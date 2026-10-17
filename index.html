@@ -119,7 +119,7 @@
                     <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" /></svg>
                 </div>
                 <div>
-                    <h1 class="text-xl md:text-2xl font-black tracking-tight">永捷系統科技 <span class="text-blue-400 font-medium">檢測費估價程式 <small class="text-xs">v1.1</small></span></h1>
+                    <h1 class="text-xl md:text-2xl font-black tracking-tight">永捷系統科技 <span class="text-blue-400 font-medium">檢測費估價程式 <small class="text-xs">v1.1.1</small></span></h1>
                 </div>
             </div>
             <div class="hidden md:block text-right">
@@ -453,18 +453,23 @@
                     <div class="w-1.5 h-8 bg-blue-600 rounded-full"></div>
                     <h2 class="text-2xl font-black text-slate-800 tracking-tight">3C保固查詢系統</h2>
                 </div>
+                <p class="text-sm text-slate-600 mb-5 leading-7">請先準備產品序號與購買證明。以下為原廠或代理商查詢入口；驗證碼與實際保固結果由原廠提供。</p>
+                <h3 class="font-bold text-slate-800 mb-4">序號查詢入口（<span id="warranty-serial-count"></span> 家）</h3>
                 <div id="brand-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4"></div>
+                <h3 class="font-bold text-slate-800 mt-8 mb-2">其他保固服務（<span id="warranty-service-count"></span> 家）</h3>
+                <p class="text-sm text-slate-500 mb-4">此區提供型號資訊、會員服務或條款／客服；不是直接輸入序號查到期日的表單。</p>
+                <div id="brand-service-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4"></div>
                 <div id="brand-detail" class="mt-12 p-8 bg-slate-50 rounded-[2rem] border-2 border-slate-100 hidden">
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div class="flex items-center gap-5">
                             <div id="detail-icon" class="w-16 h-16 bg-blue-600 text-white rounded-2xl flex items-center justify-center text-2xl font-black">?</div>
                             <div>
                                 <h3 id="detail-name" class="text-2xl font-black text-slate-900"></h3>
-                                <p id="detail-type" class="text-sm font-bold text-slate-400"></p>
+                                <p id="detail-type" class="text-sm font-bold text-slate-500"></p><p id="detail-note" class="text-sm text-slate-700 mt-3 leading-7 max-w-xl"></p><p id="detail-checked" class="text-xs text-slate-500 mt-2"></p>
                             </div>
                         </div>
                         <div class="flex flex-wrap gap-3">
-                            <a id="detail-link" href="#" target="_blank" class="bg-blue-600 text-white py-3 px-6 rounded-xl font-bold hover:bg-blue-700 transition-all flex items-center justify-center px-4">官網查詢</a>
+                            <a id="detail-link" href="#" target="_blank" rel="noopener noreferrer" class="bg-blue-600 text-white py-3 px-6 rounded-xl font-bold hover:bg-blue-700 transition-all flex items-center justify-center px-4">官網查詢</a>
                             <a id="detail-phone" href="#" class="bg-white border-2 border-slate-200 text-slate-700 py-3 px-6 rounded-xl font-bold flex items-center justify-center px-4 hidden">撥打電話</a>
                         </div>
                     </div>

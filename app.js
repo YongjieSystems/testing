@@ -1,3 +1,4 @@
+import { WARRANTY_DATA, WARRANTY_KINDS, WARRANTY_ACTIONS } from './warranty-data.js';
 import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_STATUS, parseBackup, mergeRecords, upsertRecord, matchesRecord } from './quote-core.js';
 
         const CONFIG = {
@@ -30,33 +31,7 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_S
             }
         };
 
-        const WARRANTY_DATA = [
-            { id: 'Genuine', name: '捷元 Genuine', type: '通路/電腦', icon: 'G', url: 'https://www.genuine.com.tw/Service/guaranteeInfo' },
-            { id: 'Weblink', name: '展碁 Weblink', type: '通路代理', icon: 'W', url: 'https://www.weblink.com.tw/service-inpuiry.htm' },
-            { id: 'Xander', name: '建達 Xander', type: '通路代理', icon: 'X', url: 'https://www.xander.com.tw/repair/warranty_search.aspx' },
-            { id: 'Unitech', name: '精技 Unitech', type: '通路代理', icon: 'U', url: 'https://www.unitech.com.tw/login.aspx' },
-            { id: 'Lenovo', name: '聯想 Lenovo', type: '電腦/筆電', icon: 'Le', url: 'https://pcsupport.lenovo.com/tw/zh/warranty-lookup#/' },
-            { id: 'ViewSonic', name: 'ViewSonic', type: '螢幕/投影', icon: 'VS', url: 'https://www.viewsonic.com/tw/support/warranty/' },
-            { id: 'BenQ', name: 'BenQ 明基', type: '螢幕/電子', icon: 'BQ', url: 'https://www.benq.com/zh-tw/support/registration-warranty/warranty-checker.html' },
-            { id: 'Gigabyte', name: '技嘉 GIGABYTE', type: '電腦/零件', icon: 'GA', url: 'https://www.gigabyte.com/tw/Support/Consumer/Warranty/Check' },
-            { id: 'Philips', name: '飛利浦 Philips', type: '螢幕/家電', icon: 'Ph', url: 'https://www.philips.com.tw/c-w/support-home/warranty.html?title=' },
-            { id: 'AOC', name: 'AOC', type: '螢幕顯示', icon: 'AO', url: 'https://tw.aoc.com/index/explore/route/warranty' },
-            { id: 'ADATA', name: '威剛 ADATA', type: '記憶體/SSD', icon: 'AD', url: 'https://www.xpg.com/tw/support/xpg?tab=warranty' },
-            { id: 'Kingston', name: '金士頓 Kingston', type: '記憶體/SSD', icon: 'Ki', url: 'https://www.kingston.com/tw/company/warranty' },
-            { id: 'Transcend', name: '創見 Transcend', type: '記憶體/SSD', icon: 'Tr', url: 'https://tw.transcend-info.com/support/verification' },
-            { id: 'Seagate', name: '希捷 SEAGATE', type: '硬碟', icon: 'SG', url: 'https://www.seagate.com/tw/zh/support/warranty-and-replacements/' },
-            { id: 'WD', name: 'WD 西部數據', type: '硬碟', icon: 'WD', url: 'https://support-en.wd.com/app/warrantystatusweb' },
-            { id: 'Toshiba', name: '東芝 Toshiba', type: '硬碟', icon: 'To', url: 'https://www.afastor.com/tw/registration_' },
-            { id: 'Acer', name: 'Acer 宏碁', type: '電腦/零件', icon: 'AC', url: 'https://dss.acer.com.tw/DSSApp/custservice/MachineQuery_EndUser.jsp', phone: '0800-258-222' },
-            { id: 'Apple', name: 'Apple 蘋果', type: '電腦/平板', icon: 'Ap', url: 'https://checkcoverage.apple.com/?locale=zh_TW', phone: '0800-095-988' },
-            { id: 'ASUS', name: 'ASUS 華碩', type: '電腦/零件', icon: 'A', url: 'https://www.asus.com/tw/support/warranty-status-inquiry/', phone: '0800-093-456' },
-            { id: 'Brother', name: 'Brother 兄弟', type: '印表機', icon: 'B', url: 'https://crm.brother.tw/warranty_searches/new', phone: '0800-600-211' },
-            { id: 'Canon', name: 'Canon 佳能', type: '印表機', icon: 'C', url: 'https://www.canon.com.tw/service/service_menu.aspx', phone: '0809-022-888' },
-            { id: 'Dell', name: 'DELL 戴爾', type: '電腦/伺服器', icon: 'D', url: 'https://www.dell.com/support/home/zh-tw?app=warranty', phone: '0800-186-971' },
-            { id: 'Epson', name: 'Epson 愛普生', type: '印表機', icon: 'E', url: 'https://www.epson-service.com.tw/servmMaintain.page', phone: '0800-212-873' },
-            { id: 'HP', name: 'HP 惠普', type: '電腦/印表機', icon: 'HP', url: 'https://support.hp.com/tw-zh/check-warranty', phone: '0800-010-055' },
-            { id: 'MSI', name: 'MSI 微星', type: '電腦/零件', icon: 'M', url: 'https://tw.msi.com/page/warranty', phone: '0800-018-880' }
-        ];
+
 
         const DRIVER_DATA = [
             { id: 'BROTHER', name: 'Brother 兄弟', icon: 'BR', url: 'https://support.brother.com/g/b/productsearch.aspx?c=tw&lang=zh&content=dl' },
@@ -424,6 +399,10 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_S
         }
 
         function renderWarranties() {
+            $('warranty-serial-count').textContent = WARRANTY_DATA.filter(brand => brand.kind === 'SERIAL').length;
+            $('warranty-service-count').textContent = WARRANTY_DATA.filter(brand => brand.kind !== 'SERIAL').length;
+            UI.brandGrid.replaceChildren();
+            $('brand-service-grid').replaceChildren();
             WARRANTY_DATA.forEach(brand => {
                 const btn = document.createElement('button');
                 btn.className = "brand-card bg-white border-2 border-slate-100 p-4 rounded-2xl transition-all flex flex-col items-center justify-center gap-2 group";
@@ -433,7 +412,10 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_S
                     detail.classList.remove('hidden');
                     $('detail-icon').innerText = brand.icon;
                     $('detail-name').innerText = brand.name;
-                    $('detail-type').innerText = brand.type;
+                    $('detail-type').innerText = `${brand.type} · ${WARRANTY_KINDS[brand.kind]}`;
+                    $('detail-note').textContent = brand.note;
+                    $('detail-checked').textContent = `入口檢查：${brand.checkedOn}（未輸入實機序號驗證回傳）`;
+                    $('detail-link').textContent = WARRANTY_ACTIONS[brand.kind];
                     $('detail-link').href = brand.url;
 
                     if (brand.phone) {
@@ -446,7 +428,11 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_S
                     detail.scrollIntoView({ behavior: 'smooth' });
                 };
                 btn.innerHTML = `<div class="w-12 h-12 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center font-black">${brand.icon}</div><span class="text-[10px] font-bold text-slate-600 truncate w-full text-center">${brand.name}</span>`;
-                UI.brandGrid.appendChild(btn);
+                const badge = document.createElement('span');
+                badge.className = 'text-xs font-bold text-blue-700';
+                badge.textContent = WARRANTY_KINDS[brand.kind];
+                btn.appendChild(badge);
+                (brand.kind === 'SERIAL' ? UI.brandGrid : $('brand-service-grid')).appendChild(btn);
             });
         }
 
