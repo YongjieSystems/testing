@@ -29,3 +29,12 @@ test('policy, model and login pages are not advertised as serial lookup forms', 
     assert.equal(WARRANTY_DATA.find(item=>item.id==='Canon').kind, 'MODEL');
     assert.equal(WARRANTY_DATA.find(item=>item.id==='Unitech').kind, 'LOGIN');
 });
+
+test('Lenovo avoids the reported failing host and provides a separate official support fallback', () => {
+    const entry = WARRANTY_DATA.find(item=>item.id==='Lenovo');
+    assert.equal(new URL(entry.url).hostname, 'support.lenovo.com');
+    assert.equal(new URL(entry.url).pathname, '/tw/zh/warranty-lookup');
+    assert.equal(new URL(entry.fallbackUrl).hostname, 'www.lenovo.com');
+    assert.equal(new URL(entry.fallbackUrl).protocol, 'https:');
+    assert.ok(entry.fallbackLabel);
+});

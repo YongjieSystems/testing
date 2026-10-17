@@ -48,10 +48,12 @@ export const WARRANTY_DATA = [
     "name": "聯想 Lenovo",
     "type": "電腦/筆電",
     "icon": "Le",
-    "url": "https://pcsupport.lenovo.com/tw/zh/warranty-lookup#/",
+    "url": "https://support.lenovo.com/tw/zh/warranty-lookup",
     "kind": "SERIAL",
-    "note": "輸入機器序號；頁面需要 JavaScript，首次載入可能稍久。",
-    "checkedOn": "2026-10-17"
+    "note": "輸入機器序號；可能顯示英文「Search By Serial Number」。原 PC 支援站曾回傳 no healthy upstream，已改用官方總支援站；如再遇到錯誤，請使用備用客服入口或稍後重試。",
+    "checkedOn": "2026-10-18",
+    "fallbackUrl": "https://www.lenovo.com/tw/zh/contact/",
+    "fallbackLabel": "官方客服／支援（備用）"
   },
   {
     "id": "ViewSonic",

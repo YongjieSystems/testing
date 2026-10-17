@@ -14,7 +14,7 @@
 | 展碁 Weblink | 序號查詢 | 輸入原廠序號；頁面提供保固內／外資訊，適用展碁通路產品。 | [開啟頁面](https://www.weblink.com.tw/service-inpuiry.htm) |
 | 建達 Xander | 序號查詢 | 輸入原廠序號；新品、福利品與專案保固可能不同，以建達或原廠確認為準。 | [開啟頁面](https://www.xander.com.tw/repair/warranty_search.aspx) |
 | 精技 Unitech | 需會員登入 | 目前入口為報修會員登入，沒有公開序號查詢欄位；需登入或洽精技確認保固。 | [開啟頁面](https://www.unitech.com.tw/login.aspx) |
-| 聯想 Lenovo | 序號查詢 | 輸入機器序號；頁面需要 JavaScript，首次載入可能稍久。 | [開啟頁面](https://pcsupport.lenovo.com/tw/zh/warranty-lookup#/) |
+| 聯想 Lenovo | 序號查詢 | 輸入機器序號；頁面需要 JavaScript，首次載入可能稍久。 | [開啟頁面](https://support.lenovo.com/tw/zh/warranty-lookup) |
 | ViewSonic | 序號查詢 | 輸入產品序號；台灣專案或政府採購產品請依合約確認。 | [開啟頁面](https://www.viewsonic.com/tw/support/warranty/check/) |
 | BenQ 明基 | 序號查詢 | 輸入產品序號，可搭配購買日期；原廠可能要求驗證碼。 | [開啟頁面](https://www.benq.com/zh-tw/support/registration-warranty/warranty-checker.html) |
 | 技嘉 GIGABYTE | 序號查詢 | 先按「立即查詢 >」，再輸入產品序號；不需註冊或登入。 | [開啟頁面](https://www.gigabyte.com/tw/Support/Consumer/Warranty/Check) |
@@ -51,3 +51,9 @@
 ## 注意
 
 保固判定可能受地區、代理商、購買發票、登錄、專案合約、OEM 或耗損條件影響。Captcha、同意條款與實際查詢需由使用者依原廠流程完成。本次檢查僅代表檢查日狀況，外部網站日後仍可能改版。
+
+## 2026-10-18 Lenovo 追加修正
+
+使用者回報原 PC 支援網址出現「14 UNAVAILABLE: no healthy upstream」，本次亦在實際瀏覽器重現。改用 https://support.lenovo.com/tw/zh/warranty-lookup 後，已看到 Warranty Lookup、Search By Serial Number 輸入欄與 Submit 按鈕。
+
+新版新增官方客服備用入口 https://www.lenovo.com/tw/zh/contact/，已確認有技術支援、維修與保固協助資訊。外部網站仍可能間歇異常，未以實機序號驗證回傳結果。

@@ -417,6 +417,12 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_S
                     $('detail-checked').textContent = `入口檢查：${brand.checkedOn}（未輸入實機序號驗證回傳）`;
                     $('detail-link').textContent = WARRANTY_ACTIONS[brand.kind];
                     $('detail-link').href = brand.url;
+                    const fallback = $('detail-fallback');
+                    fallback.classList.toggle('hidden', !brand.fallbackUrl);
+                    if (brand.fallbackUrl) {
+                        fallback.href = brand.fallbackUrl;
+                        fallback.textContent = brand.fallbackLabel || '官方備用入口';
+                    } else { fallback.removeAttribute('href'); fallback.textContent = ''; }
 
                     if (brand.phone) {
                         phoneBtn.href = `tel:${brand.phone}`;
