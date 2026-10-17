@@ -1,4 +1,4 @@
-import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate } from './quote-core.js';
+import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_STATUS, parseBackup, mergeRecords, upsertRecord, matchesRecord } from './quote-core.js';
 
         const CONFIG = {
             INSPECTION: {
@@ -80,7 +80,7 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate } from '
         };
 
         // 歷史紀錄相關常數
-        const MAX_HISTORY = 50;
+        const MAX_HISTORY = 200;
         let historyData = [];
         let storageWarning = '';
         try {
@@ -90,10 +90,10 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate } from '
         } catch { storageWarning = '瀏覽器儲存空間無法使用，歷史紀錄暫時無法保存。'; }
         function notify(message) { $('app-status').textContent = message; }
         function pricesFor(value) { return value.pricing || CONFIG; }
-        function persistHistory() {
-            if (storageWarning) { notify(storageWarning); return; }
-            try { localStorage.setItem('yj_quote_history', JSON.stringify(historyData)); }
-            catch { notify('報價已產生，但歷史紀錄儲存失敗，請另行備份。'); }
+        function persistHistory(records) {
+            if (storageWarning) { notify(storageWarning); return false; }
+            try { localStorage.setItem('yj_quote_history', JSON.stringify(records)); return true; }
+            catch { notify('儲存失敗，請先匯出備份，並檢查瀏覽器可用空間。'); return false; }
         }
 
         const $ = (id) => document.getElementById(id);
@@ -141,11 +141,12 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate } from '
             renderDrivers();
             renderHistory(); // 渲染歷史紀錄
             if (storageWarning) notify(storageWarning);
+            initWorkspace();
             $('new-quote-btn').onclick = () => {
-                if (!confirm('建立新報價將清空目前表單，請先複製或列印需要保留的內容。是否繼續？')) return;
+                if (!confirm('建立新報價將清空目前表單，請先保存需要保留的內容。是否繼續？')) return;
                 state = { device: 'DESKTOP', service: 'IN_STORE', zone: 'ZONE_A', urgency: 'NORMAL', source: 'OTHER', warranty: 'OUT', specialDiscount: 0, contractDiscount: 0, manufacturerFee: 0, otherFee: 0, staffName: state.staffName, department: state.department, id: crypto.randomUUID().toUpperCase(), date: quoteDate() };
                 loadHistoryData({ state, problem: '' });
-                notify('已建立新報價。');
+                notify('已建立新報價；原本的歷史與草稿仍保留。');
             };
 
             UI.btnInStore.onclick = () => { state.service = 'IN_STORE'; render(); };
@@ -228,6 +229,9 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate } from '
             summary += `----------------------------\n`;
             summary += `報價單號：YJ-${dataState.id}\n`;
             summary += `報價日期：${dateStr}\n`;
+            if (dataState.customerName) summary += `客戶稱呼：${dataState.customerName}\n`;
+            if (dataState.deviceModel) summary += `設備型號：${dataState.deviceModel}\n`;
+            summary += `處理狀態：${QUOTE_STATUS[dataState.status] || '草稿'}\n`;
             summary += `報價人員：${dataState.staffName || '--'} (${dataState.department})\n`;
             summary += `設備種類：${config.INSPECTION[dataState.device].label}\n`;
             summary += `服務方式：${dataState.service === 'IN_STORE' ? '門市檢測' : '到府檢測 (' + config.TRANSPORT[dataState.zone].label + ')'}\n`;
@@ -260,21 +264,18 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate } from '
 
         // --- 歷史紀錄功能區 ---
 
-        function addToHistory() {
-            const timestamp = new Date().toLocaleString('zh-TW', { hour12: false });
-            const record = {
-                timestamp: timestamp,
-                state: JSON.parse(JSON.stringify({ ...state, pricing: pricesFor(state) })), // 保存當次價格
-                problem: UI.problemInput.value,
-                total: UI.dispTotal.innerText
-            };
-
-            historyData.unshift(record);
-            if (historyData.length > MAX_HISTORY) {
-                historyData = historyData.slice(0, MAX_HISTORY);
-            }
-            persistHistory();
+        function currentRecord() {
+            return { timestamp: new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false }),
+                state: structuredClone({ ...state, pricing: pricesFor(state) }),
+                problem: UI.problemInput.value, total: String(quoteTotal(state, pricesFor(state)).toLocaleString('zh-TW')) };
+        }
+        function addToHistory(record) {
+            const next = upsertRecord(historyData, record?.state ? record : currentRecord(), MAX_HISTORY);
+            if (!persistHistory(next)) return false;
+            historyData = next;
             renderHistory();
+            notify('報價已保存；同一單號再次保存會更新該筆資料。');
+            return true;
         }
 
         function renderHistory() {
@@ -282,11 +283,15 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate } from '
             UI.historyList.innerHTML = '';
 
             if (historyData.length === 0) {
-                UI.historyList.innerHTML = '<p class="text-slate-400 text-sm text-center py-4">尚無紀錄</p>';
+                UI.historyList.innerHTML = '<p class="text-slate-400 text-sm text-center py-4">尚無紀錄；填寫表單後按「保存報價」。</p>';
+                $('history-count').textContent = '0';
                 return;
             }
 
+            let visibleCount = 0;
             historyData.forEach((item, index) => {
+                if (!matchesRecord(item, $('history-search').value, $('history-status').value)) return;
+                visibleCount++;
                 const el = document.createElement('div');
                 el.className = "p-3 rounded-xl border border-slate-100 bg-slate-50 hover:border-blue-300 hover:bg-blue-50 transition-all group relative";
 
@@ -313,6 +318,7 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate } from '
                         <span class="text-xs font-bold text-slate-700 truncate mr-2" title="${escapeHTML(item.problem || '')}">${deviceName}<span class="text-slate-500 font-normal">${escapeHTML(problemSummary)}</span></span>
                         <span class="text-sm font-black text-slate-900 whitespace-nowrap">NT$ ${escapeHTML(item.total)}</span>
                     </div>
+                    <p class="text-xs text-slate-600 mb-2 break-words">${escapeHTML(item.state.customerName || '未填客戶')} · ${escapeHTML(item.state.deviceModel || '未填型號')} · ${escapeHTML(QUOTE_STATUS[item.state.status] || '草稿')}</p>
                     <div class="flex gap-2">
                         <button onclick="loadHistoryItem(${index})" class="flex-1 bg-blue-100 text-blue-700 text-xs font-bold py-1.5 rounded-lg">載入</button>
                         <button onclick="copyHistoryItem(${index}, this)" class="flex-1 bg-slate-200 text-slate-600 text-xs font-bold py-1.5 rounded-lg hover:bg-slate-300 transition-colors">複製</button>
@@ -321,6 +327,8 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate } from '
                 `;
                 UI.historyList.appendChild(el);
             });
+            if (!visibleCount) UI.historyList.textContent = '沒有符合條件的報價。';
+            $('history-count').textContent = String(historyData.length);
         }
 
         window.loadHistoryItem = (index) => {
@@ -341,6 +349,10 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate } from '
             UI.distSelect.value = state.zone;
             state.date ||= record.timestamp?.split(' ')[0]?.replaceAll('/', '-') || quoteDate();
             UI.problemInput.value = record.problem || '';
+            state.customerName ||= ''; state.deviceModel ||= ''; state.status ||= 'DRAFT';
+            $('customer-name').value = state.customerName;
+            $('device-model').value = state.deviceModel;
+            $('quote-status').value = state.status;
 
             // 重新渲染介面
             render();
@@ -493,7 +505,9 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate } from '
             let total = quoteTotal(state, config);
             if (total < 0) total = 0; // 避免負數
 
-            UI.dispTotal.innerText = total.toLocaleString();
+            UI.dispTotal.innerText = total.toLocaleString('zh-TW');
+            $('mobile-total').textContent = total.toLocaleString('zh-TW');
+            renderIdentity();
             UI.dispBase.innerText = `$${basePrice.toLocaleString()}`;
             UI.dispDev.innerText = config.INSPECTION[state.device].label;
             UI.dispService.innerText = state.service === 'IN_STORE' ? '門市檢測' : '到府檢測';
@@ -550,7 +564,7 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate } from '
             UI.dispWarrantyText.innerText = state.warranty === 'IN' ? '保固內' : '已過保';
         }
 
-        window.handlePrint = () => window.print();
+        window.handlePrint = () => { if (addToHistory()) window.print(); };
         window.switchTab = (tabId) => {
             ['quote', 'warranty', 'drivers'].forEach(s => {
                 const el = $(`section-${s}`);
@@ -559,13 +573,14 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate } from '
                 if (tab) { tab.classList.remove('tab-active'); tab.classList.add('tab-inactive'); }
             });
             $(`section-${tabId}`)?.classList.remove('hidden');
+            $('mobile-quote-bar').hidden = tabId !== 'quote';
             $(`tab-${tabId}`)?.classList.replace('tab-inactive', 'tab-active');
         };
 
         function copyToClipboard() {
 
 
-            const now = new Date();
+            const record = currentRecord();
             const dateStr = state.date;
 
             const problem = UI.problemInput.value.trim();
@@ -573,11 +588,71 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate } from '
             const summary = generateSummary(state, problem, total, dateStr);
 
             navigator.clipboard.writeText(summary).then(() => {
-                addToHistory();
+                addToHistory(record);
                 const oldHTML = UI.btnCopy.innerHTML;
                 UI.btnCopy.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg> 已複製內容`;
                 setTimeout(() => UI.btnCopy.innerHTML = oldHTML, 2000);
             }).catch(() => notify('複製失敗，請確認瀏覽器剪貼簿權限，或改用列印。'));
         }
 
+        function renderIdentity() {
+            $('display-customer').textContent = state.customerName || '未填寫';
+            $('display-model').textContent = state.deviceModel || '未填寫';
+            $('display-quote-status').textContent = QUOTE_STATUS[state.status] || '草稿';
+        }
+        function downloadJSON(value, filename) {
+            const url = URL.createObjectURL(new Blob([JSON.stringify(value, null, 2)], { type: 'application/json' }));
+            const anchor = document.createElement('a'); anchor.href = url; anchor.download = filename;
+            document.body.appendChild(anchor); anchor.click(); anchor.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+        function initWorkspace() {
+            for (const [id, key] of [['customer-name','customerName'],['device-model','deviceModel'],['quote-status','status']]) {
+                $(id).addEventListener('input', event => { state[key] = event.target.value; renderIdentity(); });
+            }
+            $('save-quote-btn').onclick = addToHistory;
+            $('mobile-save-btn').onclick = addToHistory;
+            $('mobile-view-btn').onclick = () => $('quote-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            $('history-search').oninput = renderHistory;
+            $('history-status').onchange = renderHistory;
+            $('save-draft-btn').onclick = () => {
+                try { localStorage.setItem('yj_quote_draft_v1', JSON.stringify(currentRecord())); notify('草稿已保存於此瀏覽器，下次可按「載入草稿」。'); }
+                catch { notify('草稿儲存失敗，請檢查瀏覽器空間。'); }
+            };
+            $('load-draft-btn').onclick = () => {
+                try {
+                    const raw = localStorage.getItem('yj_quote_draft_v1');
+                    const [draft] = readHistory(raw ? '[' + raw + ']' : '[]', CONFIG, 1);
+                    if (!draft) { notify('尚無可用草稿。'); return; }
+                    if (!confirm('載入草稿將取代目前表單，是否繼續？')) return;
+                    loadHistoryData(draft); notify('已載入草稿。');
+                } catch { notify('草稿無法讀取；原始資料未更動。'); }
+            };
+            $('note-template').onchange = event => {
+                if (!event.target.value) return;
+                UI.problemInput.value = [UI.problemInput.value.trim(), event.target.value].filter(Boolean).join('\n');
+                updateProblemDisplay(); event.target.value = '';
+            };
+            $('export-backup-btn').onclick = () => {
+                if (storageWarning) { notify('歷史資料有讀取問題，請先下載原始資料備援。'); return; }
+                downloadJSON({ format: 'yj-quote-backup', version: 1, exportedAt: new Date().toISOString(), records: historyData }, '永捷報價備份-' + quoteDate() + '.json');
+                notify('已開始下載備份，請妥善保存；檔案包含報價與客戶稱呼。');
+            };
+            $('export-raw-btn').onclick = () => {
+                try { downloadJSON({ rawHistory: localStorage.getItem('yj_quote_history'), rawDraft: localStorage.getItem('yj_quote_draft_v1') }, '永捷原始資料備援-' + quoteDate() + '.json'); }
+                catch { notify('無法讀取本機資料。'); }
+            };
+            $('import-backup-input').onchange = async event => {
+                const file = event.target.files[0];
+                if (!file) return;
+                try {
+                    if (file.size > 2 * 1024 * 1024) throw new Error('備份檔超過 2 MB，請檢查檔案。');
+                    const incoming = parseBackup(await file.text(), CONFIG, MAX_HISTORY);
+                    const next = mergeRecords(historyData, incoming, MAX_HISTORY);
+                    if (!confirm('匯入 ' + incoming.length + ' 筆報價？同單號保留本機版本，完成後共 ' + next.length + ' 筆。')) return;
+                    if (persistHistory(next)) { historyData = next; renderHistory(); notify('備份匯入完成，本機已有的同單號報價保持不變。'); }
+                } catch (error) { notify(error.message || '匯入失敗；原有資料未更動。'); }
+                finally { event.target.value = ''; }
+            };
+        }
         init();
