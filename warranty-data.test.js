@@ -38,3 +38,13 @@ test('Lenovo avoids the reported failing host and provides a separate official s
     assert.equal(new URL(entry.fallbackUrl).protocol, 'https:');
     assert.ok(entry.fallbackLabel);
 });
+
+import fs from 'node:fs';
+test('published HTML and module imports use the release version to avoid stale warranty links', () => {
+    const {version}=JSON.parse(fs.readFileSync(new URL('./package.json',import.meta.url),'utf8'));
+    const html=fs.readFileSync(new URL('./index.html',import.meta.url),'utf8');
+    const app=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');
+    assert.ok(html.includes(`./app.js?v=${version}`));
+    assert.ok(app.includes(`./warranty-data.js?v=${version}`));
+    assert.ok(app.includes(`./quote-core.js?v=${version}`));
+});
