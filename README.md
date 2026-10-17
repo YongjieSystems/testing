@@ -1,20 +1,38 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# 永捷系統科技 檢測費估價程式
 
-# Run and deploy your AI Studio app
+純前端工具，提供檢測報價、原廠保固與驅動下載入口。不需要 Gemini 或其他 API 金鑰。
 
-This contains everything you need to run your app locally.
+## 開發與驗證
 
-View your app in AI Studio: https://ai.studio/apps/drive/1Ei4F8nOgqmTqdBzRtebKB5V5ZJK3Y5rq
+需要 Node.js 22 或更新版本，以及 pnpm（亦可使用 npm）。
 
-## Run Locally
+```sh
+pnpm install
+pnpm dev
+pnpm test
+pnpm build
+pnpm preview
+```
 
-**Prerequisites:**  Node.js
+GitHub Pages 可直接提供根目錄的 index.html、app.js、quote-core.js；若使用建置部署，發布 dist/ 內容。Vite 的相對 base 支援 /testing/ 子路徑。
 
+## 程式結構
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+- index.html：畫面、列印樣式。
+- app.js：價格設定、表單互動、報價摘要與歷史紀錄。
+- quote-core.js：金額驗證、總額計算、歷史資料讀取、HTML 編碼。
+- quote-core.test.js：核心規則回歸測試。
+
+## 使用與資料限制
+
+- 金額使用整數新臺幣，範圍 0–1,000,000；負數歸零、小數捨去，超出範圍限制為上限。
+- 複製成功後保存本機最近 50 筆報價；列印本身不另存歷史。
+- 建立新報價會重設表單並產生新單號，保留報價人員與部門。
+- 新存歷史包含當時價格，未來調價不會改動該筆明細。舊版歷史沒有價格快照，無法還原當時價目；只能使用目前設定。
+- 歷史僅存在該瀏覽器的 localStorage，沒有跨電腦同步或集中備份。清除網站資料會移除歷史。
+- 保固狀態目前僅記錄資訊，不改變價格；主管減免仍需公司另行核准，本工具不具登入與核准權限控管。
+- Tailwind CDN 與 Google Fonts 需要網路。後續可改成本地建置 CSS，改善離線可用性。
+
+## 本次修正
+
+修正負數費用、歷史單號日期不同步、區域選單還原、使用者文字 HTML 注入；增加儲存/剪貼簿錯誤提示、價格快照與新報價按鈕。移除不存在的根路徑資源引用與未使用的 API 金鑰建置設定。
