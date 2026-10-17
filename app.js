@@ -104,9 +104,9 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate } from '
                 deviceWrap: $('device-options'), btnInStore: $('btn-IN_STORE'), btnOnSite: $('btn-ON_SITE'),
                 distWrap: $('distance-container'), distSelect: $('distance-select'),
                 urgencyWrap: $('urgency-options'), btnSourceOwn: $('btn-source-OWN'), btnSourceOther: $('btn-source-OTHER'),
-                btnWarrantyIn: $('btn-warranty-IN'), btnWarrantyOut: $('btn-warranty-OUT'), 
-                specialDiscountInput: $('special-discount-input'), 
-                contractDiscountInput: $('contract-discount-input'), 
+                btnWarrantyIn: $('btn-warranty-IN'), btnWarrantyOut: $('btn-warranty-OUT'),
+                specialDiscountInput: $('special-discount-input'),
+                contractDiscountInput: $('contract-discount-input'),
                 manufacturerFeeInput: $('manufacturer-fee-input'),
                 otherFeeInput: $('other-fee-input'), // 新增
                 problemInput: $('problem-input'),
@@ -114,14 +114,14 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate } from '
                 departmentSelect: $('department-select'), // 新增
                 dispTotal: $('display-total'), dispBase: $('display-inspection'), dispTrans: $('display-transport'),
                 dispTransRow: $('display-transport-row'), dispUrg: $('display-urgency'), dispUrgRow: $('display-urgency-row'),
-                dispDisc: $('display-discount'), dispDiscRow: $('display-discount-row'), 
+                dispDisc: $('display-discount'), dispDiscRow: $('display-discount-row'),
                 dispSpecialDisc: $('display-special-discount'), dispSpecialDiscRow: $('display-special-discount-row'),
-                dispContractDisc: $('display-contract-discount'), dispContractDiscRow: $('display-contract-discount-row'), 
+                dispContractDisc: $('display-contract-discount'), dispContractDiscRow: $('display-contract-discount-row'),
                 dispManufacturerFee: $('display-manufacturer-fee'), dispManufacturerFeeRow: $('display-manufacturer-fee-row'),
                 dispOtherFee: $('display-other-fee'), dispOtherFeeRow: $('display-other-fee-row'), // 新增
                 dispDate: $('display-date'),
                 dispDev: $('display-device-type'), dispWarrantyIcon: $('warranty-indicator'), dispWarrantyText: $('warranty-text'),
-                dispService: $('display-service-mode'), dispId: $('display-id'), 
+                dispService: $('display-service-mode'), dispId: $('display-id'),
                 dispStaffName: $('display-staff-name'), // 新增
                 dispDepartment: $('display-department'), // 新增
                 headDate: $('current-date-header'),
@@ -155,7 +155,7 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate } from '
             UI.btnWarrantyIn.onclick = () => { state.warranty = 'IN'; render(); };
             UI.btnWarrantyOut.onclick = () => { state.warranty = 'OUT'; render(); };
             UI.btnCopy.onclick = copyToClipboard;
-            
+
             // 即時監聽輸入框變化
             UI.specialDiscountInput.addEventListener('input', (e) => {
                 const val = normalizeMoney(e.target.value);
@@ -183,7 +183,7 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate } from '
             });
 
             UI.problemInput.addEventListener('input', updateProblemDisplay);
-            
+
             // 新增報價人員與部門監聽
             UI.staffNameInput.addEventListener('input', (e) => {
                 state.staffName = e.target.value;
@@ -197,7 +197,7 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate } from '
             render();
             updateStaffDisplay(); // 初始化顯示
         }
-        
+
         function updateProblemDisplay() {
             const text = UI.problemInput.value.trim();
             if (text) {
@@ -223,7 +223,7 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate } from '
             const manufacturerFee = dataState.manufacturerFee;
             const otherFee = dataState.otherFee;
             const contractDiscount = dataState.contractDiscount;
-            
+
             let summary = `【永捷系統科技 - 檢測報價摘要】\n`;
             summary += `----------------------------\n`;
             summary += `報價單號：YJ-${dataState.id}\n`;
@@ -234,11 +234,11 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate } from '
             summary += `優先等級：${config.URGENCY[dataState.urgency].label}\n`;
             summary += `保固狀態：${dataState.warranty === 'IN' ? '保固內' : '已過保'}\n`;
             summary += `設備來源：${config.SOURCE[dataState.source].label}\n`;
-            
+
             if (problemText) {
                 summary += `故障描述：${problemText}\n`;
             }
-            
+
             summary += `----------------------------\n`;
             summary += `費用細目：\n`;
             summary += `- 檢測基本費：$${basePrice.toLocaleString()}\n`;
@@ -249,17 +249,17 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate } from '
             if (discPrice !== 0) summary += `- 客戶折抵額：$${discPrice.toLocaleString()}\n`;
             if (specialDiscount > 0) summary += `- 特殊減免額：$${specialDiscount.toLocaleString()} (需主管核准)\n`;
             if (contractDiscount > 0) summary += `- 合約客戶折抵：$${contractDiscount.toLocaleString()} (手動折抵)\n`;
-            
+
             summary += `----------------------------\n`;
             summary += `預估總額：NT$ ${totalText}\n`;
             summary += `----------------------------\n`;
             summary += `※ 注意：此報價不含零件耗材費用，最終金額以實際檢測為準。`;
-            
+
             return summary;
         }
-        
+
         // --- 歷史紀錄功能區 ---
-        
+
         function addToHistory() {
             const timestamp = new Date().toLocaleString('zh-TW', { hour12: false });
             const record = {
@@ -268,7 +268,7 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate } from '
                 problem: UI.problemInput.value,
                 total: UI.dispTotal.innerText
             };
-            
+
             historyData.unshift(record);
             if (historyData.length > MAX_HISTORY) {
                 historyData = historyData.slice(0, MAX_HISTORY);
@@ -280,7 +280,7 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate } from '
         function renderHistory() {
             if (!UI.historyList) return;
             UI.historyList.innerHTML = '';
-            
+
             if (historyData.length === 0) {
                 UI.historyList.innerHTML = '<p class="text-slate-400 text-sm text-center py-4">尚無紀錄</p>';
                 return;
@@ -289,18 +289,18 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate } from '
             historyData.forEach((item, index) => {
                 const el = document.createElement('div');
                 el.className = "p-3 rounded-xl border border-slate-100 bg-slate-50 hover:border-blue-300 hover:bg-blue-50 transition-all group relative";
-                
+
                 // Format: Date Time | Staff | Device | Total
                 const deviceName = CONFIG.INSPECTION[item.state.device]?.label || '未知設備';
                 const staff = escapeHTML(item.state.staffName || '未具名');
-                
+
                 // 處理故障現象摘要
                 let problemSummary = '';
                 if (item.problem) {
                     // 取前 15 個字，若超過則加 ...
                     const maxLength = 15;
-                    problemSummary = item.problem.length > maxLength 
-                        ? ' - ' + item.problem.substring(0, maxLength) + '...' 
+                    problemSummary = item.problem.length > maxLength
+                        ? ' - ' + item.problem.substring(0, maxLength) + '...'
                         : ' - ' + item.problem;
                 }
 
@@ -322,7 +322,7 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate } from '
                 UI.historyList.appendChild(el);
             });
         }
-        
+
         window.loadHistoryItem = (index) => {
             if (!confirm('是否載入此歷史報價？\n目前未儲存的內容將被覆蓋。')) return;
             loadHistoryData(historyData[index]);
@@ -330,7 +330,7 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate } from '
 
         function loadHistoryData(record) {
             state = JSON.parse(JSON.stringify(record.state)); // Deep copy back
-            
+
             // 手動恢復 UI 輸入框的值
             UI.specialDiscountInput.value = state.specialDiscount || '';
             UI.contractDiscountInput.value = state.contractDiscount || '';
@@ -341,7 +341,7 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate } from '
             UI.distSelect.value = state.zone;
             state.date ||= record.timestamp?.split(' ')[0]?.replaceAll('/', '-') || quoteDate();
             UI.problemInput.value = record.problem || '';
-            
+
             // 重新渲染介面
             render();
             updateProblemDisplay();
@@ -352,14 +352,14 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate } from '
             const record = historyData[index];
             const dateStr = record.state.date || record.timestamp.split(' ')[0];
             const summary = generateSummary(record.state, record.problem, record.total, dateStr);
-            
+
             navigator.clipboard.writeText(summary).then(() => {
                 const originalText = btnElement.innerText;
                 const originalClass = btnElement.className;
-                
+
                 btnElement.innerText = "已複製";
                 btnElement.className = "flex-1 bg-emerald-100 text-emerald-700 text-xs font-bold py-1.5 rounded-lg transition-colors";
-                
+
                 setTimeout(() => {
                     btnElement.innerText = originalText;
                     btnElement.className = originalClass;
@@ -369,9 +369,9 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate } from '
 
         window.printHistoryItem = (index) => {
             if(!confirm('列印歷史報價需載入資料，將覆蓋當前未儲存內容。是否繼續？')) return;
-            
+
             loadHistoryData(historyData[index]);
-            
+
             // Wait for render
             setTimeout(() => {
                 window.print();
@@ -423,14 +423,14 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate } from '
                     $('detail-name').innerText = brand.name;
                     $('detail-type').innerText = brand.type;
                     $('detail-link').href = brand.url;
-                    
+
                     if (brand.phone) {
                         phoneBtn.href = `tel:${brand.phone}`;
                         phoneBtn.classList.remove('hidden');
                     } else {
                         phoneBtn.classList.add('hidden');
                     }
-                    
+
                     detail.scrollIntoView({ behavior: 'smooth' });
                 };
                 btn.innerHTML = `<div class="w-12 h-12 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center font-black">${brand.icon}</div><span class="text-[10px] font-bold text-slate-600 truncate w-full text-center">${brand.name}</span>`;
@@ -466,16 +466,16 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate } from '
             else UI.btnOnSite.classList.add('btn-active');
             if (state.service === 'ON_SITE') UI.distWrap.classList.remove('hidden');
             else UI.distWrap.classList.add('hidden');
-            
+
             // 統一使用 btn-active
             document.querySelectorAll('#urgency-options button').forEach(b => b.classList.remove('btn-active'));
             $(`urg-${state.urgency}`)?.classList.add('btn-active');
-            
+
             // 統一使用 btn-active
             [UI.btnSourceOwn, UI.btnSourceOther].forEach(b => b.classList.remove('btn-active'));
             if (state.source === 'OWN') UI.btnSourceOwn.classList.add('btn-active');
             else UI.btnSourceOther.classList.add('btn-active');
-            
+
             [UI.btnWarrantyIn, UI.btnWarrantyOut].forEach(b => b.classList.remove('btn-active'));
             if (state.warranty === 'IN') UI.btnWarrantyIn.classList.add('btn-active');
             else UI.btnWarrantyOut.classList.add('btn-active');
@@ -488,7 +488,7 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate } from '
             const manufacturerFee = state.manufacturerFee;
             const otherFee = state.otherFee;
             const contractDiscount = state.contractDiscount;
-            
+
             // 計算總價 (包含原廠檢測費加項，其他費用加項，扣除折抵)
             let total = quoteTotal(state, config);
             if (total < 0) total = 0; // 避免負數
@@ -567,14 +567,14 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate } from '
 
             const now = new Date();
             const dateStr = state.date;
-            
+
             const problem = UI.problemInput.value.trim();
             const total = UI.dispTotal.innerText;
             const summary = generateSummary(state, problem, total, dateStr);
 
             navigator.clipboard.writeText(summary).then(() => {
                 addToHistory();
-                const oldHTML = UI.btnCopy.innerHTML; 
+                const oldHTML = UI.btnCopy.innerHTML;
                 UI.btnCopy.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg> 已複製內容`;
                 setTimeout(() => UI.btnCopy.innerHTML = oldHTML, 2000);
             }).catch(() => notify('複製失敗，請確認瀏覽器剪貼簿權限，或改用列印。'));
