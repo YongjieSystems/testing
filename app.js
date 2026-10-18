@@ -1,14 +1,9 @@
-import { initTeamWorkspace } from './team-workspace.js?v=1.4.2';
-import { CONFIG } from './pricing-config.js?v=1.4.2';
-import { WARRANTY_DATA, WARRANTY_KINDS, WARRANTY_ACTIONS } from './warranty-data.js?v=1.4.2';
-import { normalizeMoney, calculateQuote, assessLogistics, reviewLogistics, summarizeLogistics, ACTUAL_COST_FIELDS, SERVICE_LABELS, LOGISTICS_LABELS, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_STATUS, parseBackup, mergeRecords, upsertRecord, matchesRecord } from './quote-core.js?v=1.4.2';
+import { initTeamWorkspace } from './team-workspace.js?v=1.5.0';
+import { CONFIG } from './pricing-config.js?v=1.5.0';
+import { WARRANTY_DATA, WARRANTY_KINDS, WARRANTY_ACTIONS } from './warranty-data.js?v=1.5.0';
+import { normalizeMoney, calculateQuote, assessLogistics, reviewLogistics, summarizeLogistics, ACTUAL_COST_FIELDS, SERVICE_LABELS, LOGISTICS_LABELS, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_STATUS, parseBackup, mergeRecords, upsertRecord, matchesRecord } from './quote-core.js?v=1.5.0';
 
-                const DRIVER_DATA = [
-            { id: 'BROTHER', name: 'Brother 兄弟', icon: 'BR', url: 'https://support.brother.com/g/b/productsearch.aspx?c=tw&lang=zh&content=dl' },
-            { id: 'CANON', name: 'Canon 佳能', icon: 'CA', url: 'https://tw.canon/zh_TW/support' },
-            { id: 'EPSON', name: 'Epson 愛普生', icon: 'EP', url: 'https://www.epson.com.tw/Support/Printers/sh/s1' },
-            { id: 'HP', name: 'HP 惠普', icon: 'HP', url: 'https://support.hp.com/tw-zh/drivers/printers' }
-        ];
+import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from './driver-data.js?v=1.5.0';
 
         const newFields = () => ({ schemaVersion: 2, billingStage: 'DIAGNOSIS', logisticsPlan: 'DEDICATED', logisticsFee: '', feeConfirmed: false, routeConfirmed: false, windowConfirmed: false, actualConfirmed: false, actualMinutes: '', actualEngineerMinutes: '', actualHourlyCost: '', actualTravelCost: '', actualOtherCost: '', actualRevenue: '', actualNotes: '', logisticsWindow: '', repairFee: '', repairConfirmed: false, paidAmount: '', logisticsMinutes: '', hourlyCost: '', travelCost: '', logisticsOtherCost: '', targetMargin: '' });
         let state = { ...newFields(),
@@ -401,6 +396,9 @@ import { normalizeMoney, calculateQuote, assessLogistics, reviewLogistics, summa
                     $('detail-checked').textContent = `入口檢查：${brand.checkedOn}（未輸入實機序號驗證回傳）`;
                     $('detail-link').textContent = WARRANTY_ACTIONS[brand.kind];
                     $('detail-link').href = brand.url;
+                    const driver=DRIVER_DATA.find(item=>item.id===brand.id);
+                    $('detail-driver').hidden=!driver;
+                    $('detail-driver').onclick=()=>{if(driver){$('driver-search').value='';$('driver-category').value='ALL';renderDrivers();window.switchTab('drivers');openDriver(driver);}};
                     const fallback = $('detail-fallback');
                     fallback.classList.toggle('hidden', !brand.fallbackUrl);
                     if (brand.fallbackUrl) {
@@ -426,20 +424,37 @@ import { normalizeMoney, calculateQuote, assessLogistics, reviewLogistics, summa
             });
         }
 
+        function openDriver(brand) {
+            $('driver-detail').classList.remove('hidden');
+            $('driver-icon').textContent=brand.icon;
+            $('driver-name').textContent=brand.name;
+            $('driver-note').textContent=brand.note;
+            $('driver-kind').textContent=brand.kind==='GUIDE'?'官方下載操作指引':brand.categories.map(key=>DRIVER_CATEGORIES[key]).join('、');
+            $('driver-host').textContent=`官方網域：${new URL(brand.url).hostname} · 入口核對：${brand.checkedOn}`;
+            $('driver-link').href=brand.url;
+            $('driver-link').textContent=brand.kind==='GUIDE'?'查看官方下載指引 ↗':'前往原廠驅動頁 ↗';
+            $('driver-warranty').href=WARRANTY_DATA.find(item=>item.id===brand.id).url;
+            $('driver-detail').scrollIntoView({behavior:'smooth',block:'nearest'});
+        }
         function renderDrivers() {
-            DRIVER_DATA.forEach(brand => {
+            UI.driverGrid.replaceChildren(); $('driver-guide-grid').replaceChildren();
+            const found=DRIVER_DATA.filter(brand=>matchesDriver(brand,$('driver-search').value,$('driver-category').value));
+            $('driver-count').textContent=`符合 ${found.length}／${DRIVER_DATA.length} 家（一般入口 ${DRIVER_DATA.filter(item=>item.kind==='DRIVER').length} 家，特殊平台指引 ${DRIVER_DATA.filter(item=>item.kind==='GUIDE').length} 家）`;
+            $('driver-empty').hidden=found.length!==0;
+            $('driver-guide-section').hidden=!found.some(brand=>brand.kind==='GUIDE');
+            found.forEach(brand => {
                 const btn = document.createElement('button');
+                btn.type='button';
                 btn.className = "brand-card bg-white border-2 border-slate-100 p-4 rounded-2xl transition-all flex flex-col items-center justify-center gap-2 group";
-                btn.onclick = () => {
-                    $('driver-detail').classList.remove('hidden');
-                    $('driver-icon').innerText = brand.icon;
-                    $('driver-name').innerText = brand.name;
-                    $('driver-link').href = brand.url;
-                    $('driver-detail').scrollIntoView({ behavior: 'smooth' });
-                };
-                btn.innerHTML = `<div class="w-12 h-12 bg-slate-800 text-white rounded-xl flex items-center justify-center font-black">${brand.icon}</div><span class="text-xs font-bold text-slate-600">${brand.name}</span>`;
-                UI.driverGrid.appendChild(btn);
+                btn.onclick = () => openDriver(brand);
+                btn.innerHTML = `<div class="w-12 h-12 bg-slate-800 text-white rounded-xl flex items-center justify-center font-black">${escapeHTML(brand.icon)}</div><span class="text-xs font-bold text-slate-600">${escapeHTML(brand.name)}</span><span class="text-xs text-blue-700">${brand.kind==='GUIDE'?'Intel Mac 指引':escapeHTML(brand.categories.map(key=>DRIVER_CATEGORIES[key]).join('／'))}</span>`;
+                (brand.kind==='GUIDE'?$('driver-guide-grid'):UI.driverGrid).appendChild(btn);
             });
+            $('driver-search').oninput=()=>{$('driver-detail').classList.add('hidden');renderDrivers();};
+            $('driver-category').onchange=()=>{$('driver-detail').classList.add('hidden');renderDrivers();};
+            $('driver-reset').onclick=()=>{$('driver-search').value='';$('driver-category').value='ALL';$('driver-detail').classList.add('hidden');renderDrivers();};
+            $('driver-exclusions').replaceChildren();
+            DRIVER_EXCLUSIONS.forEach(item=>{const li=document.createElement('li');li.textContent=`${item.name}：${item.reason}`;$('driver-exclusions').appendChild(li);});
         }
 
         function render() {

@@ -120,7 +120,7 @@
                     <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" /></svg>
                 </div>
                 <div>
-                    <h1 class="text-xl md:text-2xl font-black tracking-tight">永捷系統科技 <span class="text-blue-400 font-medium">檢測費估價程式 <small class="text-xs">v1.4.2</small></span></h1>
+                    <h1 class="text-xl md:text-2xl font-black tracking-tight">永捷系統科技 <span class="text-blue-400 font-medium">檢測費估價程式 <small class="text-xs">v1.5.0</small></span></h1>
                 </div>
             </div>
             <div class="hidden md:block text-right">
@@ -135,8 +135,8 @@
             <button type="button" onclick="switchTab('quote')" id="tab-quote" class="flex-1 min-w-[100px] py-3 px-4 rounded-xl font-bold transition-all tab-active">檢測報價</button>
             <button type="button" onclick="switchTab('warranty')" id="tab-warranty" class="flex-1 min-w-[100px] py-3 px-4 rounded-xl font-bold transition-all tab-inactive">保固查詢</button>
             <button type="button" onclick="switchTab('drivers')" id="tab-drivers" class="flex-1 min-w-[100px] py-3 px-4 rounded-xl font-bold transition-all tab-inactive">驅動程式</button>
+            <button type="button" onclick="switchTab('team')" id="tab-team" class="flex-1 min-w-[100px] py-3 px-4 rounded-xl font-bold transition-all tab-inactive">團隊作業</button>
         </div>
-    <button type="button" onclick="switchTab('team')" id="tab-team" class="flex-1 min-w-[100px] py-3 px-4 rounded-xl font-bold transition-all tab-inactive">團隊作業</button>
     </nav>
 
     <main class="max-w-6xl mx-auto px-4">
@@ -588,6 +588,7 @@
                         </div>
                         <div class="flex flex-wrap gap-3">
                             <a id="detail-link" href="#" target="_blank" rel="noopener noreferrer" class="bg-blue-600 text-white py-3 px-6 rounded-xl font-bold hover:bg-blue-700 transition-all flex items-center justify-center px-4">官網查詢</a>
+                            <button id="detail-driver" hidden type="button" class="bg-blue-100 text-blue-800 py-3 px-6 rounded-xl font-bold">查看此品牌驅動</button>
                             <a id="detail-fallback" target="_blank" rel="noopener noreferrer" class="hidden bg-white border-2 border-slate-200 text-slate-700 py-3 px-6 rounded-xl font-bold">官方備用入口</a>
                             <a id="detail-phone" href="#" class="bg-white border-2 border-slate-200 text-slate-700 py-3 px-6 rounded-xl font-bold flex items-center justify-center px-4 hidden">撥打電話</a>
                         </div>
@@ -603,24 +604,38 @@
                     <div class="w-1.5 h-8 bg-blue-600 rounded-full"></div>
                     <h2 class="text-2xl font-black text-slate-800 tracking-tight">驅動下載中心</h2>
                 </div>
+                <p class="text-sm text-slate-600 mb-4">依保固清單逐家對照官方入口。先準備完整型號、作業系統與版本，再至原廠選檔下載；本頁不直接提供安裝檔，也不自動判斷相容性。</p>
+                <div class="flex flex-wrap gap-3 mb-4">
+                    <label class="flex-1">搜尋品牌或產品類別<input id="driver-search" type="search" placeholder="例如：聯想、HP、印表機" class="w-full border p-3 rounded-xl"></label>
+                    <label>產品類別<select id="driver-category" class="block border p-3 rounded-xl"><option value="ALL">所有類別</option><option value="COMPUTER">電腦／主機板／零件</option><option value="PRINTER">印表機／掃描器</option><option value="DISPLAY">螢幕／投影機</option></select></label>
+                    <button id="driver-reset" type="button" class="self-end p-3 bg-slate-100 rounded-xl">清除篩選</button>
+                </div>
+                <p id="driver-count" role="status" class="text-sm text-slate-500 mb-4"></p>
                 <div id="driver-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4"></div>
+                <p id="driver-empty" hidden class="p-6 text-slate-500">沒有符合的品牌，請改用品牌名稱或清除篩選。本頁不能直接搜尋原廠的個別機型。</p>
+                <section id="driver-guide-section" class="mt-6"><h3 class="font-bold mb-3">特殊平台下載指引</h3><div id="driver-guide-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4"></div></section>
                 <div id="driver-detail" class="mt-12 p-8 bg-slate-50 rounded-[2rem] border-2 border-slate-100 hidden">
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div class="flex items-center gap-5">
                             <div id="driver-icon" class="w-16 h-16 bg-slate-800 text-white rounded-2xl flex items-center justify-center text-2xl font-black">P</div>
                             <div>
                                 <h3 id="driver-name" class="text-2xl font-black text-slate-900"></h3>
+                                <p id="driver-kind" class="text-sm text-blue-700"></p>
                             </div>
                         </div>
-                        <a id="driver-link" href="#" target="_blank" class="bg-slate-900 text-white py-4 px-8 rounded-2xl font-black text-center">前往下載</a>
+                        <a id="driver-link" href="#" target="_blank" rel="noopener noreferrer" class="bg-slate-900 text-white py-4 px-8 rounded-2xl font-black text-center">前往原廠驅動頁 ↗</a>
                     </div>
+                    <p id="driver-note" class="mt-5 text-sm leading-7"></p>
+                    <p id="driver-host" class="mt-2 text-xs text-slate-500 break-words"></p>
+                    <a id="driver-warranty" href="#" target="_blank" rel="noopener noreferrer" class="inline-block mt-4 text-blue-700 underline">同品牌保固入口 ↗</a>
                 </div>
+                <details class="mt-8 border-t pt-5"><summary class="font-bold cursor-pointer">其餘保固廠商：本次未列入驅動清單的原因</summary><ul id="driver-exclusions" class="mt-4 space-y-3 text-sm text-slate-600"></ul></details>
             </div>
         </div>
     </main>
     <div id="mobile-quote-bar" class="no-print"><div><small id="mobile-total-caption">預估總額</small><br><strong>NT$ <span id="mobile-total">500</span></strong></div><button id="mobile-view-btn" type="button">看明細</button><button id="mobile-save-btn" type="button">保存報價</button></div>
 
-    <script type="module" src="./app.js?v=1.4.2"></script>
+    <script type="module" src="./app.js?v=1.5.0"></script>
 
 </body>
 </html>
