@@ -154,7 +154,7 @@
                             <div><label for="customer-name" class="block text-sm font-bold text-slate-700 mb-2">客戶稱呼 / 公司（選填）</label><input id="customer-name" maxlength="100" class="w-full border-2 border-slate-100 rounded-xl p-3" placeholder="例如：王先生 / 永捷科技"></div>
                             <div><label for="device-model" class="block text-sm font-bold text-slate-700 mb-2">設備型號 / 資產編號（選填）</label><input id="device-model" maxlength="160" class="w-full border-2 border-slate-100 rounded-xl p-3" placeholder="例如：ThinkPad T14 / PC-001"></div>
                             <div><label for="quote-status" class="block text-sm font-bold text-slate-700 mb-2">處理狀態</label><select id="quote-status" class="w-full border-2 border-slate-100 rounded-xl p-3"><option value="DRAFT">草稿</option><option value="QUOTED">已報價</option><option value="ACCEPTED">客戶同意</option><option value="DONE">已完成</option><option value="CANCELLED">已取消</option></select></div>
-                            <p class="text-xs text-slate-500 leading-6 self-end">資料只保存在此瀏覽器。不同手機或電腦可透過備份檔移轉，目前尚未提供即時同步。</p>
+                            <p class="text-xs text-slate-500 leading-6 self-end">本頁保存為本機紀錄。登入「團隊作業」後可手動同步目前估價，共用列表約每 15 秒更新；本機備份與雲端資料分開管理。</p>
                         </div>
                         <div>
                             <label class="block text-xs font-black text-slate-400 mb-5 uppercase tracking-[0.2em]">01 設備種類</label>
@@ -619,7 +619,7 @@
     </main>
     <div id="mobile-quote-bar" class="no-print"><div><small id="mobile-total-caption">預估總額</small><br><strong>NT$ <span id="mobile-total">500</span></strong></div><button id="mobile-view-btn" type="button">看明細</button><button id="mobile-save-btn" type="button">保存報價</button></div>
 
-    <script type="module" src="./app.js?v=1.4.0"></script>
+    <script type="module" src="./app.js?v=1.4.1"></script>
 
 </body>
 </html>
