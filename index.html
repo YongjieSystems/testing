@@ -119,7 +119,7 @@
                     <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" /></svg>
                 </div>
                 <div>
-                    <h1 class="text-xl md:text-2xl font-black tracking-tight">永捷系統科技 <span class="text-blue-400 font-medium">檢測費估價程式 <small class="text-xs">v1.2.0</small></span></h1>
+                    <h1 class="text-xl md:text-2xl font-black tracking-tight">永捷系統科技 <span class="text-blue-400 font-medium">檢測費估價程式 <small class="text-xs">v1.3.0</small></span></h1>
                 </div>
             </div>
             <div class="hidden md:block text-right">
@@ -185,6 +185,7 @@
                                 <label class="block">完整收送費（含約定取件及回送；優先調度費請一併包含）<input type="number" min="0" max="1000000" step="1" data-quote-field="logisticsFee" class="w-full border rounded-xl p-3" placeholder="待確認，不預設為免費"></label>
                                 <label class="block"><input type="checkbox" data-quote-field="feeConfirmed"> 收送價格與範圍已確認</label>
                                 <label class="block">取件／回送的約定時段及方式<input maxlength="500" data-quote-field="logisticsWindow" class="w-full border rounded-xl p-3" placeholder="分別記錄去程及回程；尚未知請註明待確認"></label>
+                                <label class="block"><input type="checkbox" data-quote-field="windowConfirmed"> 取件與回送時段已與客戶確認（不是僅填寫待確認）</label>
                                 <label class="block"><input type="checkbox" data-quote-field="routeConfirmed"> 已確認可執行的排線與時段（經濟排線必填）</label>
                                 <p class="text-sm text-slate-600">收送不含現場拆裝檢修。優先取件不代表當日修復；外包費須涵蓋雙程及必要交接費。</p>
                                 <details class="border rounded-xl p-3"><summary class="cursor-pointer font-bold">內部收送成本試算</summary>
@@ -196,6 +197,21 @@
 <label>包材、保管及其他成本（元）<input type="number" min="0" max="1000000" step="1" data-quote-field="logisticsOtherCost" class="w-full border rounded-xl p-3"></label>
 <label>目標收送毛利率（%）<input type="number" min="0" max="99" step="1" data-quote-field="targetMargin" class="w-full border rounded-xl p-3"></label>
                                     </div><p id="cost-assessment" role="status" class="text-sm mt-3 text-amber-900"></p>
+                                </details>
+                                <details class="border rounded-xl p-3"><summary class="cursor-pointer font-bold">結案實際成本與工程師時間</summary>
+                                    <p class="text-sm my-3">僅供內部，不出現在客戶摘要或列印。請記錄本案完整取件與回送週期，多人同行以人員分鐘加總。合併排線的工時及交通先分攤到各案，不能每案重複填整趟成本；所有金額採與預估相同稅基。收送淨收入須扣除分攤的折扣／退款，不含檢測與維修收入。</p>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+<label>實際人員總分鐘（含工程師）<input type="number" min="0" max="1000000" step="1" data-quote-field="actualMinutes" class="w-full border rounded-xl p-3"></label>
+<label>其中工程師分鐘<input type="number" min="0" max="1000000" step="1" data-quote-field="actualEngineerMinutes" class="w-full border rounded-xl p-3"></label>
+<label>實際人員平均每小時分攤成本（元）<input type="number" min="0" max="1000000" step="1" data-quote-field="actualHourlyCost" class="w-full border rounded-xl p-3"></label>
+<label>實際分攤交通／外包物流成本（元）<input type="number" min="0" max="1000000" step="1" data-quote-field="actualTravelCost" class="w-full border rounded-xl p-3"></label>
+<label>實際其他成本（元）<input type="number" min="0" max="1000000" step="1" data-quote-field="actualOtherCost" class="w-full border rounded-xl p-3"></label>
+<label>實際收送淨收入（元）<input type="number" min="0" max="1000000" step="1" data-quote-field="actualRevenue" class="w-full border rounded-xl p-3"></label>
+                                    </div>
+                                    <label class="block mt-3">成本差異原因／交接紀錄<textarea data-quote-field="actualNotes" maxlength="500" class="w-full border rounded-xl p-3" placeholder="例如：等待、重跑、臨時改址、包材、多人搬運"></textarea></label>
+                                    <label class="block mt-3"><input type="checkbox" data-quote-field="actualConfirmed"> 本案實際收送收入、工時與支出已核對</label>
+                                    <p id="actual-cost-review" role="status" class="text-sm mt-3 text-amber-900"></p>
+                                    <p class="text-sm mt-3">請按「保存報價」保存。只有最新版本為「已完成」且實際資料核對完整，才會納入下方統計；不會自動調整客戶費用。</p>
                                 </details>
                             </div>
                             <label class="block">本案已付款總額（僅記錄，請核對收款紀錄）<input type="number" min="0" max="1000000" step="1" data-quote-field="paidAmount" class="w-full border rounded-xl p-3"></label>
@@ -470,6 +486,10 @@
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4"><input id="history-search" type="search" aria-label="搜尋歷史報價" placeholder="搜尋單號、客戶、型號、備註、人員" class="w-full border rounded-xl p-3 text-sm"><select id="history-status" aria-label="篩選報價狀態" class="border rounded-xl p-3 text-sm"><option value="">所有狀態</option><option value="DRAFT">草稿</option><option value="QUOTED">已報價</option><option value="ACCEPTED">客戶同意</option><option value="DONE">已完成</option><option value="CANCELLED">已取消</option></select></div>
                     <div class="flex flex-wrap gap-2 mb-4"><button id="export-backup-btn" type="button" class="bg-blue-100 text-blue-800 p-3 rounded-xl text-sm font-bold">匯出備份</button><label class="bg-slate-200 p-3 rounded-xl text-sm font-bold cursor-pointer">匯入備份<input id="import-backup-input" type="file" accept=".json,application/json" class="sr-only"></label><button id="export-raw-btn" type="button" class="p-3 text-slate-500 text-xs underline">原始資料備援</button></div>
+                    <details class="border rounded-xl p-3 mb-4"><summary class="cursor-pointer font-bold">收送結案成效（內部）</summary>
+                        <p id="cost-report-caption" class="text-sm my-3"></p>
+                        <div class="overflow-x-auto"><table class="text-sm w-full"><caption class="text-left text-xs text-slate-500 mb-2">只統計本機保留資料，非公司完整營運報表。收入減成本為收送分攤結果，非整案淨利；成本低估以本版預估為準，小樣本不代表長期表現。</caption><thead><tr><th scope="col" class="p-2 text-left">方案</th><th scope="col" class="p-2 text-left">核對案數</th><th scope="col" class="p-2 text-left">收入減成本</th><th scope="col" class="p-2 text-left">工程師時間</th><th scope="col" class="p-2 text-left">低估／可比案</th></tr></thead><tbody id="cost-report-rows"></tbody></table></div>
+                    </details>
                     <div id="history-list" class="space-y-3 max-h-[400px] overflow-y-auto pr-1"></div>
                 </div>
 
@@ -532,7 +552,7 @@
     </main>
     <div id="mobile-quote-bar" class="no-print"><div><small id="mobile-total-caption">預估總額</small><br><strong>NT$ <span id="mobile-total">500</span></strong></div><button id="mobile-view-btn" type="button">看明細</button><button id="mobile-save-btn" type="button">保存報價</button></div>
 
-    <script type="module" src="./app.js?v=1.2.0"></script>
+    <script type="module" src="./app.js?v=1.3.0"></script>
 
 </body>
 </html>

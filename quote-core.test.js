@@ -68,7 +68,7 @@ test('backup rejects inconsistent totals and invalid price snapshots', () => {
 });
 
 import { calculateQuote, assessLogistics } from './quote-core.js';
-const modern = { ...state, schemaVersion: 2, billingStage: 'DIAGNOSIS', service: 'PICKUP', source: 'OWN', logisticsPlan: 'DEDICATED', logisticsFee: 300, feeConfirmed: true, logisticsWindow: '週一取件、週五回送' };
+const modern = { ...state, schemaVersion: 2, billingStage: 'DIAGNOSIS', service: 'PICKUP', source: 'OWN', logisticsPlan: 'DEDICATED', logisticsFee: 300, feeConfirmed: true, windowConfirmed: true, logisticsWindow: '週一取件、週五回送' };
 test('pickup replaces onsite travel with a single complete collection and return fee', () => {
   const result=calculateQuote(modern,config);
   assert.equal(result.total,600); assert.equal(result.transPrice,300); assert.deepEqual(result.pending,[]);
@@ -110,4 +110,53 @@ test('new pickup backups round-trip, preserve unknown costs and reject forged pl
   assert.equal(restored.state.logisticsOtherCost,''); assert.equal(restored.state.feeConfirmed,true);
   assert.equal(quoteTotal(restored.state,restored.state.pricing),600);
   for (const changes of [{logisticsPlan:'__proto__'},{billingStage:'other'},{schemaVersion:3}]) assert.throws(()=>parseBackup(backup([{...record,state:{...record.state,...changes}}]),config));
+});
+
+
+import { reviewLogistics, summarizeLogistics } from './quote-core.js';
+const settled = { ...modern, status:'DONE', logisticsMinutes:30, hourlyCost:250, travelCost:100, logisticsOtherCost:0,
+  actualMinutes:60, actualEngineerMinutes:40, actualHourlyCost:250, actualTravelCost:100, actualOtherCost:0, actualRevenue:300, actualConfirmed:true };
+test('a typed window or a string truth value is not confirmed customer scheduling', () => {
+  assert.ok(calculateQuote({...modern,windowConfirmed:undefined},config).pending.some(text=>text.includes('時段')));
+  assert.ok(calculateQuote({...modern,windowConfirmed:'true'},config).pending.some(text=>text.includes('時段')));
+  assert.ok(calculateQuote({...modern,logisticsWindow:''},config).pending.some(text=>text.includes('時段')));
+});
+test('actual costs count engineer time inside total labor once, compare estimated costs and compute margin', () => {
+  const result=reviewLogistics(settled);
+  assert.equal(result.ready,true); assert.equal(result.cost,350); assert.equal(result.contribution,-50);
+  assert.equal(result.estimatedCost,225); assert.equal(result.variance,125); assert.equal(result.engineerMinutes,40);
+  assert.equal(result.margin,-50/300*100);
+});
+test('unknown actual costs, unreviewed entries and impossible labor totals never become verified profit', () => {
+  for (const value of ['',undefined,null,true,[],Infinity,-1]) assert.equal(reviewLogistics({...settled,actualOtherCost:value}).ready,false);
+  assert.equal(reviewLogistics({...settled,actualConfirmed:false}).ready,false);
+  assert.equal(reviewLogistics({...settled,actualEngineerMinutes:61}).ready,false);
+  const free=reviewLogistics({...settled,actualRevenue:0}); assert.equal(free.ready,true); assert.equal(free.margin,null); assert.equal(free.contribution,-350);
+  assert.equal(reviewLogistics({...settled,travelCost:''}).variance,null);
+});
+const caseRecord=(id,changes={})=>saved(id,{...settled,id,...changes});
+test('reports count only the latest completed and reviewed case, not its earlier quotation versions', () => {
+  const report=summarizeLogistics([caseRecord('new',{previousQuoteId:'old'}),caseRecord('old'),caseRecord('draft',{status:'DRAFT'}),caseRecord('missing',{actualOtherCost:''}),caseRecord('unchecked',{actualConfirmed:false})]);
+  const group=report.groups.DEDICATED;
+  assert.equal(group.count,1); assert.equal(group.revenue,300); assert.equal(group.cost,350); assert.equal(group.engineerMinutes,40);
+  assert.equal(group.underestimated,1); assert.equal(group.comparable,1); assert.equal(report.open,1); assert.equal(report.awaiting,2);
+});
+test('stable case identities survive missing parents and branched or cyclic legacy references', () => {
+  const records=[caseRecord('latest',{caseId:'root',previousQuoteId:'missing'}),caseRecord('older',{caseId:'root'}),caseRecord('branch-a',{previousQuoteId:'branch-root'}),caseRecord('branch-b',{previousQuoteId:'branch-root'}),caseRecord('cycle-a',{previousQuoteId:'cycle-b'}),caseRecord('cycle-b',{previousQuoteId:'cycle-a'})];
+  assert.equal(summarizeLogistics(records).groups.DEDICATED.count,3);
+});
+test('latest cancellation, reopened case or changed service supersedes old completed reports', () => {
+  for (const changes of [{status:'CANCELLED'},{status:'DRAFT'},{service:'IN_STORE'}]) {
+    const report=summarizeLogistics([caseRecord('new',{previousQuoteId:'old',...changes}),caseRecord('old')]);
+    assert.equal(report.groups.DEDICATED.count,0);
+  }
+  assert.equal(summarizeLogistics([caseRecord('new',{previousQuoteId:'old',actualConfirmed:false}),caseRecord('old')]).awaiting,1);
+});
+test('actual costs, notes and case identity survive backup import without changing customer charges', () => {
+  const record=caseRecord('backup',{pricing:config,caseId:'root',actualNotes:'等待與回送交通'});
+  const [restored]=parseBackup(backup([record]),config);
+  assert.equal(restored.state.caseId,'root'); assert.equal(restored.state.actualNotes,'等待與回送交通');
+  assert.equal(reviewLogistics(restored.state).ready,true); assert.equal(quoteTotal(restored.state,config),600);
+  const [older]=readHistory(JSON.stringify([saved('old-pickup',{...modern,windowConfirmed:undefined})]),config);
+  assert.equal(older.state.windowConfirmed,false); assert.equal(older.state.actualMinutes,'');
 });

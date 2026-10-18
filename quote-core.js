@@ -15,7 +15,8 @@ export function quoteTotal(state, config) {
 }
 export const SERVICE_LABELS = Object.freeze({ IN_STORE: '門市檢測', ON_SITE: '到府檢修', PICKUP: '收回公司檢測' });
 export const LOGISTICS_LABELS = Object.freeze({ SCHEDULED: '經濟排線收送', DEDICATED: '預約專程收送', PRIORITY: '優先收送', COURIER: '外包物流' });
-const hasMoney = value => value !== '' && value !== null && value !== undefined && Number.isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 1000000;
+const hasMoney = value => ['number', 'string'].includes(typeof value) && String(value).trim() !== '' && Number.isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 1000000;
+export const ACTUAL_COST_FIELDS = Object.freeze(['actualMinutes', 'actualEngineerMinutes', 'actualHourlyCost', 'actualTravelCost', 'actualOtherCost', 'actualRevenue']);
 export function calculateQuote(state, config) {
     const modern = state.schemaVersion === 2;
     const pickup = state.service === 'PICKUP';
@@ -23,7 +24,7 @@ export function calculateQuote(state, config) {
     const pending = [];
     if (pickup) {
         if (!hasMoney(state.logisticsFee) || state.feeConfirmed !== true) pending.push('收送費尚未確認，未計入不代表免費');
-        if (!state.logisticsWindow?.trim()) pending.push('取件及回送時段尚未約定');
+        if (!state.logisticsWindow?.trim() || state.windowConfirmed !== true) pending.push('取件及回送時段尚未確認');
         if (state.logisticsPlan === 'SCHEDULED' && state.routeConfirmed !== true) pending.push('排線尚未確認，不能承諾排線時段');
     }
     if (repaired && (!hasMoney(state.repairFee) || state.repairConfirmed !== true)) pending.push('維修金額尚未取得客戶同意');
@@ -56,6 +57,58 @@ export function assessLogistics(state) {
     const minimum = Math.ceil(cost / (1 - margin / 100));
     return `預估收送成本 $${Math.ceil(cost).toLocaleString()}；達標收費 $${minimum.toLocaleString()}；收入減估計成本 $${Math.floor(Number(state.logisticsFee) - cost).toLocaleString()}。${Number(state.logisticsFee) < minimum ? '低於目標，請調整方案或交主管評估。' : '達到填入的成本目標，仍須確認排程與客戶同意。'}此為成本分攤估計，非公司淨利或外包現金節省。`;
 }
+export function reviewLogistics(state) {
+    if (state.service !== 'PICKUP') return { ready: false, message: '結案成本核對適用於收回公司檢測。' };
+    if (!ACTUAL_COST_FIELDS.every(key => hasMoney(state[key]))) return { ready: false, message: '實際資料未齊：請填人員總分鐘、其中工程師分鐘、平均每小時成本、交通、其他成本及實際收送淨收入；沒有費用請填 0。' };
+    if (Number(state.actualEngineerMinutes) > Number(state.actualMinutes)) return { ready: false, message: '工程師分鐘不能大於人員總分鐘（工程師已包含在總工時內，不重複加計）。' };
+    const cost = Number(state.actualMinutes) / 60 * Number(state.actualHourlyCost) + Number(state.actualTravelCost) + Number(state.actualOtherCost);
+    const revenue = Number(state.actualRevenue);
+    const contribution = revenue - cost;
+    const margin = revenue > 0 ? contribution / revenue * 100 : null;
+    const estimateKnown = ['logisticsMinutes', 'hourlyCost', 'travelCost', 'logisticsOtherCost'].every(key => hasMoney(state[key]));
+    const estimatedCost = estimateKnown ? Number(state.logisticsMinutes) / 60 * Number(state.hourlyCost) + Number(state.travelCost) + Number(state.logisticsOtherCost) : null;
+    const variance = estimatedCost === null ? null : cost - estimatedCost;
+    const checked = state.actualConfirmed === true;
+    return { ready: checked, cost, revenue, contribution, margin, estimatedCost, variance, engineerMinutes: Number(state.actualEngineerMinutes),
+        message: `${checked ? '已核對' : '尚未核對，僅供試算'}：實際收送成本 $${Math.ceil(cost).toLocaleString()}；收送淨收入 $${revenue.toLocaleString()}；收入減分攤成本 $${Math.floor(contribution).toLocaleString()}；毛利率 ${margin === null ? '無收入，無法計算' : margin.toFixed(1) + '%'}；工程師 ${Number(state.actualEngineerMinutes).toLocaleString()} 分鐘。${variance === null ? '本版預估成本未齊，無法比較。' : `較本版預估${variance >= 0 ? '增加' : '減少'} $${Math.ceil(Math.abs(variance)).toLocaleString()}。`}不代表整案淨利，也不等同可節省的薪資現金。` };
+}
+
+// Join revision chains (including branches) before selecting the first record in local history order.
+// Persisted caseId keeps the chain linked when older versions fall outside the history capacity.
+export function summarizeLogistics(records) {
+    const parents = new Map();
+    const find = id => {
+        if (!parents.has(id)) parents.set(id, id);
+        let root = id;
+        while (parents.get(root) !== root) root = parents.get(root);
+        let next;
+        while (parents.get(id) !== id) { next = parents.get(id); parents.set(id, root); id = next; }
+        return root;
+    };
+    for (const { state } of records) {
+        find(state.id);
+        for (const key of ['caseId', 'previousQuoteId']) if (typeof state[key] === 'string' && state[key]) {
+            const left = find(state.id), right = find(state[key]);
+            if (left !== right) parents.set(left, right);
+        }
+    }
+    const seen = new Set();
+    const groups = Object.fromEntries(Object.keys(LOGISTICS_LABELS).map(key => [key, { count: 0, revenue: 0, cost: 0, engineerMinutes: 0, underestimated: 0, comparable: 0 }]));
+    let awaiting = 0, open = 0;
+    for (const { state } of records) {
+        const root = find(state.id);
+        if (seen.has(root)) continue;
+        seen.add(root);
+        if (state.service !== 'PICKUP' || state.status === 'CANCELLED') continue;
+        if (state.status !== 'DONE') { open++; continue; }
+        const result = reviewLogistics(state);
+        if (!result.ready || !Object.hasOwn(groups, state.logisticsPlan)) { awaiting++; continue; }
+        const group = groups[state.logisticsPlan];
+        group.count++; group.revenue += result.revenue; group.cost += result.cost; group.engineerMinutes += result.engineerMinutes;
+        if (result.variance !== null) { group.comparable++; if (result.variance > 0) group.underestimated++; }
+    }
+    return { groups, awaiting, open };
+}
 export function escapeHTML(value) {
     return String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 }
@@ -77,10 +130,12 @@ export function readHistory(raw, config, limit = 50) {
     }).slice(0, limit).map(record => {
         const state = { ...record.state };
         if (state.schemaVersion === 2) {
-            for (const key of ['logisticsFee', 'repairFee', 'paidAmount', 'logisticsMinutes', 'hourlyCost', 'travelCost', 'logisticsOtherCost', 'targetMargin']) state[key] = hasMoney(state[key]) ? Number(state[key]) : '';
-            for (const key of ['feeConfirmed', 'routeConfirmed', 'repairConfirmed']) state[key] = state[key] === true;
+            for (const key of ['logisticsFee', 'repairFee', 'paidAmount', 'logisticsMinutes', 'hourlyCost', 'travelCost', 'logisticsOtherCost', 'targetMargin', ...ACTUAL_COST_FIELDS]) state[key] = hasMoney(state[key]) ? Number(state[key]) : '';
+            for (const key of ['feeConfirmed', 'routeConfirmed', 'windowConfirmed', 'repairConfirmed', 'actualConfirmed']) state[key] = state[key] === true;
             state.logisticsWindow = typeof state.logisticsWindow === 'string' ? state.logisticsWindow.slice(0, 500) : '';
+            state.actualNotes = typeof state.actualNotes === 'string' ? state.actualNotes.slice(0, 500) : '';
         }
+        for (const key of ['caseId', 'previousQuoteId']) if (typeof state[key] !== 'string' || !state[key] || state[key].length > 100) delete state[key];
         for (const key of ['specialDiscount', 'contractDiscount', 'manufacturerFee', 'otherFee']) state[key] = normalizeMoney(state[key]);
         state.staffName = typeof state.staffName === 'string' ? state.staffName.slice(0, 100) : '';
         state.customerName = typeof state.customerName === 'string' ? state.customerName.slice(0,100) : '';

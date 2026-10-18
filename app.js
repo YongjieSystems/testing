@@ -1,5 +1,5 @@
-import { WARRANTY_DATA, WARRANTY_KINDS, WARRANTY_ACTIONS } from './warranty-data.js?v=1.2.0';
-import { normalizeMoney, calculateQuote, assessLogistics, SERVICE_LABELS, LOGISTICS_LABELS, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_STATUS, parseBackup, mergeRecords, upsertRecord, matchesRecord } from './quote-core.js?v=1.2.0';
+import { WARRANTY_DATA, WARRANTY_KINDS, WARRANTY_ACTIONS } from './warranty-data.js?v=1.3.0';
+import { normalizeMoney, calculateQuote, assessLogistics, reviewLogistics, summarizeLogistics, ACTUAL_COST_FIELDS, SERVICE_LABELS, LOGISTICS_LABELS, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_STATUS, parseBackup, mergeRecords, upsertRecord, matchesRecord } from './quote-core.js?v=1.3.0';
 
         const CONFIG = {
             INSPECTION: {
@@ -40,7 +40,7 @@ import { normalizeMoney, calculateQuote, assessLogistics, SERVICE_LABELS, LOGIST
             { id: 'HP', name: 'HP 惠普', icon: 'HP', url: 'https://support.hp.com/tw-zh/drivers/printers' }
         ];
 
-        const newFields = () => ({ schemaVersion: 2, billingStage: 'DIAGNOSIS', logisticsPlan: 'DEDICATED', logisticsFee: '', feeConfirmed: false, routeConfirmed: false, logisticsWindow: '', repairFee: '', repairConfirmed: false, paidAmount: '', logisticsMinutes: '', hourlyCost: '', travelCost: '', logisticsOtherCost: '', targetMargin: '' });
+        const newFields = () => ({ schemaVersion: 2, billingStage: 'DIAGNOSIS', logisticsPlan: 'DEDICATED', logisticsFee: '', feeConfirmed: false, routeConfirmed: false, windowConfirmed: false, actualConfirmed: false, actualMinutes: '', actualEngineerMinutes: '', actualHourlyCost: '', actualTravelCost: '', actualOtherCost: '', actualRevenue: '', actualNotes: '', logisticsWindow: '', repairFee: '', repairConfirmed: false, paidAmount: '', logisticsMinutes: '', hourlyCost: '', travelCost: '', logisticsOtherCost: '', targetMargin: '' });
         let state = { ...newFields(),
             device: 'DESKTOP', service: 'IN_STORE', zone: 'ZONE_A',
             urgency: 'NORMAL', source: 'OTHER', warranty: 'OUT',
@@ -232,6 +232,17 @@ import { normalizeMoney, calculateQuote, assessLogistics, SERVICE_LABELS, LOGIST
         // --- 歷史紀錄功能區 ---
 
         function currentRecord() {
+            if (!state.caseId) {
+                let ancestor = state;
+                const visited = new Set();
+                while (!ancestor.caseId && ancestor.previousQuoteId && !visited.has(ancestor.id)) {
+                    visited.add(ancestor.id);
+                    const parent = historyData.find(item => item.state.id === ancestor.previousQuoteId);
+                    if (!parent) break;
+                    ancestor = parent.state;
+                }
+                state.caseId = ancestor.caseId || ancestor.previousQuoteId || ancestor.id;
+            }
             return { timestamp: new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false }),
                 state: structuredClone({ ...state, pricing: pricesFor(state) }),
                 calculation: calculateQuote(state, pricesFor(state)),
@@ -258,6 +269,7 @@ import { normalizeMoney, calculateQuote, assessLogistics, SERVICE_LABELS, LOGIST
         function renderHistory() {
             if (!UI.historyList) return;
             UI.historyList.innerHTML = '';
+            renderCostReport();
 
             if (historyData.length === 0) {
                 UI.historyList.innerHTML = '<p class="text-slate-400 text-sm text-center py-4">尚無紀錄；填寫表單後按「保存報價」。</p>';
@@ -599,6 +611,19 @@ import { normalizeMoney, calculateQuote, assessLogistics, SERVICE_LABELS, LOGIST
             document.body.appendChild(anchor); anchor.click(); anchor.remove();
             setTimeout(() => URL.revokeObjectURL(url), 1000);
         }
+        function renderCostReport() {
+            const report = summarizeLogistics(historyData);
+            $('cost-report-caption').textContent = `本機資料：${report.open} 案尚未完成，${report.awaiting} 案已完成但實際成本未核對。每案僅計本機排序最新版本；不受下方搜尋篩選影響。`;
+            const rows = $('cost-report-rows'); rows.replaceChildren();
+            for (const [key, group] of Object.entries(report.groups)) {
+                const tr = document.createElement('tr');
+                for (const value of [LOGISTICS_LABELS[key], group.count, group.count ? '$' + Math.floor(group.revenue-group.cost).toLocaleString() : '—', group.count ? group.engineerMinutes.toLocaleString() + ' 分' : '—', group.comparable ? `${group.underestimated} / ${group.comparable}` : '—']) {
+                    const td = document.createElement('td'); td.className = 'p-2 border-b whitespace-nowrap'; td.textContent = String(value); tr.appendChild(td);
+                }
+                rows.appendChild(tr);
+            }
+        }
+
         function renderFulfillment() {
             const modern = state.schemaVersion === 2;
             $('fulfillment-controls').hidden = !modern;
@@ -619,6 +644,7 @@ import { normalizeMoney, calculateQuote, assessLogistics, SERVICE_LABELS, LOGIST
             $('previous-quote').textContent = state.previousQuoteId ? `前版單號：YJ-${state.previousQuoteId}` : '';
             $('payment-summary').textContent = modern ? `已付 $${paid.toLocaleString()}；${paid > result.total ? '溢付待核對' : '待付'} $${Math.abs(result.total-paid).toLocaleString()}${result.pending.length ? '（依目前小計）' : ''}` : '';
             $('cost-assessment').textContent = assessLogistics(state);
+            $('actual-cost-review').textContent = reviewLogistics(state).message;
         }
 
         function initWorkspace() {
@@ -627,6 +653,8 @@ import { normalizeMoney, calculateQuote, assessLogistics, SERVICE_LABELS, LOGIST
                     const key = element.dataset.quoteField;
                     if (['logisticsFee', 'logisticsPlan', 'logisticsWindow'].includes(key)) state.feeConfirmed = false;
                     if (['logisticsPlan', 'logisticsWindow'].includes(key)) state.routeConfirmed = false;
+                    if (['logisticsPlan', 'logisticsWindow'].includes(key)) state.windowConfirmed = false;
+                    if ([...ACTUAL_COST_FIELDS, 'actualNotes', 'logisticsPlan', 'logisticsFee'].includes(key)) state.actualConfirmed = false;
                     if (key === 'repairFee') state.repairConfirmed = false;
                     state[key] = element.type === 'checkbox' ? element.checked : element.type === 'number' ? (element.value === '' ? '' : normalizeMoney(element.value)) : element.value;
                     if (element.type === 'number') element.value = String(state[key]);
