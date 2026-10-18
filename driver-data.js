@@ -1,4 +1,4 @@
-import { WARRANTY_DATA } from './warranty-data.js?v=1.5.0';
+import { WARRANTY_DATA } from './warranty-data.js?v=1.6.0';
 
 // Official entry points reviewed 2026-10-18. No installer was downloaded or run.
 export const DRIVER_CATEGORIES = { COMPUTER:'電腦／主機板／零件', PRINTER:'印表機／掃描器', DISPLAY:'螢幕／投影機' };

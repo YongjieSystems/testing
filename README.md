@@ -83,3 +83,6 @@ GitHub Pages 可直接提供根目錄的 index.html、app.js、quote-core.js；�
 新增共用 PostgreSQL 資料庫、Supabase Auth 登入、後端角色權限、主管核准、集中排線、分派與站點回報。完整操作、權限矩陣與部署限制見 [團隊作業說明](docs/team-workspace.md)。本機既有資料不會自動上傳；登入後明確同步目前估價，保留後端版本及審核軌跡。
 
 `pnpm test` 包含嵌入式 PostgreSQL 權限與排線交易測試。`scripts/team-live-test.mjs` 為需明確建立獨立 QA 團隊才能執行的雲端驗證，不包含在一般 CI，也不使用公司客戶資料。私有初始設定及 QA 檔案使用 `*.local` 並由 Git 忽略，不能提交。
+# 教育訓練
+
+v1.6.0 新增「教育訓練」分頁：新人、客服收送、主管三條路徑共 14 步，含本機閱讀進度、三題自我練習及 18 頁 PDF 操作手冊。閱讀勾選與答題不是正式考核，不授予權限；教學跳轉不會寫入案件。可使用 `?tab=training` 直接開啟。

@@ -1,9 +1,10 @@
-import { initTeamWorkspace } from './team-workspace.js?v=1.5.0';
-import { CONFIG } from './pricing-config.js?v=1.5.0';
-import { WARRANTY_DATA, WARRANTY_KINDS, WARRANTY_ACTIONS } from './warranty-data.js?v=1.5.0';
-import { normalizeMoney, calculateQuote, assessLogistics, reviewLogistics, summarizeLogistics, ACTUAL_COST_FIELDS, SERVICE_LABELS, LOGISTICS_LABELS, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_STATUS, parseBackup, mergeRecords, upsertRecord, matchesRecord } from './quote-core.js?v=1.5.0';
+import { initTeamWorkspace } from './team-workspace.js?v=1.6.0';
+import { initTraining } from './training.js?v=1.6.0';
+import { CONFIG } from './pricing-config.js?v=1.6.0';
+import { WARRANTY_DATA, WARRANTY_KINDS, WARRANTY_ACTIONS } from './warranty-data.js?v=1.6.0';
+import { normalizeMoney, calculateQuote, assessLogistics, reviewLogistics, summarizeLogistics, ACTUAL_COST_FIELDS, SERVICE_LABELS, LOGISTICS_LABELS, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_STATUS, parseBackup, mergeRecords, upsertRecord, matchesRecord } from './quote-core.js?v=1.6.0';
 
-import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from './driver-data.js?v=1.5.0';
+import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from './driver-data.js?v=1.6.0';
 
         const newFields = () => ({ schemaVersion: 2, billingStage: 'DIAGNOSIS', logisticsPlan: 'DEDICATED', logisticsFee: '', feeConfirmed: false, routeConfirmed: false, windowConfirmed: false, actualConfirmed: false, actualMinutes: '', actualEngineerMinutes: '', actualHourlyCost: '', actualTravelCost: '', actualOtherCost: '', actualRevenue: '', actualNotes: '', logisticsWindow: '', repairFee: '', repairConfirmed: false, paidAmount: '', logisticsMinutes: '', hourlyCost: '', travelCost: '', logisticsOtherCost: '', targetMargin: '' });
         let state = { ...newFields(),
@@ -557,7 +558,7 @@ import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from
 
         window.handlePrint = () => { if (addToHistory()) window.print(); };
         window.switchTab = (tabId) => {
-            ['quote', 'warranty', 'drivers', 'team'].forEach(s => {
+            ['quote', 'warranty', 'drivers', 'team', 'training'].forEach(s => {
                 const el = $(`section-${s}`);
                 const tab = $(`tab-${s}`);
                 if (el) el.classList.add('hidden');
@@ -731,6 +732,8 @@ import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from
             };
         }
         init();
+        initTraining(window.switchTab);
+        if(new URLSearchParams(location.search).get('tab')==='training') window.switchTab('training');
         initTeamWorkspace({
             getRecord: currentRecord,
             onOpenRecord(record, meta) {
