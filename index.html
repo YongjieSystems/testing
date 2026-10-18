@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
+        [hidden] { display: none !important; }
         body {
             font-family: Arial, "Helvetica Neue", Helvetica, "Noto Sans TC", sans-serif;
             background-color: #f8fafc;
@@ -119,7 +120,7 @@
                     <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" /></svg>
                 </div>
                 <div>
-                    <h1 class="text-xl md:text-2xl font-black tracking-tight">永捷系統科技 <span class="text-blue-400 font-medium">檢測費估價程式 <small class="text-xs">v1.3.0</small></span></h1>
+                    <h1 class="text-xl md:text-2xl font-black tracking-tight">永捷系統科技 <span class="text-blue-400 font-medium">檢測費估價程式 <small class="text-xs">v1.4.0</small></span></h1>
                 </div>
             </div>
             <div class="hidden md:block text-right">
@@ -135,6 +136,7 @@
             <button type="button" onclick="switchTab('warranty')" id="tab-warranty" class="flex-1 min-w-[100px] py-3 px-4 rounded-xl font-bold transition-all tab-inactive">保固查詢</button>
             <button type="button" onclick="switchTab('drivers')" id="tab-drivers" class="flex-1 min-w-[100px] py-3 px-4 rounded-xl font-bold transition-all tab-inactive">驅動程式</button>
         </div>
+    <button type="button" onclick="switchTab('team')" id="tab-team" class="flex-1 min-w-[100px] py-3 px-4 rounded-xl font-bold transition-all tab-inactive">團隊作業</button>
     </nav>
 
     <main class="max-w-6xl mx-auto px-4">
@@ -496,6 +498,71 @@
             </div>
         </div>
 
+        <section id="section-team" class="hidden no-print mb-20 space-y-5">
+            <div class="bg-white rounded-2xl p-6 border space-y-4">
+                <h2 class="text-2xl font-black">團隊作業</h2>
+                <p class="text-sm text-slate-600">本機估價不會自動上傳。登入後可明確同步目前報價；共用資料以團隊版本及主管核准紀錄為準。員工只能讀取後端允許的資料。</p>
+                <p id="team-user" class="font-bold">尚未登入</p>
+                <div class="flex flex-wrap gap-3"><button type="button" id="team-refresh" class="p-3 bg-blue-100 rounded-xl">更新團隊資料</button><button type="button" id="team-signout" class="p-3 bg-slate-200 rounded-xl">登出此分頁</button></div>
+                <p id="team-status" role="status" aria-live="polite" class="text-sm text-amber-900">正在檢查登入狀態…</p>
+                <div id="team-login" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <label>登入電子郵件<input id="team-email" type="email" autocomplete="username" class="w-full border rounded-xl p-3"></label>
+                    <label>密碼<input id="team-password" type="password" autocomplete="current-password" class="w-full border rounded-xl p-3"></label>
+                    <button type="button" id="team-login-btn" class="p-3 bg-blue-700 text-white rounded-xl">登入團隊</button>
+                </div>
+                <div id="team-password-setup" hidden class="space-y-3 border p-4 rounded-xl">
+                    <h3 class="font-bold">首次開通：請本人設定密碼</h3>
+                    <p class="text-sm">請使用至少 12 字元的密碼。密碼只送至登入服務，不會存入報價、原始碼或團隊名單；請勿把密碼傳給助理或同事。</p>
+                    <label class="block">新密碼<input id="team-new-password" type="password" minlength="12" autocomplete="new-password" class="w-full border p-3 rounded-xl"></label>
+                    <label class="block">再次輸入密碼<input id="team-confirm-password" type="password" minlength="12" autocomplete="new-password" class="w-full border p-3 rounded-xl"></label>
+                    <button id="team-set-password" type="button" class="p-3 bg-blue-700 text-white rounded-xl">設定我的密碼</button>
+                </div>
+            </div>
+            <div id="team-private" hidden class="space-y-5">
+                <label class="block bg-white p-4 rounded-xl">工作團隊<select id="team-org" class="w-full p-3 border rounded-xl"></select></label>
+                <div id="team-operator" hidden class="bg-white rounded-2xl p-6 border space-y-4">
+                    <h3 class="text-xl font-bold">估價同步與集中排線</h3>
+                    <p class="text-sm">客服同步客戶報價；主管同步時另包含目前表單的內部成本。雲端費用由核定價目重新計算，改價或減免須重新核准。發生版本衝突時，不會覆寫同事的修改。</p>
+                    <button type="button" id="team-upload" class="p-3 bg-emerald-700 text-white rounded-xl">同步目前估價至團隊</button>
+                    <details class="border rounded-xl p-4"><summary class="font-bold cursor-pointer">編排路線草稿</summary>
+                        <p class="text-sm my-3">依行程順序加入站點，開始與結束時間包含該站交接及作業；相鄰站點須預留交通時間。系統檢查時間衝突，不會自動估算交通或最佳路徑。所有日期時間均以臺北時間輸入及顯示。</p>
+                        <p id="team-route-editing" class="font-bold">新路線草稿</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 my-3">
+                            <label>路線名稱<input id="team-route-name" maxlength="120" class="w-full border p-3 rounded-xl"></label>
+                            <label>收送人員<select id="team-route-driver" class="w-full border p-3 rounded-xl"></select></label>
+                            <label>路線開始<input id="team-route-start" type="datetime-local" class="w-full border p-3 rounded-xl"></label>
+                            <label>路線結束<input id="team-route-end" type="datetime-local" class="w-full border p-3 rounded-xl"></label>
+                        </div>
+                        <div id="team-stop-editor" class="space-y-3"></div>
+                        <div class="flex flex-wrap gap-3 mt-3"><button id="team-new-route" type="button" class="p-3 bg-slate-200 rounded-xl">另建空白路線</button><button id="team-add-stop" type="button" class="p-3 bg-blue-100 rounded-xl">加入站點</button><button id="team-save-route" type="button" class="p-3 bg-blue-700 text-white rounded-xl">保存路線草稿</button></div>
+                    </details>
+                </div>
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-5">
+                    <section class="bg-white rounded-2xl p-6 border space-y-4"><h3 class="text-xl font-bold">共用案件（最近 200 案）</h3><div id="team-case-list" class="space-y-3"></div></section>
+                    <section class="bg-white rounded-2xl p-6 border space-y-4"><h3 class="text-xl font-bold">集中排線／我的任務（最近 100 條）</h3><p class="text-sm">工程師與收送人員只會取得分派給自己的已發布路線。取件、回送分開記錄，依站點順序回報；無法完成請記錄原因。</p><div id="team-route-list" class="space-y-3"></div></section>
+                </div>
+                <div id="team-manager" hidden class="bg-white rounded-2xl p-6 border space-y-5">
+                    <h3 class="text-xl font-bold">主管管理</h3>
+                    <p id="team-selected-case" class="font-bold">請從案件列表選取供主管處理的案件</p>
+                    <label class="block">核准／結案／取消原因<input id="team-case-reason" maxlength="500" class="w-full border p-3 rounded-xl"></label>
+                    <label class="block">技術工程師<select id="team-case-engineer" class="w-full border p-3 rounded-xl"></select></label>
+                    <div class="flex flex-wrap gap-3"><button id="team-approve" type="button" class="p-3 bg-emerald-700 text-white rounded-xl">核准最新報價與減免</button><button id="team-assign" type="button" class="p-3 bg-blue-100 rounded-xl">分派技術工程師</button><button id="team-close-case" type="button" class="p-3 bg-slate-200 rounded-xl">結束此案件</button><button id="team-cancel-case" type="button" class="p-3 bg-slate-200 rounded-xl">取消此案件</button></div>
+                    <details class="border p-4 rounded-xl"><summary class="font-bold cursor-pointer">員工名單與權限</summary>
+                        <p class="text-sm my-3">先登錄名單，再為新帳號產生一次性開通連結，由本人設定密碼。這裡不會寄送電子郵件、不會重設既有帳號；既有帳號恢復需由專案擁有者處理。停用會撤銷後端權限，不能停用最後一位已登入主管。</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <label>員工電子郵件<input id="team-employee-email" type="email" class="w-full border p-3 rounded-xl"></label>
+                            <label>員工姓名<input id="team-employee-name" maxlength="100" class="w-full border p-3 rounded-xl"></label>
+                            <label>角色<select id="team-employee-role" class="w-full border p-3 rounded-xl"><option value="STAFF">客服／行政</option><option value="ENGINEER">工程師</option><option value="DRIVER">收送人員</option><option value="MANAGER">主管</option></select></label>
+                            <label><input id="team-employee-active" type="checkbox" checked> 啟用帳號</label>
+                        </div>
+                        <button id="team-save-employee" type="button" class="p-3 bg-blue-700 text-white rounded-xl my-3">保存員工權限</button>
+                        <div id="team-account-link" class="space-y-3"></div><div id="team-employee-list" class="space-y-3"></div>
+                    </details>
+                    <details class="border p-4 rounded-xl"><summary class="font-bold cursor-pointer">最近 30 筆操作紀錄</summary><ul id="team-audit-list" class="mt-3"></ul></details>
+                </div>
+            </div>
+        </section>
+
         <!-- 分頁 2: 保固查詢 -->
         <div id="section-warranty" class="hidden space-y-8 mb-20">
             <div class="bg-white rounded-[2.5rem] p-10 shadow-sm border border-slate-200">
@@ -552,7 +619,7 @@
     </main>
     <div id="mobile-quote-bar" class="no-print"><div><small id="mobile-total-caption">預估總額</small><br><strong>NT$ <span id="mobile-total">500</span></strong></div><button id="mobile-view-btn" type="button">看明細</button><button id="mobile-save-btn" type="button">保存報價</button></div>
 
-    <script type="module" src="./app.js?v=1.3.0"></script>
+    <script type="module" src="./app.js?v=1.4.0"></script>
 
 </body>
 </html>

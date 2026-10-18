@@ -1,39 +1,9 @@
-import { WARRANTY_DATA, WARRANTY_KINDS, WARRANTY_ACTIONS } from './warranty-data.js?v=1.3.0';
-import { normalizeMoney, calculateQuote, assessLogistics, reviewLogistics, summarizeLogistics, ACTUAL_COST_FIELDS, SERVICE_LABELS, LOGISTICS_LABELS, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_STATUS, parseBackup, mergeRecords, upsertRecord, matchesRecord } from './quote-core.js?v=1.3.0';
+import { initTeamWorkspace } from './team-workspace.js?v=1.4.0';
+import { CONFIG } from './pricing-config.js?v=1.4.0';
+import { WARRANTY_DATA, WARRANTY_KINDS, WARRANTY_ACTIONS } from './warranty-data.js?v=1.4.0';
+import { normalizeMoney, calculateQuote, assessLogistics, reviewLogistics, summarizeLogistics, ACTUAL_COST_FIELDS, SERVICE_LABELS, LOGISTICS_LABELS, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_STATUS, parseBackup, mergeRecords, upsertRecord, matchesRecord } from './quote-core.js?v=1.4.0';
 
-        const CONFIG = {
-            INSPECTION: {
-                'DESKTOP': { label: '桌上型電腦', price: 500 },
-                'LAPTOP': { label: '筆記型電腦', price: 500 },
-                'INKJET': { label: '噴墨印表機', price: 400 },
-                'LASER': { label: '雷射印表機', price: 400 },
-                'SERVER': { label: 'NAS/伺服器', price: 600 },
-                'NETWORK': { label: '弱電監控/網路', price: 600 },
-                'SOFTWARE': { label: '軟體及遠端', price: 450 },
-                'OTHER_IT': { label: '其他資訊產品', price: 400 },
-                'DELIVERY': { label: '設備代送費', price: 300 }
-            },
-            TRANSPORT: {
-                'ZONE_A': { label: '市區 (5km內)', price: 300 },
-                'ZONE_B': { label: '郊區 (5-15km)', price: 700 },
-                'ZONE_C': { label: '偏遠地區 (15km+)', price: 1200 },
-                'MOUNTAIN': { label: '特殊山區', price: 3000 },
-                'ISLAND': { label: '離島地區', price: 8000 }
-            },
-            URGENCY: {
-                'NORMAL': { label: '一般檢修（時限另約）', price: 0 },
-                'EXPRESS': { label: '檢修急件（時限另約）', price: 500 },
-                'EMERGENCY': { label: '假日檢修', price: 800 }
-            },
-            SOURCE: {
-                'OWN': { label: '購於永捷', price: -200 },
-                'OTHER': { label: '購於他處', price: 0 }
-            }
-        };
-
-
-
-        const DRIVER_DATA = [
+                const DRIVER_DATA = [
             { id: 'BROTHER', name: 'Brother 兄弟', icon: 'BR', url: 'https://support.brother.com/g/b/productsearch.aspx?c=tw&lang=zh&content=dl' },
             { id: 'CANON', name: 'Canon 佳能', icon: 'CA', url: 'https://tw.canon/zh_TW/support' },
             { id: 'EPSON', name: 'Epson 愛普生', icon: 'EP', url: 'https://www.epson.com.tw/Support/Printers/sh/s1' },
@@ -572,7 +542,7 @@ import { normalizeMoney, calculateQuote, assessLogistics, reviewLogistics, summa
 
         window.handlePrint = () => { if (addToHistory()) window.print(); };
         window.switchTab = (tabId) => {
-            ['quote', 'warranty', 'drivers'].forEach(s => {
+            ['quote', 'warranty', 'drivers', 'team'].forEach(s => {
                 const el = $(`section-${s}`);
                 const tab = $(`tab-${s}`);
                 if (el) el.classList.add('hidden');
@@ -711,3 +681,14 @@ import { normalizeMoney, calculateQuote, assessLogistics, reviewLogistics, summa
             };
         }
         init();
+        initTeamWorkspace({
+            getRecord: currentRecord,
+            onOpenRecord(record, meta) {
+                loadHistoryData({ ...record, state: { ...newFields(), ...record.state, ...meta.costs, cloudOrgId: meta.orgId, cloudCaseId: meta.caseId, cloudRevision: meta.revision } });
+                window.switchTab('quote'); notify(`已載入團隊案件版本 ${meta.revision}；修改後請回「團隊作業」同步。`);
+            },
+            onSaved(result, meta) {
+                loadHistoryData({ ...result.record, state: { ...state, ...result.record.state, cloudOrgId: meta.orgId, cloudCaseId: result.id, cloudRevision: result.revision } });
+                notify(`已同步至團隊，報價版本 ${result.revision}。`);
+            }
+        });

@@ -1,0 +1,10 @@
+begin;
+create index on public.yj_cases(assigned_to);
+create index on public.yj_quote_versions(created_by);
+create index on public.yj_case_costs(updated_by);
+create index on public.yj_routes(driver_id);
+create index on public.yj_routes(created_by);
+create index on public.yj_audit_events(org_id,created_at desc);
+create index on public.yj_audit_events(actor_id);
+alter table yj_private.bootstrap_challenges enable row level security;
+commit;

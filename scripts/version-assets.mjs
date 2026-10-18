@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 const { version } = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const root = new URL('../', import.meta.url);
-for (const [file, assets] of [['index.html', ['app.js']], ['app.js', ['quote-core.js', 'warranty-data.js']]]) {
+for (const [file, assets] of [['index.html', ['app.js']], ['app.js', ['quote-core.js', 'warranty-data.js', 'pricing-config.js', 'team-workspace.js']], ['team-workspace.js', ['team-core.js', 'team-config.js']]]) {
     const path = new URL(file, root);
     let source = fs.readFileSync(path, 'utf8');
     for (const asset of assets) {
