@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from './vendor/supabase.js';
 import { TEAM_CONFIG } from './team-config.js?v=1.4.0';
 import { TEAM_ROLES, teamPayload, teamError, localToIso, isoToTaipeiInput, teamFetch } from './team-core.js?v=1.4.0';
 
