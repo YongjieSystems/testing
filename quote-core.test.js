@@ -66,3 +66,48 @@ test('backup rejects inconsistent totals and invalid price snapshots', () => {
   assert.throws(()=>parseBackup(backup([{...saved('one',{pricing:config}),total:'999'}]),config),/不一致/);
   assert.throws(()=>parseBackup(backup([saved('one',{pricing:{}})]),config),/價格/);
 });
+
+import { calculateQuote, assessLogistics } from './quote-core.js';
+const modern = { ...state, schemaVersion: 2, billingStage: 'DIAGNOSIS', service: 'PICKUP', source: 'OWN', logisticsPlan: 'DEDICATED', logisticsFee: 300, feeConfirmed: true, logisticsWindow: '週一取件、週五回送' };
+test('pickup replaces onsite travel with a single complete collection and return fee', () => {
+  const result=calculateQuote(modern,config);
+  assert.equal(result.total,600); assert.equal(result.transPrice,300); assert.deepEqual(result.pending,[]);
+  assert.equal(quoteTotal({...modern,service:'IN_STORE'},config),300);
+});
+test('unknown logistics is explicitly pending and not silently sold as free', () => {
+  for (const logisticsFee of ['',undefined,null,-1,Infinity]) {
+    const result=calculateQuote({...modern,logisticsFee},config);
+    assert.equal(result.transPrice,0); assert.ok(result.pending.some(text=>text.includes('收送費')));
+  }
+  assert.ok(calculateQuote({...modern,feeConfirmed:false},config).pending.length);
+  assert.equal(calculateQuote({...modern,logisticsFee:0},config).pending.length,0);
+});
+test('economic routing needs an actual confirmed route and both trip windows', () => {
+  assert.ok(calculateQuote({...modern,logisticsPlan:'SCHEDULED'},config).pending.some(text=>text.includes('排線')));
+  assert.equal(calculateQuote({...modern,logisticsPlan:'SCHEDULED',routeConfirmed:true},config).pending.length,0);
+  assert.ok(calculateQuote({...modern,logisticsWindow:''},config).pending.length);
+});
+test('agreed repair replaces diagnosis and its discount without adding return again', () => {
+  const result=calculateQuote({...modern,billingStage:'REPAIR',repairFee:1200,repairConfirmed:true},config);
+  assert.equal(result.total,1500); assert.equal(result.discPrice,0); assert.deepEqual(result.pending,[]);
+  assert.ok(calculateQuote({...modern,billingStage:'REPAIR',repairFee:1200},config).pending.length);
+});
+test('new purchase discount cannot consume transport while legacy records keep the original calculation', () => {
+  const cheaper=structuredClone(config); cheaper.INSPECTION.DESKTOP.price=100;
+  assert.equal(calculateQuote(modern,cheaper).total,300);
+  assert.equal(quoteTotal({...state},cheaper),200);
+});
+test('cost assessment requires every cost, includes complete travel cycle and uses margin rather than markup', () => {
+  const costs={...modern,logisticsMinutes:30,hourlyCost:250,travelCost:100,logisticsOtherCost:0,targetMargin:20};
+  assert.match(assessLogistics(costs),/225/); assert.match(assessLogistics(costs),/282/);
+  assert.match(assessLogistics({...costs,logisticsMinutes:60}),/438/);
+  assert.match(assessLogistics({...costs,travelCost:''}),/未齊/);
+  assert.match(assessLogistics({...costs,targetMargin:100}),/小於/);
+});
+test('new pickup backups round-trip, preserve unknown costs and reject forged plan or phase', () => {
+  const record=saved('pickup',{...modern,pricing:config,logisticsOtherCost:''});
+  const [restored]=parseBackup(backup([record]),config);
+  assert.equal(restored.state.logisticsOtherCost,''); assert.equal(restored.state.feeConfirmed,true);
+  assert.equal(quoteTotal(restored.state,restored.state.pricing),600);
+  for (const changes of [{logisticsPlan:'__proto__'},{billingStage:'other'},{schemaVersion:3}]) assert.throws(()=>parseBackup(backup([{...record,state:{...record.state,...changes}}]),config));
+});

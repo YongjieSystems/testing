@@ -119,7 +119,7 @@
                     <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" /></svg>
                 </div>
                 <div>
-                    <h1 class="text-xl md:text-2xl font-black tracking-tight">永捷系統科技 <span class="text-blue-400 font-medium">檢測費估價程式 <small class="text-xs">v1.1.3</small></span></h1>
+                    <h1 class="text-xl md:text-2xl font-black tracking-tight">永捷系統科技 <span class="text-blue-400 font-medium">檢測費估價程式 <small class="text-xs">v1.2.0</small></span></h1>
                 </div>
             </div>
             <div class="hidden md:block text-right">
@@ -161,9 +161,10 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
                             <div>
                                 <label class="block text-xs font-black text-slate-400 mb-5 uppercase tracking-[0.2em]">02 服務方式</label>
-                                <div class="flex p-1.5 bg-slate-100 rounded-2xl">
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 p-1.5 bg-slate-100 rounded-2xl">
                                     <button type="button" id="btn-IN_STORE" class="flex-1 py-3.5 px-2 rounded-xl text-sm font-bold transition-all">門市檢測</button>
-                                    <button type="button" id="btn-ON_SITE" class="flex-1 py-3.5 px-2 rounded-xl text-sm font-bold transition-all">到府檢測</button>
+                                    <button type="button" id="btn-ON_SITE" class="flex-1 py-3.5 px-2 rounded-xl text-sm font-bold transition-all">到府檢修</button>
+                                    <button type="button" id="btn-PICKUP" class="flex-1 py-3.5 px-2 rounded-xl text-sm font-bold transition-all">收回公司檢測</button>
                                 </div>
                             </div>
                             <div id="distance-container" class="">
@@ -171,8 +172,36 @@
                                 <select id="distance-select" class="w-full bg-blue-50 border-2 border-blue-100 text-blue-900 rounded-2xl py-3.5 px-5 text-sm font-bold focus:border-blue-500 focus:bg-white outline-none transition-all cursor-pointer"></select>
                             </div>
                         </div>
+                        <p id="legacy-note" hidden class="text-sm text-amber-800">舊版報價：沿用原計價規則。請建立新報價使用收送與維修階段功能。</p>
+                        <div id="fulfillment-controls" class="space-y-5 border rounded-2xl p-5 bg-slate-50">
+                            <h2 class="font-bold text-lg">案件階段與收送安排</h2>
+                            <label class="block">計費階段<select data-quote-field="billingStage" class="w-full border rounded-xl p-3"><option value="DIAGNOSIS">檢測估價／不維修</option><option value="REPAIR">維修報價（免另收檢測費）</option></select></label>
+                            <div id="repair-controls" hidden class="space-y-3">
+                                <label class="block">維修總費用（含本次同意範圍的零件及工資；其他加項請勿重複輸入）<input type="number" min="0" max="1000000" step="1" data-quote-field="repairFee" class="w-full border rounded-xl p-3"></label>
+                                <label class="block"><input type="checkbox" data-quote-field="repairConfirmed"> 客戶已同意此維修金額與範圍</label>
+                            </div>
+                            <div id="logistics-controls" hidden class="space-y-3">
+                                <label class="block">收送方案<select data-quote-field="logisticsPlan" class="w-full border rounded-xl p-3"><option value="SCHEDULED">經濟排線收送</option><option value="DEDICATED">預約專程收送</option><option value="PRIORITY">優先收送</option><option value="COURIER">外包物流</option></select></label>
+                                <label class="block">完整收送費（含約定取件及回送；優先調度費請一併包含）<input type="number" min="0" max="1000000" step="1" data-quote-field="logisticsFee" class="w-full border rounded-xl p-3" placeholder="待確認，不預設為免費"></label>
+                                <label class="block"><input type="checkbox" data-quote-field="feeConfirmed"> 收送價格與範圍已確認</label>
+                                <label class="block">取件／回送的約定時段及方式<input maxlength="500" data-quote-field="logisticsWindow" class="w-full border rounded-xl p-3" placeholder="分別記錄去程及回程；尚未知請註明待確認"></label>
+                                <label class="block"><input type="checkbox" data-quote-field="routeConfirmed"> 已確認可執行的排線與時段（經濟排線必填）</label>
+                                <p class="text-sm text-slate-600">收送不含現場拆裝檢修。優先取件不代表當日修復；外包費須涵蓋雙程及必要交接費。</p>
+                                <details class="border rounded-xl p-3"><summary class="cursor-pointer font-bold">內部收送成本試算</summary>
+                                    <p class="text-sm my-3">各欄採相同含稅／未稅基準。完整週期包含取件、回送、空車、等待及交接。無費用填 0，未知留白。僅供內部試算，非主管核准系統；勿輸入機密薪資。工時已含薪資成本，不再重複加機會成本。</p>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+<label>完整週期人員分鐘<input type="number" min="0" max="1000000" step="1" data-quote-field="logisticsMinutes" class="w-full border rounded-xl p-3"></label>
+<label>每小時分攤成本（元）<input type="number" min="0" max="1000000" step="1" data-quote-field="hourlyCost" class="w-full border rounded-xl p-3"></label>
+<label>雙程車資／交通成本（元）<input type="number" min="0" max="1000000" step="1" data-quote-field="travelCost" class="w-full border rounded-xl p-3"></label>
+<label>包材、保管及其他成本（元）<input type="number" min="0" max="1000000" step="1" data-quote-field="logisticsOtherCost" class="w-full border rounded-xl p-3"></label>
+<label>目標收送毛利率（%）<input type="number" min="0" max="99" step="1" data-quote-field="targetMargin" class="w-full border rounded-xl p-3"></label>
+                                    </div><p id="cost-assessment" role="status" class="text-sm mt-3 text-amber-900"></p>
+                                </details>
+                            </div>
+                            <label class="block">本案已付款總額（僅記錄，請核對收款紀錄）<input type="number" min="0" max="1000000" step="1" data-quote-field="paidAmount" class="w-full border rounded-xl p-3"></label>
+                        </div>
                         <div>
-                            <label class="block text-xs font-black text-slate-400 mb-5 uppercase tracking-[0.2em]">04 優先等級</label>
+                            <label class="block text-xs font-black text-slate-400 mb-5 uppercase tracking-[0.2em]">04 檢修優先／假日處理（不含收送）</label>
                             <div id="urgency-options" class="grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
@@ -271,7 +300,7 @@
                             </div>
                         </div>
                         <div class="mt-10">
-                            <p class="text-[10px] text-blue-200 font-black uppercase tracking-widest mb-2">Total Estimated Amount</p>
+                            <p class="text-[10px] text-blue-200 font-black uppercase tracking-widest mb-2" id="total-caption">預估總額</p>
                             <div class="flex items-baseline gap-2">
                                 <span class="text-2xl font-light text-blue-300">NT$</span>
                                 <span id="display-total" class="text-6xl font-black tabular-nums tracking-tighter">0</span>
@@ -279,6 +308,7 @@
                         </div>
                     </div>
                     <div class="p-10 space-y-8">
+                        <p id="quote-completeness" class="text-sm font-bold text-amber-800"></p><p id="fulfillment-summary" class="text-sm text-slate-700 whitespace-pre-wrap break-words"></p><p id="payment-summary" class="text-sm font-bold"></p><p id="previous-quote" class="text-xs break-all text-slate-500"></p>
                         <dl class="grid grid-cols-1 gap-3 text-sm border-b pb-5"><div><dt class="text-slate-500">客戶稱呼 / 公司</dt><dd id="display-customer" class="font-bold break-words">未填寫</dd></div><div><dt class="text-slate-500">設備型號 / 資產編號</dt><dd id="display-model" class="font-bold break-words">未填寫</dd></div><div><dt class="text-slate-500">處理狀態</dt><dd id="display-quote-status" class="font-bold">草稿</dd></div></dl>
                         <div class="space-y-5">
                             <div class="flex justify-between items-center">
@@ -286,7 +316,7 @@
                                     <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 shadow-sm">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" /></svg>
                                     </div>
-                                    <span class="text-base font-bold text-slate-700">檢測基本費</span>
+                                    <span id="base-fee-label" class="text-base font-bold text-slate-700">檢測基本費</span>
                                 </div>
                                 <span id="display-inspection" class="text-lg font-black text-slate-900">$0</span>
                             </div>
@@ -295,7 +325,7 @@
                                     <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 shadow-sm">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                                     </div>
-                                    <span class="text-base font-bold text-emerald-700">服務/出勤費</span>
+                                    <span id="transport-fee-label" class="text-base font-bold text-emerald-700">到府出勤費</span>
                                 </div>
                                 <span id="display-transport" class="text-lg font-black text-emerald-600">$0</span>
                             </div>
@@ -304,7 +334,7 @@
                                     <div class="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600 shadow-sm">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                     </div>
-                                    <span class="text-base font-bold text-orange-600">優先處理加乘</span>
+                                    <span class="text-base font-bold text-orange-600">檢修優先／假日處理費</span>
                                 </div>
                                 <span id="display-urgency" class="text-lg font-black text-orange-600">+$0</span>
                             </div>
@@ -404,9 +434,9 @@
 
                         <div class="bg-slate-50 rounded-2xl p-6 text-[11px] text-slate-600 leading-relaxed border border-slate-100 statement-box mt-6">
                             <p class="font-bold text-slate-800 mb-2 text-sm underline decoration-blue-500 underline-offset-4">⚠️ 報價聲明 Notes：</p>
-                            1. 此金額僅包含基本檢測與運費，<strong class="text-blue-600">不含零件耗材費用</strong>。<br>
+                            1. 檢測估價不含零件耗材；維修報價依客戶同意範圍計費。<br>
                             2. 最終維修金額視實際檢測拆解狀況而定。<br>
-                            3. 若確認不維修，仍須支付檢測基本費與出勤費。<br>
+                            3. 不維修仍須支付約定檢測與收送／出勤費；同意維修不另加檢測費。新增費用須先取得客戶同意。<br>
                             4. 本報價均為含稅價，並含郵寄發票費用。<br>
                             5. 成本邏輯：工時、油資、運營、風險、技術
                         </div>
@@ -500,9 +530,9 @@
             </div>
         </div>
     </main>
-    <div id="mobile-quote-bar" class="no-print"><div><small>預估總額</small><br><strong>NT$ <span id="mobile-total">500</span></strong></div><button id="mobile-view-btn" type="button">看明細</button><button id="mobile-save-btn" type="button">保存報價</button></div>
+    <div id="mobile-quote-bar" class="no-print"><div><small id="mobile-total-caption">預估總額</small><br><strong>NT$ <span id="mobile-total">500</span></strong></div><button id="mobile-view-btn" type="button">看明細</button><button id="mobile-save-btn" type="button">保存報價</button></div>
 
-    <script type="module" src="./app.js?v=1.1.3"></script>
+    <script type="module" src="./app.js?v=1.2.0"></script>
 
 </body>
 </html>

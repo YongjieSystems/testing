@@ -1,5 +1,5 @@
-import { WARRANTY_DATA, WARRANTY_KINDS, WARRANTY_ACTIONS } from './warranty-data.js?v=1.1.3';
-import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_STATUS, parseBackup, mergeRecords, upsertRecord, matchesRecord } from './quote-core.js?v=1.1.3';
+import { WARRANTY_DATA, WARRANTY_KINDS, WARRANTY_ACTIONS } from './warranty-data.js?v=1.2.0';
+import { normalizeMoney, calculateQuote, assessLogistics, SERVICE_LABELS, LOGISTICS_LABELS, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_STATUS, parseBackup, mergeRecords, upsertRecord, matchesRecord } from './quote-core.js?v=1.2.0';
 
         const CONFIG = {
             INSPECTION: {
@@ -21,9 +21,9 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_S
                 'ISLAND': { label: '離島地區', price: 8000 }
             },
             URGENCY: {
-                'NORMAL': { label: '一般 (3-5天)', price: 0 },
-                'EXPRESS': { label: '急件 (當日)', price: 500 },
-                'EMERGENCY': { label: '特急 (假日)', price: 800 }
+                'NORMAL': { label: '一般檢修（時限另約）', price: 0 },
+                'EXPRESS': { label: '檢修急件（時限另約）', price: 500 },
+                'EMERGENCY': { label: '假日檢修', price: 800 }
             },
             SOURCE: {
                 'OWN': { label: '購於永捷', price: -200 },
@@ -40,7 +40,8 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_S
             { id: 'HP', name: 'HP 惠普', icon: 'HP', url: 'https://support.hp.com/tw-zh/drivers/printers' }
         ];
 
-        let state = {
+        const newFields = () => ({ schemaVersion: 2, billingStage: 'DIAGNOSIS', logisticsPlan: 'DEDICATED', logisticsFee: '', feeConfirmed: false, routeConfirmed: false, logisticsWindow: '', repairFee: '', repairConfirmed: false, paidAmount: '', logisticsMinutes: '', hourlyCost: '', travelCost: '', logisticsOtherCost: '', targetMargin: '' });
+        let state = { ...newFields(),
             device: 'DESKTOP', service: 'IN_STORE', zone: 'ZONE_A',
             urgency: 'NORMAL', source: 'OTHER', warranty: 'OUT',
             specialDiscount: 0,
@@ -119,11 +120,12 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_S
             initWorkspace();
             $('new-quote-btn').onclick = () => {
                 if (!confirm('建立新報價將清空目前表單，請先保存需要保留的內容。是否繼續？')) return;
-                state = { device: 'DESKTOP', service: 'IN_STORE', zone: 'ZONE_A', urgency: 'NORMAL', source: 'OTHER', warranty: 'OUT', specialDiscount: 0, contractDiscount: 0, manufacturerFee: 0, otherFee: 0, staffName: state.staffName, department: state.department, id: crypto.randomUUID().toUpperCase(), date: quoteDate() };
+                state = { ...newFields(), device: 'DESKTOP', service: 'IN_STORE', zone: 'ZONE_A', urgency: 'NORMAL', source: 'OTHER', warranty: 'OUT', specialDiscount: 0, contractDiscount: 0, manufacturerFee: 0, otherFee: 0, staffName: state.staffName, department: state.department, id: crypto.randomUUID().toUpperCase(), date: quoteDate() };
                 loadHistoryData({ state, problem: '' });
                 notify('已建立新報價；原本的歷史與草稿仍保留。');
             };
 
+            $('btn-PICKUP').onclick = () => { if (state.schemaVersion !== 2) { notify('舊版報價保留原計價方式，請建立新報價使用收送方案。'); return; } state.service = 'PICKUP'; render(); };
             UI.btnInStore.onclick = () => { state.service = 'IN_STORE'; render(); };
             UI.btnOnSite.onclick = () => { state.service = 'ON_SITE'; render(); };
             UI.btnSourceOwn.onclick = () => { state.source = 'OWN'; render(); };
@@ -191,15 +193,7 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_S
 
         function generateSummary(dataState, problemText, totalText, dateStr) {
             const config = pricesFor(dataState);
-            const basePrice = config.INSPECTION[dataState.device].price;
-            const transPrice = dataState.service === 'ON_SITE' ? config.TRANSPORT[dataState.zone].price : 0;
-            const urgPrice = config.URGENCY[dataState.urgency].price;
-            const discPrice = config.SOURCE[dataState.source].price;
-            const specialDiscount = dataState.specialDiscount;
-            const manufacturerFee = dataState.manufacturerFee;
-            const otherFee = dataState.otherFee;
-            const contractDiscount = dataState.contractDiscount;
-
+            const calculation = calculateQuote(dataState, config);
             let summary = `【永捷系統科技 - 檢測報價摘要】\n`;
             summary += `----------------------------\n`;
             summary += `報價單號：YJ-${dataState.id}\n`;
@@ -209,7 +203,7 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_S
             summary += `處理狀態：${QUOTE_STATUS[dataState.status] || '草稿'}\n`;
             summary += `報價人員：${dataState.staffName || '--'} (${dataState.department})\n`;
             summary += `設備種類：${config.INSPECTION[dataState.device].label}\n`;
-            summary += `服務方式：${dataState.service === 'IN_STORE' ? '門市檢測' : '到府檢測 (' + config.TRANSPORT[dataState.zone].label + ')'}\n`;
+            summary += `服務方式：${SERVICE_LABELS[dataState.service]}\n`;
             summary += `優先等級：${config.URGENCY[dataState.urgency].label}\n`;
             summary += `保固狀態：${dataState.warranty === 'IN' ? '保固內' : '已過保'}\n`;
             summary += `設備來源：${config.SOURCE[dataState.source].label}\n`;
@@ -220,19 +214,17 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_S
 
             summary += `----------------------------\n`;
             summary += `費用細目：\n`;
-            summary += `- 檢測基本費：$${basePrice.toLocaleString()}\n`;
-            if (transPrice > 0) summary += `- 服務出勤費：$${transPrice.toLocaleString()}\n`;
-            if (urgPrice > 0) summary += `- 優先處理費：$${urgPrice.toLocaleString()}\n`;
-            if (manufacturerFee > 0) summary += `- 代送原廠費：$${manufacturerFee.toLocaleString()}\n`;
-            if (otherFee > 0) summary += `- 其他加項費：$${otherFee.toLocaleString()}\n`;
-            if (discPrice !== 0) summary += `- 客戶折抵額：$${discPrice.toLocaleString()}\n`;
-            if (specialDiscount > 0) summary += `- 特殊減免額：$${specialDiscount.toLocaleString()} (需主管核准)\n`;
-            if (contractDiscount > 0) summary += `- 合約客戶折抵：$${contractDiscount.toLocaleString()} (手動折抵)\n`;
-
+            for (const line of calculation.lines) {
+                if (line.amount || line.key === 'base') summary += `- ${line.label}：$${line.amount.toLocaleString()}\n`;
+            }
+            if (dataState.service === 'PICKUP') summary += `收送方案：${LOGISTICS_LABELS[dataState.logisticsPlan]}\n取件及回送時段：${dataState.logisticsWindow || '待確認'}\n※ 收送不含現場拆裝檢修；優先取件不代表當日修復。\n`;
+            for (const warning of calculation.pending) summary += `※ 待確認：${warning}\n`;
+            if (dataState.previousQuoteId) summary += `前版單號：YJ-${dataState.previousQuoteId}\n`;
             summary += `----------------------------\n`;
-            summary += `預估總額：NT$ ${totalText}\n`;
+            summary += `${calculation.pending.length ? '目前項目小計（尚非完整報價）' : '預估總額'}：NT$ ${calculation.total.toLocaleString('zh-TW')}\n`;
+            if (dataState.schemaVersion === 2) summary += `已付：$${normalizeMoney(dataState.paidAmount).toLocaleString()}；${normalizeMoney(dataState.paidAmount) > calculation.total ? '溢付待核對' : '待付'}：$${Math.abs(calculation.total-normalizeMoney(dataState.paidAmount)).toLocaleString()}${calculation.pending.length ? '（依目前小計）' : ''}\n`;
             summary += `----------------------------\n`;
-            summary += `※ 注意：此報價不含零件耗材費用，最終金額以實際檢測為準。`;
+            summary += `※ 檢測階段不含零件耗材；維修階段依雙方確認範圍計費。新增費用須先取得客戶同意。`;
 
             return summary;
         }
@@ -242,14 +234,24 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_S
         function currentRecord() {
             return { timestamp: new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false }),
                 state: structuredClone({ ...state, pricing: pricesFor(state) }),
-                problem: UI.problemInput.value, total: String(quoteTotal(state, pricesFor(state)).toLocaleString('zh-TW')) };
+                calculation: calculateQuote(state, pricesFor(state)),
+                problem: UI.problemInput.value, total: quoteTotal(state, pricesFor(state)).toLocaleString('zh-TW') };
         }
         function addToHistory(record) {
-            const next = upsertRecord(historyData, record?.state ? record : currentRecord(), MAX_HISTORY);
+            let savedRecord = record?.state ? record : currentRecord();
+            if (['ACCEPTED', 'DONE'].includes(savedRecord.state.status) && calculateQuote(savedRecord.state, pricesFor(savedRecord.state)).pending.length) {
+                notify('仍有待確認項目，不能保存為客戶同意或已完成；請先補齊，或改存草稿。'); return false;
+            }
+            const previous = historyData.find(item => item.state.id === savedRecord.state.id);
+            if (previous && (JSON.stringify(previous.state) !== JSON.stringify(savedRecord.state) || previous.problem !== savedRecord.problem)) {
+                state = { ...state, previousQuoteId: state.id, id: crypto.randomUUID().toUpperCase() };
+                savedRecord = currentRecord(); render();
+            }
+            const next = upsertRecord(historyData, savedRecord, MAX_HISTORY);
             if (!persistHistory(next)) return false;
             historyData = next;
             renderHistory();
-            notify('報價已保存；同一單號再次保存會更新該筆資料。');
+            notify('報價已保存；修改已存報價會另建單號，保留原始版本。');
             return true;
         }
 
@@ -465,9 +467,9 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_S
             UI.distSelect.value = state.zone;
             document.querySelectorAll('#device-options button').forEach(b => b.classList.remove('btn-active'));
             $(`dev-${state.device}`)?.classList.add('btn-active');
-            [UI.btnInStore, UI.btnOnSite].forEach(b => b.classList.remove('btn-active'));
-            if (state.service === 'IN_STORE') UI.btnInStore.classList.add('btn-active');
-            else UI.btnOnSite.classList.add('btn-active');
+            [UI.btnInStore, UI.btnOnSite, $('btn-PICKUP')].forEach(b => b.classList.remove('btn-active'));
+            $(`btn-${state.service}`).classList.add('btn-active');
+            renderFulfillment();
             if (state.service === 'ON_SITE') UI.distWrap.classList.remove('hidden');
             else UI.distWrap.classList.add('hidden');
 
@@ -484,10 +486,8 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_S
             if (state.warranty === 'IN') UI.btnWarrantyIn.classList.add('btn-active');
             else UI.btnWarrantyOut.classList.add('btn-active');
 
-            const basePrice = config.INSPECTION[state.device].price;
-            const transPrice = state.service === 'ON_SITE' ? config.TRANSPORT[state.zone].price : 0;
-            const urgPrice = config.URGENCY[state.urgency].price;
-            const discPrice = config.SOURCE[state.source].price;
+            const calculation = calculateQuote(state, config);
+            const { basePrice, transPrice, urgPrice, discPrice } = calculation;
             const specialDiscount = state.specialDiscount;
             const manufacturerFee = state.manufacturerFee;
             const otherFee = state.otherFee;
@@ -500,10 +500,12 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_S
             UI.dispTotal.innerText = total.toLocaleString('zh-TW');
             $('mobile-total').textContent = total.toLocaleString('zh-TW');
             renderIdentity();
+            $('base-fee-label').textContent = calculation.lines[0].label;
+            $('transport-fee-label').textContent = calculation.lines[1].label;
             UI.dispBase.innerText = `$${basePrice.toLocaleString()}`;
             UI.dispDev.innerText = config.INSPECTION[state.device].label;
-            UI.dispService.innerText = state.service === 'IN_STORE' ? '門市檢測' : '到府檢測';
-            if (transPrice > 0) { UI.dispTransRow.classList.remove('hidden'); UI.dispTrans.innerText = `$${transPrice.toLocaleString()}`; }
+            UI.dispService.innerText = SERVICE_LABELS[state.service];
+            if (transPrice > 0 || (state.service === 'PICKUP' && state.feeConfirmed === true && state.logisticsFee !== '')) { UI.dispTransRow.classList.remove('hidden'); UI.dispTrans.innerText = `$${transPrice.toLocaleString()}`; }
             else UI.dispTransRow.classList.add('hidden');
 
             if (urgPrice > 0) {
@@ -572,7 +574,7 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_S
         function copyToClipboard() {
 
 
-            const record = currentRecord();
+            if (!addToHistory()) return;
             const dateStr = state.date;
 
             const problem = UI.problemInput.value.trim();
@@ -580,7 +582,6 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_S
             const summary = generateSummary(state, problem, total, dateStr);
 
             navigator.clipboard.writeText(summary).then(() => {
-                addToHistory(record);
                 const oldHTML = UI.btnCopy.innerHTML;
                 UI.btnCopy.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg> 已複製內容`;
                 setTimeout(() => UI.btnCopy.innerHTML = oldHTML, 2000);
@@ -598,7 +599,41 @@ import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_S
             document.body.appendChild(anchor); anchor.click(); anchor.remove();
             setTimeout(() => URL.revokeObjectURL(url), 1000);
         }
+        function renderFulfillment() {
+            const modern = state.schemaVersion === 2;
+            $('fulfillment-controls').hidden = !modern;
+            $('legacy-note').hidden = modern;
+            $('logistics-controls').hidden = state.service !== 'PICKUP';
+            $('repair-controls').hidden = state.billingStage !== 'REPAIR';
+            for (const element of document.querySelectorAll('[data-quote-field]')) {
+                const value = state[element.dataset.quoteField];
+                if (element.type === 'checkbox') element.checked = value === true;
+                else if (document.activeElement !== element) element.value = value ?? '';
+            }
+            const result = calculateQuote(state, pricesFor(state));
+            $('quote-completeness').textContent = result.pending.length ? '尚非完整報價：' + result.pending.join('；') : '服務與維修承諾依雙方確認範圍。';
+            $('total-caption').textContent = result.pending.length ? '目前項目小計（尚非完整報價）' : '預估總額';
+            $('mobile-total-caption').textContent = result.pending.length ? '小計・待確認' : '預估總額';
+            $('fulfillment-summary').textContent = state.service === 'PICKUP' ? `${LOGISTICS_LABELS[state.logisticsPlan]}｜取件及回送：${state.logisticsWindow || '待確認'}。收送費含約定取件與回送，不含現場拆裝檢修；優先取件不代表當日修復。` : '';
+            const paid = normalizeMoney(state.paidAmount);
+            $('previous-quote').textContent = state.previousQuoteId ? `前版單號：YJ-${state.previousQuoteId}` : '';
+            $('payment-summary').textContent = modern ? `已付 $${paid.toLocaleString()}；${paid > result.total ? '溢付待核對' : '待付'} $${Math.abs(result.total-paid).toLocaleString()}${result.pending.length ? '（依目前小計）' : ''}` : '';
+            $('cost-assessment').textContent = assessLogistics(state);
+        }
+
         function initWorkspace() {
+            for (const element of document.querySelectorAll('[data-quote-field]')) {
+                element.addEventListener('input', () => {
+                    const key = element.dataset.quoteField;
+                    if (['logisticsFee', 'logisticsPlan', 'logisticsWindow'].includes(key)) state.feeConfirmed = false;
+                    if (['logisticsPlan', 'logisticsWindow'].includes(key)) state.routeConfirmed = false;
+                    if (key === 'repairFee') state.repairConfirmed = false;
+                    state[key] = element.type === 'checkbox' ? element.checked : element.type === 'number' ? (element.value === '' ? '' : normalizeMoney(element.value)) : element.value;
+                    if (element.type === 'number') element.value = String(state[key]);
+                    render();
+                });
+            }
+
             for (const [id, key] of [['customer-name','customerName'],['device-model','deviceModel'],['quote-status','status']]) {
                 $(id).addEventListener('input', event => { state[key] = event.target.value; renderIdentity(); });
             }

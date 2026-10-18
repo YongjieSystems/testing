@@ -6,11 +6,55 @@ export function quoteDate(date = new Date()) {
     return new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
 }
 export function quoteTotal(state, config) {
+    if (state.schemaVersion === 2) return calculateQuote(state, config).total;
     return Math.max(0, config.INSPECTION[state.device].price
         + (state.service === 'ON_SITE' ? config.TRANSPORT[state.zone].price : 0)
         + config.URGENCY[state.urgency].price + config.SOURCE[state.source].price
         + normalizeMoney(state.manufacturerFee) + normalizeMoney(state.otherFee)
         - normalizeMoney(state.specialDiscount) - normalizeMoney(state.contractDiscount));
+}
+export const SERVICE_LABELS = Object.freeze({ IN_STORE: '門市檢測', ON_SITE: '到府檢修', PICKUP: '收回公司檢測' });
+export const LOGISTICS_LABELS = Object.freeze({ SCHEDULED: '經濟排線收送', DEDICATED: '預約專程收送', PRIORITY: '優先收送', COURIER: '外包物流' });
+const hasMoney = value => value !== '' && value !== null && value !== undefined && Number.isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 1000000;
+export function calculateQuote(state, config) {
+    const modern = state.schemaVersion === 2;
+    const pickup = state.service === 'PICKUP';
+    const repaired = modern && state.billingStage === 'REPAIR';
+    const pending = [];
+    if (pickup) {
+        if (!hasMoney(state.logisticsFee) || state.feeConfirmed !== true) pending.push('收送費尚未確認，未計入不代表免費');
+        if (!state.logisticsWindow?.trim()) pending.push('取件及回送時段尚未約定');
+        if (state.logisticsPlan === 'SCHEDULED' && state.routeConfirmed !== true) pending.push('排線尚未確認，不能承諾排線時段');
+    }
+    if (repaired && (!hasMoney(state.repairFee) || state.repairConfirmed !== true)) pending.push('維修金額尚未取得客戶同意');
+    const basePrice = repaired ? (hasMoney(state.repairFee) ? normalizeMoney(state.repairFee) : 0) : config.INSPECTION[state.device].price;
+    const transPrice = pickup ? (hasMoney(state.logisticsFee) && state.feeConfirmed === true ? normalizeMoney(state.logisticsFee) : 0)
+        : state.service === 'ON_SITE' ? config.TRANSPORT[state.zone].price : 0;
+    const urgPrice = config.URGENCY[state.urgency].price;
+    const discount = config.SOURCE[state.source].price;
+    const discPrice = modern ? (repaired || state.device === 'DELIVERY' ? 0 : Math.max(-basePrice, discount)) : discount;
+    const lines = [
+        { key: 'base', label: repaired ? '維修費（不另加檢測費）' : '檢測基本費', amount: basePrice },
+        { key: 'transport', label: pickup ? '收送費（含約定取件及回送）' : '到府出勤費', amount: transPrice },
+        { key: 'urgency', label: '檢修優先／假日處理費（不含優先收送）', amount: urgPrice },
+        { key: 'source', label: modern ? '購於永捷檢測折抵' : '客戶折抵額', amount: discPrice },
+        { key: 'manufacturer', label: '原廠費用加項', amount: normalizeMoney(state.manufacturerFee) },
+        { key: 'other', label: '其他加項費', amount: normalizeMoney(state.otherFee) },
+        { key: 'special', label: '特殊減免額（需主管核准）', amount: -normalizeMoney(state.specialDiscount) },
+        { key: 'contract', label: '合約折抵', amount: -normalizeMoney(state.contractDiscount) }
+    ];
+    if (pickup && state.device === 'DELIVERY') pending.push('代送費與客戶收送費可能重疊，請確認服務範圍');
+    return { lines, total: Math.max(0, lines.reduce((sum, line) => sum + line.amount, 0)), pending, basePrice, transPrice, urgPrice, discPrice, repaired };
+}
+export function assessLogistics(state) {
+    if (state.service !== 'PICKUP') return '請選擇收回公司檢測後評估收送成本。';
+    if (!['logisticsMinutes', 'hourlyCost', 'travelCost', 'logisticsOtherCost', 'targetMargin', 'logisticsFee'].every(key => hasMoney(state[key])) || state.feeConfirmed !== true)
+        return '成本資料未齊：空白代表未知，請輸入完整週期的工時、成本及已確認收送費。';
+    const margin = Number(state.targetMargin);
+    if (margin >= 100) return '目標毛利率必須小於 100%。';
+    const cost = Number(state.logisticsMinutes) / 60 * Number(state.hourlyCost) + Number(state.travelCost) + Number(state.logisticsOtherCost);
+    const minimum = Math.ceil(cost / (1 - margin / 100));
+    return `預估收送成本 $${Math.ceil(cost).toLocaleString()}；達標收費 $${minimum.toLocaleString()}；收入減估計成本 $${Math.floor(Number(state.logisticsFee) - cost).toLocaleString()}。${Number(state.logisticsFee) < minimum ? '低於目標，請調整方案或交主管評估。' : '達到填入的成本目標，仍須確認排程與客戶同意。'}此為成本分攤估計，非公司淨利或外包現金節省。`;
 }
 export function escapeHTML(value) {
     return String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
@@ -23,12 +67,20 @@ export function readHistory(raw, config, limit = 50) {
         const state = record?.state;
         return state && ['INSPECTION', 'TRANSPORT', 'URGENCY', 'SOURCE'].every((group, index) =>
             Object.hasOwn(config[group], state[['device', 'zone', 'urgency', 'source'][index]]))
-            && ['IN_STORE', 'ON_SITE'].includes(state.service)
+            && Object.hasOwn(SERVICE_LABELS, state.service)
+            && (state.schemaVersion === undefined || state.schemaVersion === 2)
+            && (state.service !== 'PICKUP' || (state.schemaVersion === 2 && Object.hasOwn(LOGISTICS_LABELS, state.logisticsPlan)))
+            && (state.schemaVersion !== 2 || ['DIAGNOSIS', 'REPAIR'].includes(state.billingStage))
             && ['IN', 'OUT'].includes(state.warranty)
             && typeof state.id === 'string' && typeof record.timestamp === 'string'
             && typeof record.problem === 'string' && ['string', 'number'].includes(typeof record.total);
     }).slice(0, limit).map(record => {
         const state = { ...record.state };
+        if (state.schemaVersion === 2) {
+            for (const key of ['logisticsFee', 'repairFee', 'paidAmount', 'logisticsMinutes', 'hourlyCost', 'travelCost', 'logisticsOtherCost', 'targetMargin']) state[key] = hasMoney(state[key]) ? Number(state[key]) : '';
+            for (const key of ['feeConfirmed', 'routeConfirmed', 'repairConfirmed']) state[key] = state[key] === true;
+            state.logisticsWindow = typeof state.logisticsWindow === 'string' ? state.logisticsWindow.slice(0, 500) : '';
+        }
         for (const key of ['specialDiscount', 'contractDiscount', 'manufacturerFee', 'otherFee']) state[key] = normalizeMoney(state[key]);
         state.staffName = typeof state.staffName === 'string' ? state.staffName.slice(0, 100) : '';
         state.customerName = typeof state.customerName === 'string' ? state.customerName.slice(0,100) : '';
