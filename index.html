@@ -120,7 +120,7 @@
                     <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" /></svg>
                 </div>
                 <div>
-                    <h1 class="text-xl md:text-2xl font-black tracking-tight">永捷系統科技 <span class="text-blue-400 font-medium">檢測費估價程式 <small class="text-xs">v1.4.1</small></span></h1>
+                    <h1 class="text-xl md:text-2xl font-black tracking-tight">永捷系統科技 <span class="text-blue-400 font-medium">檢測費估價程式 <small class="text-xs">v1.4.2</small></span></h1>
                 </div>
             </div>
             <div class="hidden md:block text-right">
@@ -487,7 +487,8 @@
                         <span class="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-lg">本機 <span id="history-count">0</span> / 200 筆</span>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4"><input id="history-search" type="search" aria-label="搜尋歷史報價" placeholder="搜尋單號、客戶、型號、備註、人員" class="w-full border rounded-xl p-3 text-sm"><select id="history-status" aria-label="篩選報價狀態" class="border rounded-xl p-3 text-sm"><option value="">所有狀態</option><option value="DRAFT">草稿</option><option value="QUOTED">已報價</option><option value="ACCEPTED">客戶同意</option><option value="DONE">已完成</option><option value="CANCELLED">已取消</option></select></div>
-                    <div class="flex flex-wrap gap-2 mb-4"><button id="export-backup-btn" type="button" class="bg-blue-100 text-blue-800 p-3 rounded-xl text-sm font-bold">匯出備份</button><label class="bg-slate-200 p-3 rounded-xl text-sm font-bold cursor-pointer">匯入備份<input id="import-backup-input" type="file" accept=".json,application/json" class="sr-only"></label><button id="export-raw-btn" type="button" class="p-3 text-slate-500 text-xs underline">原始資料備援</button></div>
+                    <div class="flex flex-wrap gap-2 mb-4"><button id="export-backup-btn" type="button" class="bg-blue-100 text-blue-800 p-3 rounded-xl text-sm font-bold">匯出備份</button><label class="bg-slate-200 p-3 rounded-xl text-sm font-bold cursor-pointer">匯入備份<input id="import-backup-input" type="file" accept=".json,application/json" class="sr-only"></label><button id="export-raw-btn" type="button" class="p-3 text-slate-500 text-xs underline">原始資料備援</button><button id="clear-history-btn" type="button" class="p-3 bg-red-50 text-red-700 rounded-xl text-sm font-bold">清空歷史</button><button id="restore-history-btn" type="button" class="p-3 bg-slate-100 rounded-xl text-sm font-bold">還原上次清空</button></div>
+                    <p id="history-clear-status" role="status" class="text-sm text-slate-600 mb-3"></p>
                     <details class="border rounded-xl p-3 mb-4"><summary class="cursor-pointer font-bold">收送結案成效（內部）</summary>
                         <p id="cost-report-caption" class="text-sm my-3"></p>
                         <div class="overflow-x-auto"><table class="text-sm w-full"><caption class="text-left text-xs text-slate-500 mb-2">只統計本機保留資料，非公司完整營運報表。收入減成本為收送分攤結果，非整案淨利；成本低估以本版預估為準，小樣本不代表長期表現。</caption><thead><tr><th scope="col" class="p-2 text-left">方案</th><th scope="col" class="p-2 text-left">核對案數</th><th scope="col" class="p-2 text-left">收入減成本</th><th scope="col" class="p-2 text-left">工程師時間</th><th scope="col" class="p-2 text-left">低估／可比案</th></tr></thead><tbody id="cost-report-rows"></tbody></table></div>
@@ -619,7 +620,7 @@
     </main>
     <div id="mobile-quote-bar" class="no-print"><div><small id="mobile-total-caption">預估總額</small><br><strong>NT$ <span id="mobile-total">500</span></strong></div><button id="mobile-view-btn" type="button">看明細</button><button id="mobile-save-btn" type="button">保存報價</button></div>
 
-    <script type="module" src="./app.js?v=1.4.1"></script>
+    <script type="module" src="./app.js?v=1.4.2"></script>
 
 </body>
 </html>

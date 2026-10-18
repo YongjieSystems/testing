@@ -1,7 +1,7 @@
-import { initTeamWorkspace } from './team-workspace.js?v=1.4.1';
-import { CONFIG } from './pricing-config.js?v=1.4.1';
-import { WARRANTY_DATA, WARRANTY_KINDS, WARRANTY_ACTIONS } from './warranty-data.js?v=1.4.1';
-import { normalizeMoney, calculateQuote, assessLogistics, reviewLogistics, summarizeLogistics, ACTUAL_COST_FIELDS, SERVICE_LABELS, LOGISTICS_LABELS, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_STATUS, parseBackup, mergeRecords, upsertRecord, matchesRecord } from './quote-core.js?v=1.4.1';
+import { initTeamWorkspace } from './team-workspace.js?v=1.4.2';
+import { CONFIG } from './pricing-config.js?v=1.4.2';
+import { WARRANTY_DATA, WARRANTY_KINDS, WARRANTY_ACTIONS } from './warranty-data.js?v=1.4.2';
+import { normalizeMoney, calculateQuote, assessLogistics, reviewLogistics, summarizeLogistics, ACTUAL_COST_FIELDS, SERVICE_LABELS, LOGISTICS_LABELS, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_STATUS, parseBackup, mergeRecords, upsertRecord, matchesRecord } from './quote-core.js?v=1.4.2';
 
                 const DRIVER_DATA = [
             { id: 'BROTHER', name: 'Brother 兄弟', icon: 'BR', url: 'https://support.brother.com/g/b/productsearch.aspx?c=tw&lang=zh&content=dl' },
@@ -640,6 +640,41 @@ import { normalizeMoney, calculateQuote, assessLogistics, reviewLogistics, summa
             $('mobile-view-btn').onclick = () => $('quote-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
             $('history-search').oninput = renderHistory;
             $('history-status').onchange = renderHistory;
+            const archiveKey='yj_quote_history_archives_v1';
+            let clearArmed=false;
+            const historyMessage=text=>{ $('history-clear-status').textContent=text; notify(text); };
+            $('clear-history-btn').onclick=()=>{
+                if(storageWarning) { historyMessage(storageWarning); return; }
+                if(!clearArmed) { clearArmed=true; $('clear-history-btn').textContent='確認清空本機歷史'; historyMessage('再次按確認清空。紀錄會先保留在此瀏覽器的還原區，可按「還原上次清空」恢復；草稿與團隊案件不受影響。'); return; }
+                clearArmed=false; $('clear-history-btn').textContent='清空歷史';
+                try {
+                    const raw=localStorage.getItem('yj_quote_history') || '[]';
+                    const records=readHistory(raw,CONFIG,MAX_HISTORY);
+                    if(!Array.isArray(JSON.parse(raw)) || JSON.parse(raw).length!==records.length) throw new Error('歷史資料有讀取問題，請先下載原始資料備援。');
+                    if(!records.length) { historyData=[]; renderHistory(); historyMessage('目前沒有歷史紀錄可清空。'); return; }
+                    const archives=JSON.parse(localStorage.getItem(archiveKey) || '[]');
+                    if(!Array.isArray(archives)) throw new Error('還原區無法讀取，歷史紀錄未清空。');
+                    archives.push({format:'yj-quote-backup',version:1,exportedAt:new Date().toISOString(),records});
+                    localStorage.setItem(archiveKey,JSON.stringify(archives));
+                    if(!persistHistory([])) return;
+                    historyData=[]; renderHistory(); historyMessage(`已清空 ${records.length} 筆本機歷史，可按「還原上次清空」恢復。`);
+                } catch(error) { historyMessage(error instanceof Error ? error.message : '清空失敗，請先匯出備份。'); }
+            };
+            $('restore-history-btn').onclick=()=>{
+                if(storageWarning) { historyMessage(storageWarning); return; }
+                try {
+                    const archives=JSON.parse(localStorage.getItem(archiveKey) || '[]');
+                    if(!Array.isArray(archives)) throw new Error('還原區無法讀取。');
+                    if(!archives.length) { historyMessage('目前沒有可還原的清空紀錄。'); return; }
+                    const incoming=parseBackup(JSON.stringify(archives.at(-1)),CONFIG,MAX_HISTORY);
+                    const current=readHistory(localStorage.getItem('yj_quote_history'),CONFIG,MAX_HISTORY);
+                    const next=mergeRecords(current,incoming,MAX_HISTORY);
+                    if(!persistHistory(next)) return;
+                    historyData=next; renderHistory();
+                    archives.pop(); localStorage.setItem(archiveKey,JSON.stringify(archives));
+                    historyMessage(`已還原上次清空，現在共 ${next.length} 筆；相同單號保留目前版本。`);
+                } catch(error) { historyMessage(error instanceof Error ? error.message : '還原失敗。'); }
+            };
             $('save-draft-btn').onclick = () => {
                 try { localStorage.setItem('yj_quote_draft_v1', JSON.stringify(currentRecord())); notify('草稿已保存於此瀏覽器，下次可按「載入草稿」。'); }
                 catch { notify('草稿儲存失敗，請檢查瀏覽器空間。'); }
