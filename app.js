@@ -1,10 +1,10 @@
-import { initTeamWorkspace } from './team-workspace.js?v=1.6.0';
-import { initTraining } from './training.js?v=1.6.0';
-import { CONFIG } from './pricing-config.js?v=1.6.0';
-import { WARRANTY_DATA, WARRANTY_KINDS, WARRANTY_ACTIONS } from './warranty-data.js?v=1.6.0';
-import { normalizeMoney, calculateQuote, assessLogistics, reviewLogistics, summarizeLogistics, ACTUAL_COST_FIELDS, SERVICE_LABELS, LOGISTICS_LABELS, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_STATUS, parseBackup, mergeRecords, upsertRecord, matchesRecord } from './quote-core.js?v=1.6.0';
+import { initTeamWorkspace } from './team-workspace.js?v=1.7.0';
+import { initTraining } from './training.js?v=1.7.0';
+import { CONFIG } from './pricing-config.js?v=1.7.0';
+import { WARRANTY_DATA, WARRANTY_KINDS, WARRANTY_ACTIONS } from './warranty-data.js?v=1.7.0';
+import { formatQuoteId, generateQuoteSummary, normalizeMoney, calculateQuote, assessLogistics, reviewLogistics, summarizeLogistics, ACTUAL_COST_FIELDS, SERVICE_LABELS, LOGISTICS_LABELS, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_STATUS, parseBackup, mergeRecords, upsertRecord, matchesRecord } from './quote-core.js?v=1.7.0';
 
-import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from './driver-data.js?v=1.6.0';
+import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from './driver-data.js?v=1.7.0';
 
         const newFields = () => ({ schemaVersion: 2, billingStage: 'DIAGNOSIS', logisticsPlan: 'DEDICATED', logisticsFee: '', feeConfirmed: false, routeConfirmed: false, windowConfirmed: false, actualConfirmed: false, actualMinutes: '', actualEngineerMinutes: '', actualHourlyCost: '', actualTravelCost: '', actualOtherCost: '', actualRevenue: '', actualNotes: '', logisticsWindow: '', repairFee: '', repairConfirmed: false, paidAmount: '', logisticsMinutes: '', hourlyCost: '', travelCost: '', logisticsOtherCost: '', targetMargin: '' });
         let state = { ...newFields(),
@@ -76,7 +76,7 @@ import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from
             const dateStr = quoteDate(now);
             if (UI.headDate) UI.headDate.innerText = dateStr;
             if (UI.dispDate) UI.dispDate.innerText = dateStr;
-            if (UI.dispId) UI.dispId.innerText = `YJ-${state.id}`;
+            if (UI.dispId) UI.dispId.innerText = formatQuoteId(state.id);
 
             renderQuoteForm();
             renderWarranties();
@@ -158,41 +158,7 @@ import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from
         }
 
         function generateSummary(dataState, problemText, totalText, dateStr) {
-            const config = pricesFor(dataState);
-            const calculation = calculateQuote(dataState, config);
-            let summary = `【永捷系統科技 - 檢測報價摘要】\n`;
-            summary += `----------------------------\n`;
-            summary += `報價單號：YJ-${dataState.id}\n`;
-            summary += `報價日期：${dateStr}\n`;
-            if (dataState.customerName) summary += `客戶稱呼：${dataState.customerName}\n`;
-            if (dataState.deviceModel) summary += `設備型號：${dataState.deviceModel}\n`;
-            summary += `處理狀態：${QUOTE_STATUS[dataState.status] || '草稿'}\n`;
-            summary += `報價人員：${dataState.staffName || '--'} (${dataState.department})\n`;
-            summary += `設備種類：${config.INSPECTION[dataState.device].label}\n`;
-            summary += `服務方式：${SERVICE_LABELS[dataState.service]}\n`;
-            summary += `優先等級：${config.URGENCY[dataState.urgency].label}\n`;
-            summary += `保固狀態：${dataState.warranty === 'IN' ? '保固內' : '已過保'}\n`;
-            summary += `設備來源：${config.SOURCE[dataState.source].label}\n`;
-
-            if (problemText) {
-                summary += `故障描述：${problemText}\n`;
-            }
-
-            summary += `----------------------------\n`;
-            summary += `費用細目：\n`;
-            for (const line of calculation.lines) {
-                if (line.amount || line.key === 'base') summary += `- ${line.label}：$${line.amount.toLocaleString()}\n`;
-            }
-            if (dataState.service === 'PICKUP') summary += `收送方案：${LOGISTICS_LABELS[dataState.logisticsPlan]}\n取件及回送時段：${dataState.logisticsWindow || '待確認'}\n※ 收送不含現場拆裝檢修；優先取件不代表當日修復。\n`;
-            for (const warning of calculation.pending) summary += `※ 待確認：${warning}\n`;
-            if (dataState.previousQuoteId) summary += `前版單號：YJ-${dataState.previousQuoteId}\n`;
-            summary += `----------------------------\n`;
-            summary += `${calculation.pending.length ? '目前項目小計（尚非完整報價）' : '預估總額'}：NT$ ${calculation.total.toLocaleString('zh-TW')}\n`;
-            if (dataState.schemaVersion === 2) summary += `已付：$${normalizeMoney(dataState.paidAmount).toLocaleString()}；${normalizeMoney(dataState.paidAmount) > calculation.total ? '溢付待核對' : '待付'}：$${Math.abs(calculation.total-normalizeMoney(dataState.paidAmount)).toLocaleString()}${calculation.pending.length ? '（依目前小計）' : ''}\n`;
-            summary += `----------------------------\n`;
-            summary += `※ 檢測階段不含零件耗材；維修階段依雙方確認範圍計費。新增費用須先取得客戶同意。`;
-
-            return summary;
+            return generateQuoteSummary(dataState,problemText,pricesFor(dataState),dateStr);
         }
 
         // --- 歷史紀錄功能區 ---
@@ -460,7 +426,7 @@ import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from
 
         function render() {
             const config = pricesFor(state);
-            UI.dispId.innerText = `YJ-${state.id}`;
+            UI.dispId.innerText = formatQuoteId(state.id);
             UI.dispDate.innerText = state.date;
             UI.distSelect.value = state.zone;
             document.querySelectorAll('#device-options button').forEach(b => b.classList.remove('btn-active'));
@@ -500,6 +466,7 @@ import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from
             renderIdentity();
             $('base-fee-label').textContent = calculation.lines[0].label;
             $('transport-fee-label').textContent = calculation.lines[1].label;
+            $('urgency-fee-label').textContent = calculation.lines.find(line=>line.key==='urgency').label;
             UI.dispBase.innerText = `$${basePrice.toLocaleString()}`;
             UI.dispDev.innerText = config.INSPECTION[state.device].label;
             UI.dispService.innerText = SERVICE_LABELS[state.service];
@@ -627,7 +594,7 @@ import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from
             $('mobile-total-caption').textContent = result.pending.length ? '小計・待確認' : '預估總額';
             $('fulfillment-summary').textContent = state.service === 'PICKUP' ? `${LOGISTICS_LABELS[state.logisticsPlan]}｜取件及回送：${state.logisticsWindow || '待確認'}。收送費含約定取件與回送，不含現場拆裝檢修；優先取件不代表當日修復。` : '';
             const paid = normalizeMoney(state.paidAmount);
-            $('previous-quote').textContent = state.previousQuoteId ? `前版單號：YJ-${state.previousQuoteId}` : '';
+            $('previous-quote').textContent = state.previousQuoteId ? `前版單號：${formatQuoteId(state.previousQuoteId)}` : '';
             $('payment-summary').textContent = modern ? `已付 $${paid.toLocaleString()}；${paid > result.total ? '溢付待核對' : '待付'} $${Math.abs(result.total-paid).toLocaleString()}${result.pending.length ? '（依目前小計）' : ''}` : '';
             $('cost-assessment').textContent = assessLogistics(state);
             $('actual-cost-review').textContent = reviewLogistics(state).message;

@@ -2,6 +2,12 @@ export function normalizeMoney(value) {
     const number = Number(value);
     return Number.isFinite(number) ? Math.min(1000000, Math.max(0, Math.trunc(number))) : 0;
 }
+// Customer-facing reference; the full record ID remains unchanged for storage and synchronization.
+export function formatQuoteId(id) {
+    let hash=14695981039346656037n;
+    for(const byte of new TextEncoder().encode(String(id).toUpperCase())) hash=BigInt.asUintN(64,(hash^BigInt(byte))*1099511628211n);
+    return 'YJ-'+hash.toString(36).toUpperCase().padStart(13,'0');
+}
 export function quoteDate(date = new Date()) {
     return new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
 }
@@ -37,7 +43,7 @@ export function calculateQuote(state, config) {
     const lines = [
         { key: 'base', label: repaired ? '維修費（不另加檢測費）' : '檢測基本費', amount: basePrice },
         { key: 'transport', label: pickup ? '收送費（含約定取件及回送）' : '到府出勤費', amount: transPrice },
-        { key: 'urgency', label: '檢修優先／假日處理費（不含優先收送）', amount: urgPrice },
+        { key: 'urgency', label: config.URGENCY[state.urgency].label, amount: urgPrice },
         { key: 'source', label: modern ? '購於永捷檢測折抵' : '客戶折抵額', amount: discPrice },
         { key: 'manufacturer', label: '原廠費用加項', amount: normalizeMoney(state.manufacturerFee) },
         { key: 'other', label: '其他加項費', amount: normalizeMoney(state.otherFee) },
@@ -171,7 +177,7 @@ export function mergeRecords(existing, incoming, limit = 200) {
 
 export function matchesRecord(record, query = '', status = '') {
     if (status && (record.state.status || 'DRAFT') !== status) return false;
-    const text = [record.state.id, record.state.customerName, record.state.deviceModel, record.state.staffName,
+    const text = [record.state.id, 'YJ-'+record.state.id, formatQuoteId(record.state.id), record.state.customerName, record.state.deviceModel, record.state.staffName,
         record.state.department, record.problem, record.timestamp].join(' ').toLocaleLowerCase();
     return query.trim().toLocaleLowerCase().split(/\s+/).every(term => text.includes(term));
 }
@@ -192,4 +198,40 @@ export function parseBackup(raw, config, limit = 200) {
         }
     });
     return records;
+}
+
+export function generateQuoteSummary(dataState, problemText, config, dateStr) {
+    const calculation = calculateQuote(dataState, config);
+    let summary = `【永捷系統科技 - 檢測報價摘要】\n`;
+    summary += `----------------------------\n`;
+    summary += `報價單號：${formatQuoteId(dataState.id)}\n`;
+    summary += `報價日期：${dateStr}\n`;
+    if (dataState.customerName) summary += `客戶稱呼：${dataState.customerName}\n`;
+    if (dataState.deviceModel) summary += `設備型號：${dataState.deviceModel}\n`;
+    summary += `處理狀態：${QUOTE_STATUS[dataState.status] || '草稿'}\n`;
+    summary += `報價人員：${dataState.staffName || '--'} (${dataState.department})\n`;
+    summary += `設備種類：${config.INSPECTION[dataState.device].label}\n`;
+    summary += `服務方式：${SERVICE_LABELS[dataState.service]}\n`;
+    summary += `優先等級：${config.URGENCY[dataState.urgency].label}\n`;
+    summary += `保固狀態：${dataState.warranty === 'IN' ? '保固內' : '已過保'}\n`;
+    summary += `設備來源：${config.SOURCE[dataState.source].label}\n`;
+
+    if (problemText) {
+        summary += `故障描述：${problemText}\n`;
+    }
+
+    summary += `----------------------------\n`;
+    summary += `費用細目：\n`;
+    for (const line of calculation.lines) {
+        if (line.amount || line.key === 'base') summary += `- ${line.label}：$${line.amount.toLocaleString()}\n`;
+    }
+    if (dataState.service === 'PICKUP') summary += `收送方案：${LOGISTICS_LABELS[dataState.logisticsPlan]}\n取件及回送時段：${dataState.logisticsWindow || '待確認'}\n※ 收送不含現場拆裝檢修；優先取件不代表當日修復。\n`;
+    for (const warning of calculation.pending) summary += `※ 待確認：${warning}\n`;
+    summary += `----------------------------\n`;
+    summary += `${calculation.pending.length ? '目前項目小計（尚非完整報價）' : '預估總額'}：NT$ ${calculation.total.toLocaleString('zh-TW')}\n`;
+    if (dataState.schemaVersion === 2) summary += `已付：$${normalizeMoney(dataState.paidAmount).toLocaleString()}；${normalizeMoney(dataState.paidAmount) > calculation.total ? '溢付待核對' : '待付'}：$${Math.abs(calculation.total-normalizeMoney(dataState.paidAmount)).toLocaleString()}${calculation.pending.length ? '（依目前小計）' : ''}\n`;
+    summary += `----------------------------\n`;
+    summary += `※ 檢測階段不含零件耗材；維修階段依雙方確認範圍計費。新增費用須先取得客戶同意。`;
+
+    return summary;
 }

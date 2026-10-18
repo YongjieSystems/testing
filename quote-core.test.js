@@ -1,8 +1,29 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { normalizeMoney, quoteTotal, readHistory, escapeHTML, quoteDate } from './quote-core.js';
+import { formatQuoteId, generateQuoteSummary } from './quote-core.js';
+import { CONFIG as productionConfig } from './pricing-config.js';
 const config = { INSPECTION: { DESKTOP: { label: 'PC', price: 500 } }, TRANSPORT: { ZONE_A: { label: 'A', price: 300 } }, URGENCY: { NORMAL: { label: 'normal', price: 0 } }, SOURCE: { OWN: { label: 'own', price: -200 } } };
 const state = { device: 'DESKTOP', zone: 'ZONE_A', urgency: 'NORMAL', source: 'OWN', service: 'ON_SITE', warranty: 'OUT', id: 'test' };
+test('short quote references are stable, case independent and retain differences at the end of an ID',()=>{
+ const id='c6f4759d-169d-4e23-bcae-e03ca12e5aaa';
+ assert.match(formatQuoteId(id),/^YJ-[0-9A-Z]{13}$/);
+ assert.equal(formatQuoteId(id),formatQuoteId(id.toUpperCase()));
+ assert.notEqual(formatQuoteId(id),formatQuoteId(id.slice(0,-1)+'b'));
+ const record={state:{...state,id}};
+ assert.ok(matchesRecord(record,formatQuoteId(id)));
+ assert.ok(matchesRecord(record,id));
+ assert.ok(matchesRecord(record,'YJ-'+id));
+});
+test('customer summary omits previous references and uses the selected urgency name and fee',()=>{
+ const input={...state,schemaVersion:2,service:'IN_STORE',urgency:'EXPRESS',source:'OTHER',status:'DRAFT',department:'維修服務部',previousQuoteId:'previous-private-id'};
+ const summary=generateQuoteSummary(input,'測試故障',productionConfig,'2026-10-18');
+ assert.match(summary,/報價單號：YJ-[0-9A-Z]{13}/);
+ assert.doesNotMatch(summary,/前版單號|previous-private-id/);
+ assert.match(summary,/檢修急件（時限另約）：\$500/);
+ assert.match(generateQuoteSummary({...input,urgency:'EMERGENCY'},'',productionConfig,'2026-10-18'),/假日檢修：\$800/);
+ assert.equal(calculateQuote({...input,urgency:'EMERGENCY'},productionConfig).lines.find(line=>line.key==='urgency').label,'假日檢修');
+});
 test('money rejects negatives, fractions, non-finite values and caps excessive values', () => {
   for (const [input, expected] of [[-100,0],['',0],['1e309',0],['abc',0],[1.9,1],[2000000,1000000]]) assert.equal(normalizeMoney(input),expected);
 });

@@ -109,6 +109,7 @@
         @media print { #mobile-quote-bar { display:none !important; } }
     </style>
 
+    <link rel="stylesheet" href="./interface.css?v=1.7.0">
 </head>
 <body class="antialiased">
 
@@ -120,7 +121,7 @@
                     <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" /></svg>
                 </div>
                 <div>
-                    <h1 class="text-xl md:text-2xl font-black tracking-tight">永捷系統科技 <span class="text-blue-400 font-medium">檢測費估價程式 <small class="text-xs">v1.6.0</small></span></h1>
+                    <h1 class="text-xl md:text-2xl font-black tracking-tight">永捷系統科技 <span class="text-blue-400 font-medium">檢測費估價程式 <small class="text-xs">v1.7.0</small></span></h1>
                 </div>
             </div>
             <div class="hidden md:block text-right">
@@ -353,7 +354,7 @@
                                     <div class="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600 shadow-sm">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                     </div>
-                                    <span class="text-base font-bold text-orange-600">檢修優先／假日處理費</span>
+                                    <span id="urgency-fee-label" class="text-base font-bold text-orange-600">檢修優先／假日處理費</span>
                                 </div>
                                 <span id="display-urgency" class="text-lg font-black text-orange-600">+$0</span>
                             </div>
@@ -656,7 +657,7 @@
     </main>
     <div id="mobile-quote-bar" class="no-print"><div><small id="mobile-total-caption">預估總額</small><br><strong>NT$ <span id="mobile-total">500</span></strong></div><button id="mobile-view-btn" type="button">看明細</button><button id="mobile-save-btn" type="button">保存報價</button></div>
 
-    <script type="module" src="./app.js?v=1.6.0"></script>
+    <script type="module" src="./app.js?v=1.7.0"></script>
 
 </body>
 </html>

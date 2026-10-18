@@ -1,6 +1,6 @@
 import { createClient } from './vendor/supabase.js?v=1.4.1';
-import { TEAM_CONFIG } from './team-config.js?v=1.6.0';
-import { TEAM_ROLES, teamPayload, teamError, localToIso, isoToTaipeiInput, teamFetch } from './team-core.js?v=1.6.0';
+import { TEAM_CONFIG } from './team-config.js?v=1.7.0';
+import { TEAM_ROLES, teamPayload, teamError, localToIso, isoToTaipeiInput, teamFetch } from './team-core.js?v=1.7.0';
 
 export function initTeamWorkspace({getRecord,onOpenRecord,onSaved}) {
     const $=id=>document.getElementById(id);
