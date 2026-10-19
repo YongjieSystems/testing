@@ -109,7 +109,8 @@
         @media print { #mobile-quote-bar { display:none !important; } }
     </style>
 
-    <link rel="stylesheet" href="./interface.css?v=1.8.0">
+    <link rel="stylesheet" href="./interface.css?v=1.8.1">
+<style>#customer-print-only{display:none}@media print{body>*{display:none!important}#customer-print-only{display:block!important;padding:20px}#customer-print-only pre{font:16px/1.8 "Microsoft JhengHei",sans-serif;white-space:pre-wrap;overflow-wrap:anywhere}}</style>
 </head>
 <body class="antialiased">
 
@@ -121,7 +122,7 @@
                     <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" /></svg>
                 </div>
                 <div>
-                    <h1 class="text-xl md:text-2xl font-black tracking-tight">永捷系統科技 <span class="text-blue-400 font-medium">檢測費估價程式 <small class="text-xs">v1.8.0</small></span></h1>
+                    <h1 class="text-xl md:text-2xl font-black tracking-tight">永捷系統科技 <span class="text-blue-400 font-medium">檢測費估價程式 <small class="text-xs">v1.8.1</small></span></h1>
                 </div>
             </div>
             <div class="hidden md:block text-right">
@@ -468,7 +469,7 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 no-print">
                     <button type="button" id="print-btn" onclick="handlePrint()" class="bg-slate-800 text-white py-4.5 px-6 rounded-2xl font-bold hover:bg-black transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-3">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-                        列印正式報價單
+                        列印客戶版報價
                     </button>
                     <button type="button" id="copy-btn" class="bg-white border-2 border-slate-200 text-slate-700 py-4.5 px-6 rounded-2xl font-bold hover:border-blue-600 hover:text-blue-700 transition-all active:scale-[0.98] flex items-center justify-center gap-3">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
@@ -659,7 +660,8 @@
     </main>
     <div id="mobile-quote-bar" class="no-print"><div><small id="mobile-total-caption">預估總額</small><br><strong>NT$ <span id="mobile-total">500</span></strong></div><button id="mobile-view-btn" type="button">看明細</button><button id="mobile-save-btn" type="button">保存報價</button></div>
 
-    <script type="module" src="./app.js?v=1.8.0"></script>
+    <script type="module" src="./app.js?v=1.8.1"></script>
 
+<section id="customer-print-only" aria-label="客戶報價"><pre id="customer-print-text"></pre></section>
 </body>
 </html>

@@ -181,3 +181,13 @@ test('actual costs, notes and case identity survive backup import without changi
   const [older]=readHistory(JSON.stringify([saved('old-pickup',{...modern,windowConfirmed:undefined})]),config);
   assert.equal(older.state.windowConfirmed,false); assert.equal(older.state.actualMinutes,'');
 });
+
+test('compact customer inspection text keeps fees and pickup conditions without internal metadata',()=>{
+ const input={...state,id:'customer-test',schemaVersion:2,service:'PICKUP',source:'OTHER',logisticsPlan:'PRIORITY',logisticsFee:'300',feeConfirmed:true,logisticsWindow:'週一取件／週三回送',windowConfirmed:true,staffName:'PRIVATE_STAFF',department:'PRIVATE_DEPT',actualNotes:'PRIVATE_COST',hourlyCost:'987',paidAmount:'200'};
+ const t=generateQuoteSummary(input,'PRIVATE_TECHNICIAN_NOTES',productionConfig,'2026-10-20');
+ assert.match(t,/收送費.*\$300/);assert.match(t,/週一取件／週三回送/);assert.match(t,/已收紀錄：\$200/);assert.match(t,/含稅/);assert.match(t,/新增費用須先取得同意/);assert.doesNotMatch(t,/PRIVATE_|987|報價人員|設備來源|優先等級|處理狀態/);
+});
+test('customer pending pickup is never presented as free or confirmed scheduling',()=>{
+ const t=generateQuoteSummary({...state,schemaVersion:2,service:'PICKUP',logisticsPlan:'SCHEDULED',logisticsFee:'',logisticsWindow:''},'',productionConfig,'2026-10-20');
+ assert.match(t,/尚有待確認項目/);assert.match(t,/未計入不代表免費/);assert.match(t,/取件及回送時段尚未確認/);assert.doesNotMatch(t,/已收紀錄/);
+});

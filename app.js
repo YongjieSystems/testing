@@ -1,10 +1,10 @@
-import { initTeamWorkspace } from './team-workspace.js?v=1.8.0';
-import { initTraining } from './training.js?v=1.8.0';
-import { CONFIG } from './pricing-config.js?v=1.8.0';
-import { WARRANTY_DATA, WARRANTY_KINDS, WARRANTY_ACTIONS } from './warranty-data.js?v=1.8.0';
-import { formatQuoteId, generateQuoteSummary, normalizeMoney, calculateQuote, assessLogistics, reviewLogistics, summarizeLogistics, ACTUAL_COST_FIELDS, SERVICE_LABELS, LOGISTICS_LABELS, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_STATUS, parseBackup, mergeRecords, upsertRecord, matchesRecord } from './quote-core.js?v=1.8.0';
+import { initTeamWorkspace } from './team-workspace.js?v=1.8.1';
+import { initTraining } from './training.js?v=1.8.1';
+import { CONFIG } from './pricing-config.js?v=1.8.1';
+import { WARRANTY_DATA, WARRANTY_KINDS, WARRANTY_ACTIONS } from './warranty-data.js?v=1.8.1';
+import { formatQuoteId, generateQuoteSummary, normalizeMoney, calculateQuote, assessLogistics, reviewLogistics, summarizeLogistics, ACTUAL_COST_FIELDS, SERVICE_LABELS, LOGISTICS_LABELS, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_STATUS, parseBackup, mergeRecords, upsertRecord, matchesRecord } from './quote-core.js?v=1.8.1';
 
-import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from './driver-data.js?v=1.8.0';
+import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from './driver-data.js?v=1.8.1';
 
         const newFields = () => ({ schemaVersion: 2, billingStage: 'DIAGNOSIS', logisticsPlan: 'DEDICATED', logisticsFee: '', feeConfirmed: false, routeConfirmed: false, windowConfirmed: false, actualConfirmed: false, actualMinutes: '', actualEngineerMinutes: '', actualHourlyCost: '', actualTravelCost: '', actualOtherCost: '', actualRevenue: '', actualNotes: '', logisticsWindow: '', repairFee: '', repairConfirmed: false, paidAmount: '', logisticsMinutes: '', hourlyCost: '', travelCost: '', logisticsOtherCost: '', targetMargin: '' });
         let state = { ...newFields(),
@@ -286,7 +286,7 @@ import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from
             const dateStr = record.state.date || record.timestamp.split(' ')[0];
             const summary = generateSummary(record.state, record.problem, record.total, dateStr);
 
-            navigator.clipboard.writeText(summary).then(() => {
+            ($('customer-print-text').textContent=summary, navigator.clipboard.writeText(summary)).then(() => {
                 const originalText = btnElement.innerText;
                 const originalClass = btnElement.className;
 
@@ -523,7 +523,7 @@ import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from
             UI.dispWarrantyText.innerText = state.warranty === 'IN' ? '保固內' : '已過保';
         }
 
-        window.handlePrint = () => { if (addToHistory()) window.print(); };
+        window.handlePrint = () => { if (addToHistory()) { $('customer-print-text').textContent=generateSummary(state,UI.problemInput.value.trim(),null,state.date); window.print(); } };
         window.switchTab = (tabId) => {
             ['quote', 'warranty', 'drivers', 'team', 'training'].forEach(s => {
                 const el = $(`section-${s}`);
@@ -546,7 +546,7 @@ import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from
             const total = UI.dispTotal.innerText;
             const summary = generateSummary(state, problem, total, dateStr);
 
-            navigator.clipboard.writeText(summary).then(() => {
+            ($('customer-print-text').textContent=summary, navigator.clipboard.writeText(summary)).then(() => {
                 const oldHTML = UI.btnCopy.innerHTML;
                 UI.btnCopy.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg> 已複製內容`;
                 setTimeout(() => UI.btnCopy.innerHTML = oldHTML, 2000);

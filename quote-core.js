@@ -201,37 +201,22 @@ export function parseBackup(raw, config, limit = 200) {
 }
 
 export function generateQuoteSummary(dataState, problemText, config, dateStr) {
-    const calculation = calculateQuote(dataState, config);
-    let summary = `【永捷系統科技 - 檢測報價摘要】\n`;
-    summary += `----------------------------\n`;
-    summary += `報價單號：${formatQuoteId(dataState.id)}\n`;
-    summary += `報價日期：${dateStr}\n`;
-    if (dataState.customerName) summary += `客戶稱呼：${dataState.customerName}\n`;
-    if (dataState.deviceModel) summary += `設備型號：${dataState.deviceModel}\n`;
-    summary += `處理狀態：${QUOTE_STATUS[dataState.status] || '草稿'}\n`;
-    summary += `報價人員：${dataState.staffName || '--'} (${dataState.department})\n`;
-    summary += `設備種類：${config.INSPECTION[dataState.device].label}\n`;
-    summary += `服務方式：${SERVICE_LABELS[dataState.service]}\n`;
-    summary += `優先等級：${config.URGENCY[dataState.urgency].label}\n`;
-    summary += `保固狀態：${dataState.warranty === 'IN' ? '保固內' : '已過保'}\n`;
-    summary += `設備來源：${config.SOURCE[dataState.source].label}\n`;
-
-    if (problemText) {
-        summary += `故障描述：${problemText}\n`;
-    }
-
-    summary += `----------------------------\n`;
-    summary += `費用細目：\n`;
-    for (const line of calculation.lines) {
-        if (line.amount || line.key === 'base') summary += `- ${line.label}：$${line.amount.toLocaleString()}\n`;
-    }
-    if (dataState.service === 'PICKUP') summary += `收送方案：${LOGISTICS_LABELS[dataState.logisticsPlan]}\n取件及回送時段：${dataState.logisticsWindow || '待確認'}\n※ 收送不含現場拆裝檢修；優先取件不代表當日修復。\n`;
-    for (const warning of calculation.pending) summary += `※ 待確認：${warning}\n`;
-    summary += `----------------------------\n`;
-    summary += `${calculation.pending.length ? '目前項目小計（尚非完整報價）' : '預估總額'}：NT$ ${calculation.total.toLocaleString('zh-TW')}\n`;
-    if (dataState.schemaVersion === 2) summary += `已付：$${normalizeMoney(dataState.paidAmount).toLocaleString()}；${normalizeMoney(dataState.paidAmount) > calculation.total ? '溢付待核對' : '待付'}：$${Math.abs(calculation.total-normalizeMoney(dataState.paidAmount)).toLocaleString()}${calculation.pending.length ? '（依目前小計）' : ''}\n`;
-    summary += `----------------------------\n`;
-    summary += `※ 檢測階段不含零件耗材；維修階段依雙方確認範圍計費。新增費用須先取得客戶同意。`;
-
-    return summary;
+ const c=calculateQuote(dataState,config),paid=normalizeMoney(dataState.paidAmount);
+ return [
+ '【永捷檢測報價草稿】',
+ '報價單號：'+formatQuoteId(dataState.id),
+ ...(dateStr?['日期：'+dateStr]:[]),
+ ...(dataState.customerName?['客戶：'+dataState.customerName]:[]),
+ '設備：'+(dataState.deviceModel || config.INSPECTION[dataState.device].label),
+ '服務：'+SERVICE_LABELS[dataState.service],
+ '',
+ ...c.lines.filter(l=>l.amount||l.key==='base').map(l=>(l.key==='special'?'優惠折讓':l.label)+'：'+(l.amount<0?'−':'')+'$'+Math.abs(l.amount).toLocaleString('zh-TW')),
+ (c.pending.length?'目前小計（尚有待確認項目）':'預估合計')+'：NT$ '+c.total.toLocaleString('zh-TW')+'（含稅）',
+ ...(paid>0?['已收紀錄：$'+paid.toLocaleString()+'；'+(paid>c.total?'溢付待核對':'預估待付')+'：$'+Math.abs(c.total-paid).toLocaleString()]:[]),
+ ...(dataState.service==='PICKUP'?['','收送：'+LOGISTICS_LABELS[dataState.logisticsPlan],'取件／回送：'+(dataState.logisticsWindow||'待確認'),'收送不含現場拆裝檢修；優先取件不代表當日修復。']:[]),
+ ...(c.pending.length?['待確認：'+c.pending.join('；')]:[]),
+ '',
+ '檢測不含零件耗材；不維修仍收約定檢測及收送／出勤費。',
+ '維修及檢測費折抵另依確認報價；新增費用須先取得同意。',
+ ].join('\n');
 }
