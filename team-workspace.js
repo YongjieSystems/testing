@@ -1,6 +1,6 @@
 import { createClient } from './vendor/supabase.js?v=1.4.1';
-import { TEAM_CONFIG } from './team-config.js?v=1.7.0';
-import { TEAM_ROLES, teamPayload, teamError, localToIso, isoToTaipeiInput, teamFetch } from './team-core.js?v=1.7.0';
+import { TEAM_CONFIG } from './team-config.js?v=1.7.1';
+import { TEAM_ROLES, teamPayload, teamError, localToIso, isoToTaipeiInput, teamFetch } from './team-core.js?v=1.7.1';
 
 export function initTeamWorkspace({getRecord,onOpenRecord,onSaved}) {
     const $=id=>document.getElementById(id);
@@ -16,10 +16,11 @@ export function initTeamWorkspace({getRecord,onOpenRecord,onSaved}) {
     function action(button,fn) { button.addEventListener('click',()=>run(fn)); }
     async function run(fn) {
         if(busy) return; busy=true;
-        document.querySelectorAll('#section-team button').forEach(button=>button.disabled=true);
+        const disabledBefore = new Map([...document.querySelectorAll('#section-team button')].map(button=>[button,button.disabled]));
+        for(const button of disabledBefore.keys()) button.disabled=true;
         status('正在處理，請稍候…');
         try { await fn(); } catch(error) { status(teamError(error)); }
-        finally { if($('team-status').textContent==='正在處理，請稍候…') status('操作已完成。'); busy=false; document.querySelectorAll('#section-team button').forEach(button=>button.disabled=false); }
+        finally { if($('team-status').textContent==='正在處理，請稍候…') status('操作已完成。'); busy=false; for(const [button,wasDisabled] of disabledBefore) if(button.isConnected) button.disabled=wasDisabled; }
     }
     function node(tag,text,className='') { const element=document.createElement(tag); if(text!==undefined) element.textContent=String(text); element.className=className; return element; }
     function button(parent,label,fn) { const element=node('button',label,'p-2 rounded-lg bg-blue-100 text-blue-900 text-sm font-bold'); element.type='button'; action(element,fn); parent.append(element); return element; }
