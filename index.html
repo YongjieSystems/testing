@@ -109,7 +109,7 @@
         @media print { #mobile-quote-bar { display:none !important; } }
     </style>
 
-    <link rel="stylesheet" href="./interface.css?v=1.7.1">
+    <link rel="stylesheet" href="./interface.css?v=1.8.0">
 </head>
 <body class="antialiased">
 
@@ -121,7 +121,7 @@
                     <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" /></svg>
                 </div>
                 <div>
-                    <h1 class="text-xl md:text-2xl font-black tracking-tight">永捷系統科技 <span class="text-blue-400 font-medium">檢測費估價程式 <small class="text-xs">v1.7.1</small></span></h1>
+                    <h1 class="text-xl md:text-2xl font-black tracking-tight">永捷系統科技 <span class="text-blue-400 font-medium">檢測費估價程式 <small class="text-xs">v1.8.0</small></span></h1>
                 </div>
             </div>
             <div class="hidden md:block text-right">
@@ -137,7 +137,7 @@
             <button type="button" onclick="switchTab('warranty')" id="tab-warranty" class="flex-1 min-w-[100px] py-3 px-4 rounded-xl font-bold transition-all tab-inactive">保固查詢</button>
             <button type="button" onclick="switchTab('drivers')" id="tab-drivers" class="flex-1 min-w-[100px] py-3 px-4 rounded-xl font-bold transition-all tab-inactive">驅動程式</button>
             <button type="button" onclick="switchTab('team')" id="tab-team" class="flex-1 min-w-[100px] py-3 px-4 rounded-xl font-bold transition-all tab-inactive">團隊作業</button>
-            <button type="button" onclick="switchTab('training')" id="tab-training" class="flex-1 min-w-[100px] py-3 px-4 rounded-xl font-bold transition-all tab-inactive">教育訓練</button>
+            <button type="button" onclick="switchTab('training')" id="tab-training" class="flex-1 min-w-[100px] py-3 px-4 rounded-xl font-bold transition-all tab-inactive">操作說明／教育訓練</button>
         </div>
     </nav>
 
@@ -504,7 +504,7 @@
         <section id="section-team" class="hidden no-print mb-20 space-y-5">
             <div class="bg-white rounded-2xl p-6 border space-y-4">
                 <h2 class="text-2xl font-black">團隊作業</h2>
-                <p><a href="https://yongjiesystems.github.io/Maintenance/?v=2.2.0" target="_blank" rel="noopener noreferrer" class="text-blue-700 underline">開啟維修報價、檢測折抵與主管核准</a></p>
+                <p><a href="https://yongjiesystems.github.io/Maintenance/?v=2.3.0" target="_blank" rel="noopener noreferrer" class="text-blue-700 underline">開啟維修報價、檢測折抵與主管核准</a></p>
                 <p class="text-sm text-slate-600">本機估價不會自動上傳。登入後可明確同步目前報價；共用資料以團隊版本及主管核准紀錄為準。員工只能讀取後端允許的資料。</p>
                 <p id="team-user" class="font-bold">尚未登入</p>
                 <div class="flex flex-wrap gap-3"><button type="button" id="team-refresh" class="p-3 bg-blue-100 rounded-xl">更新團隊資料</button><button type="button" id="team-signout" class="p-3 bg-slate-200 rounded-xl">登出此分頁</button></div>
@@ -638,17 +638,18 @@
         <div id="section-training" class="hidden space-y-6 mb-20">
             <section class="bg-white border rounded-[2rem] p-6 md:p-10 space-y-4">
                 <h2 class="text-2xl font-black">教育訓練與操作指引</h2>
-                <p class="leading-7">第一次使用請從「新人基本操作」開始，再依工作閱讀客服收送或主管流程。每一步都有完成檢查，讀完可勾選並前往對應功能。</p>
+                <p class="leading-7">第一次使用請從「新人基本操作」開始，再閱讀「檢測 → 維修 → 收送完整流程」，並依工作閱讀客服收送或主管流程。每一步都有完成檢查，讀完可勾選並前往對應功能。</p>
                 <p class="text-sm text-amber-900 leading-7">此處是教學，不是測試環境。「前往」只切換頁面，不會替你建立、同步、核准或完成案件。實作前請主管安排明確標示的練習案件，不要用真實客戶案件隨意測試。</p>
-                <label class="block font-bold">選擇學習路徑<select id="training-track" class="block w-full md:w-auto border rounded-xl p-3 mt-2"><option value="basic">新人基本操作</option><option value="dispatch">客服與收送流程</option><option value="manager">主管管理與成本</option></select></label>
+                <label class="block font-bold">選擇學習路徑<select id="training-track" class="block w-full md:w-auto border rounded-xl p-3 mt-2"><option value="basic">新人基本操作</option><option value="integration">檢測 → 維修 → 收送完整流程</option><option value="dispatch">客服與收送流程</option><option value="manager">主管管理與成本</option></select></label>
                 <p id="training-progress" role="status" class="font-bold text-blue-800"></p>
                 <p id="training-storage" role="status" class="text-xs text-slate-500">學習紀錄只存在此瀏覽器，不會送到主管或雲端。勾選不代表取得操作權限或主管已核准。</p>
-                <a href="./manuals/employee-manual-v1.5.0.pdf" target="_blank" rel="noopener noreferrer" class="inline-block bg-blue-700 text-white rounded-xl p-3 font-bold">開啟完整操作手冊 PDF</a>
-                <p class="text-xs text-slate-500">手冊為 v1.5.0 主流程，共 18 頁；本頁新增教學步驟，不更改原有估價與團隊規則。</p>
+                <a href="./manuals/employee-manual-v1.5.0.pdf" target="_blank" rel="noopener noreferrer" class="inline-block bg-blue-700 text-white rounded-xl p-3 font-bold">開啟舊版基礎手冊 PDF</a>
+                <p class="text-xs text-slate-500">PDF 為 v1.5.0 舊版基礎流程（18 頁），不含新版維修連結與折抵；新版完整流程請以本頁及維修程式內操作說明為準。</p>
             </section>
+            <p class="bg-blue-50 border rounded-xl p-4 leading-7">跨程式順序：檢測同步 → 維修連結原案 → 維修與折抵同步 → 檢測及維修分別核准 → 發布收送路線 → 交接與收款核對。<br><a href="https://yongjiesystems.github.io/Maintenance/?v=2.3.0" target="_blank" rel="noopener noreferrer" class="text-blue-800 underline font-bold">開啟維修估價程式（按「操作說明／教育訓練」查看維修端步驟）</a></p>
             <div id="training-steps" class="space-y-4"></div>
             <section class="bg-white border rounded-[2rem] p-6 md:p-10 space-y-4">
-                <h2 class="text-xl font-bold">三題自我練習</h2>
+                <h2 class="text-xl font-bold">五題自我練習</h2>
                 <p class="text-sm">先選答案，再看說明。答案與成績不會送到主管，也不會更改任何案件。</p>
                 <div id="training-quiz" class="space-y-5"></div>
                 <button id="training-check-quiz" type="button" class="bg-blue-700 text-white rounded-xl p-3 font-bold">檢查答案與說明</button>
@@ -658,7 +659,7 @@
     </main>
     <div id="mobile-quote-bar" class="no-print"><div><small id="mobile-total-caption">預估總額</small><br><strong>NT$ <span id="mobile-total">500</span></strong></div><button id="mobile-view-btn" type="button">看明細</button><button id="mobile-save-btn" type="button">保存報價</button></div>
 
-    <script type="module" src="./app.js?v=1.7.1"></script>
+    <script type="module" src="./app.js?v=1.8.0"></script>
 
 </body>
 </html>
