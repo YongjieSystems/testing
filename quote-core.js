@@ -203,7 +203,7 @@ export function parseBackup(raw, config, limit = 200) {
 export function generateQuoteSummary(dataState, problemText, config, dateStr) {
  const c=calculateQuote(dataState,config),paid=normalizeMoney(dataState.paidAmount);
  return [
- '【永捷檢測報價草稿】',
+ '【永捷檢測報價】',
  '報價單號：'+formatQuoteId(dataState.id),
  ...(dateStr?['日期：'+dateStr]:[]),
  ...(dataState.customerName?['客戶：'+dataState.customerName]:[]),

@@ -19,7 +19,8 @@ test('customer summary omits previous references and uses the selected urgency n
  const input={...state,schemaVersion:2,service:'IN_STORE',urgency:'EXPRESS',source:'OTHER',status:'DRAFT',department:'維修服務部',previousQuoteId:'previous-private-id'};
  const summary=generateQuoteSummary(input,'測試故障',productionConfig,'2026-10-18');
  assert.match(summary,/報價單號：YJ-[0-9A-Z]{13}/);
- assert.doesNotMatch(summary,/前版單號|previous-private-id/);
+ assert.ok(summary.startsWith("【永捷檢測報價】\n"));
+ assert.doesNotMatch(summary,/草稿|前版單號|previous-private-id/);
  assert.match(summary,/檢修急件（時限另約）：\$500/);
  assert.match(generateQuoteSummary({...input,urgency:'EMERGENCY'},'',productionConfig,'2026-10-18'),/假日檢修：\$800/);
  assert.equal(calculateQuote({...input,urgency:'EMERGENCY'},productionConfig).lines.find(line=>line.key==='urgency').label,'假日檢修');
