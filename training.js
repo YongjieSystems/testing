@@ -6,9 +6,9 @@ const tracks = {
         ['保存與交付報價','選正確處理狀態，按「保存報價」。本頁輸出是客戶精簡草稿，複製或列印前核對客戶、設備、費用及收送約定；格式精簡不代表已正式核准。','看到保存成功提示，並在本機歷史找到該案。','quote'],
         ['查詢原廠保固','選品牌後看入口類型，再前往原廠輸入序號。型號條款不是個別機器到期日；查不到不等於過保。','在案件備註記下查詢日期與結論，估價頁保固狀態需自行確認。','warranty'],
         ['找正確驅動並備份','驅動中心先選品牌，到原廠核對完整型號及作業系統再下載。每日依公司安排匯出報價備份，妥善保存。','知道驅動入口在哪，也知道本機備份不能取代完整雲端備份。','drivers'],
-        ['複製客戶精簡版','按「複製文字摘要」，看到已複製提示後，貼到 LINE、郵件或文件，貼上後再核對一次。精簡版保留費用、含稅合計、折抵及收送條件；沒有發生的費用不列。','故障現象會完整帶出；員工姓名、部門及內部成本不會帶出，故障欄請勿填入不宜提供客戶的內部資訊；不要另外把內部畫面截圖當客戶報價。','quote'],
-        ['列印客戶精簡版','按「列印客戶版報價」，在瀏覽器列印預覽核對客戶與金額。要電子檔可在目的地選「另存為 PDF」，再依公司方式保存及交付。','列印只顯示客戶精簡文字，內部欄位不會印出。匯出備份、原始資料備援是內部資料，不能當客戶報價寄出。','quote'],
-        ['分清草稿與正式報價','檢測頁的複製及列印都標示草稿；即使手動選「已報價」或「客戶同意」，也不代表完成團隊主管核准。正式維修報價請連結原檢測案件，完成維修同步與核准，再由維修團隊頁輸出。','保存、同步、客戶同意、主管核准是不同步驟。檢測團隊已核准，也不會把本機檢測輸出改成正式維修報價。','maintenance'],
+        ["先預覽，再複製客戶版", "填好資料後往下展開「客戶報價預覽」。依序核對服務內容、費用明細及收送約定；故障現象會完整帶出。按「複製文字摘要」，看到「已複製內容」後貼到LINE、郵件或文件，再核對一次才交付。", "預覽不會保存或同步。故障欄請填適合給客戶看的文字；待確認不代表免費，內部成本、姓名與部門不帶出。", "quote"],
+        ["列印或另存客戶報價PDF", "先展開「客戶報價預覽」核對內容，再按「列印客戶版報價」。在瀏覽器列印預覽逐頁檢查，選印表機或「另存為PDF」；貼上文字、列印及預覽使用相同客戶摘要。", "手機請往下滑到報價區。案件備份及原始資料備援是內部資料，不是客戶報價PDF。", "quote"],
+        ["分清三套程式的交付方式", "檢測複製與列印仍標示草稿，手動選狀態不代表團隊核准。維修本機報價可依主管口頭確認直接交付；需要團隊已核准正式版時，連結原案、同步及核准後由維修團隊頁輸出。租賃正式版仍須團隊核准。", "保存、同步、客戶同意與主管核准是不同步驟；直接交付本機維修報價不會自動建立線上核准紀錄。", "maintenance"],
     ]},
     integration: {name:'檢測 → 維修 → 收送完整流程',steps:[
         ['先保存，再同步檢測案件','在檢測報價填好客戶、設備、故障、服務方式及約定費用，按「保存報價」。登入「團隊作業」後按「同步目前估價至團隊」，確認成功及版本。','只有本機歷史的紀錄不會出現在維修共用列表。請記下客戶與案件，避免連錯。','team'],
@@ -55,7 +55,7 @@ export function initTraining(switchTab) {
             const item=make('section','','border rounded-2xl p-5 space-y-3 bg-white');
             item.append(make('h3',`${i+1}. ${title}`,'font-bold text-lg'),make('p',text,'text-sm leading-7'),make('p','完成時檢查：'+check,'text-sm text-slate-600 leading-7'));
             const controls=make('div','','flex flex-wrap items-center gap-4');
-            const go=make(target==='maintenance'?'a':'button',`前往${{quote:'檢測報價',warranty:'保固查詢',drivers:'驅動程式',team:'團隊作業',maintenance:'維修估價程式'}[target]}`,'bg-blue-100 text-blue-800 p-3 rounded-xl font-bold');if(target==='maintenance'){go.href='https://yongjiesystems.github.io/Maintenance/?v=2.3.2';go.target='_blank';go.rel='noopener noreferrer';}else{go.type='button';go.onclick=()=>switchTab(target);}
+            const go=make(target==='maintenance'?'a':'button',`前往${{quote:'檢測報價',warranty:'保固查詢',drivers:'驅動程式',team:'團隊作業',maintenance:'維修估價程式'}[target]}`,'bg-blue-100 text-blue-800 p-3 rounded-xl font-bold');if(target==='maintenance'){go.href='https://yongjiesystems.github.io/Maintenance/?v=2.4.1';go.target='_blank';go.rel='noopener noreferrer';}else{go.type='button';go.onclick=()=>switchTab(target);}
             const label=make('label','我已閱讀並理解這一步','flex items-center gap-2 text-sm');const box=make('input','');box.type='checkbox';box.checked=done.has(`${key}-${i}`);box.setAttribute('aria-label',`${track.name} 第 ${i+1} 步 已閱讀並理解`);
             box.onchange=()=>{box.checked?done.add(`${key}-${i}`):done.delete(`${key}-${i}`);save();$('training-progress').textContent=`${track.name}：已自行確認 ${track.steps.filter((_,n)=>done.has(`${key}-${n}`)).length}／${track.steps.length} 步；全部路徑 ${done.size}／${valid.size} 步。`;};label.prepend(box);controls.append(go,label);item.append(controls);list.append(item);
         });
