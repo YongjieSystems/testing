@@ -209,6 +209,7 @@ export function generateQuoteSummary(dataState, problemText, config, dateStr) {
  ...(dataState.customerName?['客戶：'+dataState.customerName]:[]),
  '設備：'+(dataState.deviceModel || config.INSPECTION[dataState.device].label),
  '服務：'+SERVICE_LABELS[dataState.service],
+ ...(problemText?.trim()?['故障現象：'+problemText.trim()]:[]),
  '',
  ...c.lines.filter(l=>l.amount||l.key==='base').map(l=>(l.key==='special'?'優惠折讓':l.label)+'：'+(l.amount<0?'−':'')+'$'+Math.abs(l.amount).toLocaleString('zh-TW')),
  (c.pending.length?'目前小計（尚有待確認項目）':'預估合計')+'：NT$ '+c.total.toLocaleString('zh-TW')+'（含稅）',

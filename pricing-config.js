@@ -6,7 +6,7 @@ export const CONFIG = {
                 'LASER': { label: '雷射印表機', price: 400 },
                 'SERVER': { label: 'NAS/伺服器', price: 600 },
                 'NETWORK': { label: '弱電監控/網路', price: 600 },
-                'SOFTWARE': { label: '軟體及遠端', price: 450 },
+                'SOFTWARE': { label: '軟體及遠端', price: 500 },
                 'OTHER_IT': { label: '其他資訊產品', price: 400 },
                 'DELIVERY': { label: '設備代送費', price: 300 }
             },
