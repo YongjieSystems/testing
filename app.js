@@ -1,10 +1,10 @@
-import { initTeamWorkspace } from './team-workspace.js?v=1.8.4';
-import { initTraining } from './training.js?v=1.8.4';
-import { CONFIG } from './pricing-config.js?v=1.8.4';
-import { WARRANTY_DATA, WARRANTY_KINDS, WARRANTY_ACTIONS } from './warranty-data.js?v=1.8.4';
-import { formatQuoteId, generateQuoteSummary, normalizeMoney, calculateQuote, assessLogistics, reviewLogistics, summarizeLogistics, ACTUAL_COST_FIELDS, SERVICE_LABELS, LOGISTICS_LABELS, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_STATUS, parseBackup, mergeRecords, upsertRecord, matchesRecord } from './quote-core.js?v=1.8.4';
+import { initTeamWorkspace } from './team-workspace.js?v=1.9.0';
+import { initTraining } from './training.js?v=1.9.0';
+import { CONFIG } from './pricing-config.js?v=1.9.0';
+import { WARRANTY_DATA, WARRANTY_KINDS, WARRANTY_ACTIONS } from './warranty-data.js?v=1.9.0';
+import { formatQuoteId, generateQuoteSummary, normalizeMoney, calculateQuote, assessLogistics, reviewLogistics, summarizeLogistics, ACTUAL_COST_FIELDS, SERVICE_LABELS, LOGISTICS_LABELS, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_STATUS, parseBackup, mergeRecords, upsertRecord, matchesRecord } from './quote-core.js?v=1.9.0';
 
-import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from './driver-data.js?v=1.8.4';
+import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from './driver-data.js?v=1.9.0';
 
         const newFields = () => ({ schemaVersion: 2, billingStage: 'DIAGNOSIS', logisticsPlan: 'DEDICATED', logisticsFee: '', feeConfirmed: false, routeConfirmed: false, windowConfirmed: false, actualConfirmed: false, actualMinutes: '', actualEngineerMinutes: '', actualHourlyCost: '', actualTravelCost: '', actualOtherCost: '', actualRevenue: '', actualNotes: '', logisticsWindow: '', repairFee: '', repairConfirmed: false, paidAmount: '', logisticsMinutes: '', hourlyCost: '', travelCost: '', logisticsOtherCost: '', targetMargin: '' });
         let state = { ...newFields(),
@@ -142,7 +142,13 @@ import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from
             updateStaffDisplay(); // 初始化顯示
         }
 
+        function updateCustomerPreview() {
+            const preview=$('customer-summary-preview');
+            if(preview) preview.textContent=generateQuoteSummary(state,UI.problemInput.value,pricesFor(state),state.date);
+        }
+
         function updateProblemDisplay() {
+            updateCustomerPreview();
             const text = UI.problemInput.value.trim();
             if (text) {
                 UI.dispProblemContainer.classList.remove('hidden');
@@ -521,6 +527,7 @@ import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from
 
             UI.dispWarrantyIcon.className = `warranty-dot dot-${state.warranty === 'IN' ? 'green' : 'red'}`;
             UI.dispWarrantyText.innerText = state.warranty === 'IN' ? '保固內' : '已過保';
+            updateCustomerPreview();
         }
 
         window.handlePrint = () => { if (addToHistory()) { $('customer-print-text').textContent=generateSummary(state,UI.problemInput.value.trim(),null,state.date); window.print(); } };

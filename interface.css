@@ -72,3 +72,49 @@ button:disabled { opacity: .6; cursor: wait; }
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
 }
+
+/* Shared quotation workspace: readable inputs, quiet surfaces, clear customer output. */
+:root {--quote-ink:#172b47;--quote-muted:#52647d;--quote-line:#dce5ef;--quote-blue:#2459c4;--quote-font:"Microsoft JhengHei","PingFang TC","Noto Sans TC",system-ui,sans-serif;}
+@media screen {
+ body {font-family:var(--quote-font);color:var(--quote-ink);background:#f4f7fb;line-height:1.7;}
+ button,input,select,textarea {font-family:var(--quote-font);}
+ button {letter-spacing:0;font-weight:600;min-height:44px;border-radius:12px;transition:background-color .15s,border-color .15s;}
+ input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea {border-radius:12px;border-color:#ccd8e5;background:#fff;line-height:1.6;box-shadow:none;}
+ input:focus-visible,select:focus-visible,textarea:focus-visible {outline:3px solid #9bc2ff;outline-offset:2px;}
+ h1,h2,h3 {letter-spacing:-.02em;line-height:1.5;}
+ pre {font-family:var(--quote-font);white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.95;tab-size:2;}
+ .customer-preview {margin:16px 0;padding:18px 20px;background:#fff;border:1px solid var(--quote-line);border-radius:16px;color:var(--quote-ink);min-width:0;}
+ .customer-preview summary {cursor:pointer;font-weight:700;font-size:16px;min-height:44px;line-height:1.7;}
+ .customer-preview p {font-size:13px;color:var(--quote-muted);margin:6px 0 14px;}
+ .customer-preview pre {padding:18px;background:#f7f9fc;border:1px solid #e7edf5;border-radius:12px;font-size:15px;max-height:600px;overflow:auto;}
+}
+@media screen and (max-width:600px) {
+ .customer-preview {padding:14px;margin:12px 0;}
+ .customer-preview pre {padding:14px;font-size:14px;max-height:none;}
+}
+
+@media screen {
+ header {box-shadow:0 2px 12px #142e4f10!important;}
+ main {max-width:1360px!important;}
+ #section-quote section,#history-section,#section-training>section {border-color:var(--quote-line);box-shadow:0 4px 18px #17335405;}
+ #quote-card {border:1px solid var(--quote-line);box-shadow:0 8px 30px #17335409;}
+ #quote-card>div:first-child {background:linear-gradient(125deg,#194caa,#2868db);}
+ #quote-card .statement-box {padding:16px;font-size:13px;line-height:1.85;background:#f7f9fc;border-radius:14px;}
+ #device-options button,#urgency-options button {border-radius:12px;font-size:14px;padding:12px 10px;min-height:52px;box-shadow:none;}
+ nav>div {padding:5px;background:#e8eef6;border-radius:16px;}
+ nav button {border-radius:12px!important;}
+ #display-total {font-size:clamp(40px,4.8vw,58px);font-variant-numeric:tabular-nums;letter-spacing:-.04em;}
+ #print-btn,#copy-btn {min-height:50px;font-size:15px;padding:12px 16px;box-shadow:none;}
+}
+@media screen and (max-width:767px) {
+ main {padding:16px!important;}
+ #section-quote section,#quote-card>div {padding:20px;}
+ #device-options {gap:8px;}
+ #quote-card {border-radius:20px;}
+ #section-quote .gap-10 {gap:18px;}
+ #history-list>div {padding:14px;}
+}
+@media screen and (max-width:767px) {
+ nav>div {grid-template-columns:repeat(3,minmax(0,1fr))!important;}
+ nav button {min-height:48px;padding:10px 6px!important;font-size:13px;line-height:1.5;}
+}

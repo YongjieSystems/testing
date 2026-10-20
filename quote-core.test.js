@@ -203,3 +203,11 @@ test('remote service uses 500 for new quotes while saved price snapshots remain 
  assert.match(generateQuoteSummary(remote,'遠端連線異常',productionConfig,'2026-10-20'),/\$500/);
  assert.doesNotMatch(generateQuoteSummary(remote,'   ',productionConfig,'2026-10-20'),/故障現象/);
 });
+
+
+test('customer quotation reads service, fees, then agreements and retains repair timing warning',()=>{
+ const t=generateQuoteSummary({...state,schemaVersion:2},'無法列印',productionConfig,'2026-10-20');
+ assert.ok(t.indexOf('【服務內容】')<t.indexOf('【費用明細】'));
+ assert.ok(t.indexOf('【費用明細】')<t.indexOf('【收送與服務約定】'));
+ assert.match(t,/故障現象：無法列印/);assert.match(t,/不代表保證當日修復/);
+});
