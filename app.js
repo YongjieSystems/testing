@@ -1,10 +1,10 @@
-import { initTeamWorkspace } from './team-workspace.js?v=1.10.0';
-import { initTraining } from './training.js?v=1.10.0';
-import { CONFIG } from './pricing-config.js?v=1.10.0';
-import { WARRANTY_DATA, WARRANTY_KINDS, WARRANTY_ACTIONS } from './warranty-data.js?v=1.10.0';
-import { formatQuoteId, generateQuoteSummary, normalizeMoney, calculateQuote, assessLogistics, reviewLogistics, summarizeLogistics, ACTUAL_COST_FIELDS, SERVICE_LABELS, LOGISTICS_LABELS, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_STATUS, parseBackup, mergeRecords, upsertRecord, matchesRecord } from './quote-core.js?v=1.10.0';
+import { initTeamWorkspace } from './team-workspace.js?v=1.11.0';
+import { initTraining } from './training.js?v=1.11.0';
+import { CONFIG } from './pricing-config.js?v=1.11.0';
+import { WARRANTY_DATA, WARRANTY_KINDS, WARRANTY_ACTIONS } from './warranty-data.js?v=1.11.0';
+import { formatQuoteId, generateQuoteSummary, normalizeMoney, calculateQuote, assessLogistics, reviewLogistics, summarizeLogistics, ACTUAL_COST_FIELDS, SERVICE_LABELS, SERVICE_DESCRIPTIONS, LOGISTICS_LABELS, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_STATUS, parseBackup, mergeRecords, upsertRecord, matchesRecord } from './quote-core.js?v=1.11.0';
 
-import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from './driver-data.js?v=1.10.0';
+import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from './driver-data.js?v=1.11.0';
 
         let quoteAccess=false;
         const newFields = () => ({ schemaVersion: 2, billingStage: 'DIAGNOSIS', logisticsPlan: 'DEDICATED', logisticsFee: '', feeConfirmed: false, routeConfirmed: false, windowConfirmed: false, actualConfirmed: false, actualMinutes: '', actualEngineerMinutes: '', actualHourlyCost: '', actualTravelCost: '', actualOtherCost: '', actualRevenue: '', actualNotes: '', logisticsWindow: '', repairFee: '', repairConfirmed: false, paidAmount: '', logisticsMinutes: '', hourlyCost: '', travelCost: '', logisticsOtherCost: '', targetMargin: '' });
@@ -591,9 +591,14 @@ import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from
 
         function renderFulfillment() {
             const modern = state.schemaVersion === 2;
+            const custom = modern && state.service === 'PICKUP';
             $('fulfillment-controls').hidden = !modern;
             $('legacy-note').hidden = modern;
-            $('logistics-controls').hidden = state.service !== 'PICKUP';
+            $('service-explanation').textContent = SERVICE_DESCRIPTIONS[state.service];
+            $('fulfillment-title').textContent = custom ? '案件階段與客製化收送安排' : '案件計費';
+            $('logistics-controls').hidden = !custom;
+            for (const element of $('logistics-controls').querySelectorAll('input,select,textarea')) element.disabled = !custom;
+            if (!custom) for (const detail of $('logistics-controls').querySelectorAll('details')) detail.open = false;
             $('repair-controls').hidden = state.billingStage !== 'REPAIR';
             for (const element of document.querySelectorAll('[data-quote-field]')) {
                 const value = state[element.dataset.quoteField];
@@ -608,8 +613,8 @@ import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from
             const paid = normalizeMoney(state.paidAmount);
             $('previous-quote').textContent = state.previousQuoteId ? `前版單號：${formatQuoteId(state.previousQuoteId)}` : '';
             $('payment-summary').textContent = modern ? `已付 $${paid.toLocaleString()}；${paid > result.total ? '溢付待核對' : '待付'} $${Math.abs(result.total-paid).toLocaleString()}${result.pending.length ? '（依目前小計）' : ''}` : '';
-            $('cost-assessment').textContent = assessLogistics(state);
-            $('actual-cost-review').textContent = reviewLogistics(state).message;
+            $('cost-assessment').textContent = custom ? assessLogistics(state) : '';
+            $('actual-cost-review').textContent = custom ? reviewLogistics(state).message : '';
         }
 
         function initWorkspace() {

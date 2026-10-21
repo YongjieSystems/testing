@@ -19,8 +19,13 @@ export function quoteTotal(state, config) {
         + normalizeMoney(state.manufacturerFee) + normalizeMoney(state.otherFee)
         - normalizeMoney(state.specialDiscount) - normalizeMoney(state.contractDiscount));
 }
-export const SERVICE_LABELS = Object.freeze({ IN_STORE: '門市檢測', ON_SITE: '到府檢修', PICKUP: '收回公司檢測' });
-export const LOGISTICS_LABELS = Object.freeze({ SCHEDULED: '經濟排線收送', DEDICATED: '預約專程收送', PRIORITY: '優先收送', COURIER: '外包物流' });
+export const SERVICE_LABELS = Object.freeze({ IN_STORE: '門市檢測', ON_SITE: '到府檢測', PICKUP: '客製化收送服務' });
+export const SERVICE_DESCRIPTIONS = Object.freeze({
+    IN_STORE: '客戶自行送件到門市，不收收送費；檢測費仍依原規則計算。',
+    ON_SITE: '工程師到客戶現場檢測，依所選區域沿用原出勤費。後續取回及回送依原約定確認，不會自動加收客製化收送費。',
+    PICKUP: '一般安排不適用或需特殊收送時使用。選擇順路排線、專程、優先或外包物流，確認完整取件及回送費；內部成本分析可按需展開。'
+});
+export const LOGISTICS_LABELS = Object.freeze({ SCHEDULED: '順路排線收送', DEDICATED: '預約專程收送', PRIORITY: '優先收送', COURIER: '外包物流' });
 const hasMoney = value => ['number', 'string'].includes(typeof value) && String(value).trim() !== '' && Number.isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 1000000;
 export const ACTUAL_COST_FIELDS = Object.freeze(['actualMinutes', 'actualEngineerMinutes', 'actualHourlyCost', 'actualTravelCost', 'actualOtherCost', 'actualRevenue']);
 export function calculateQuote(state, config) {
@@ -54,7 +59,7 @@ export function calculateQuote(state, config) {
     return { lines, total: Math.max(0, lines.reduce((sum, line) => sum + line.amount, 0)), pending, basePrice, transPrice, urgPrice, discPrice, repaired };
 }
 export function assessLogistics(state) {
-    if (state.service !== 'PICKUP') return '請選擇收回公司檢測後評估收送成本。';
+    if (state.service !== 'PICKUP') return '請選擇客製化收送服務後評估收送成本。';
     if (!['logisticsMinutes', 'hourlyCost', 'travelCost', 'logisticsOtherCost', 'targetMargin', 'logisticsFee'].every(key => hasMoney(state[key])) || state.feeConfirmed !== true)
         return '成本資料未齊：空白代表未知，請輸入完整週期的工時、成本及已確認收送費。';
     const margin = Number(state.targetMargin);
@@ -64,7 +69,7 @@ export function assessLogistics(state) {
     return `預估收送成本 $${Math.ceil(cost).toLocaleString()}；達標收費 $${minimum.toLocaleString()}；收入減估計成本 $${Math.floor(Number(state.logisticsFee) - cost).toLocaleString()}。${Number(state.logisticsFee) < minimum ? '低於目標，請調整方案或交主管評估。' : '達到填入的成本目標，仍須確認排程與客戶同意。'}此為成本分攤估計，非公司淨利或外包現金節省。`;
 }
 export function reviewLogistics(state) {
-    if (state.service !== 'PICKUP') return { ready: false, message: '結案成本核對適用於收回公司檢測。' };
+    if (state.service !== 'PICKUP') return { ready: false, message: '結案成本核對適用於客製化收送服務。' };
     if (!ACTUAL_COST_FIELDS.every(key => hasMoney(state[key]))) return { ready: false, message: '實際資料未齊：請填人員總分鐘、其中工程師分鐘、平均每小時成本、交通、其他成本及實際收送淨收入；沒有費用請填 0。' };
     if (Number(state.actualEngineerMinutes) > Number(state.actualMinutes)) return { ready: false, message: '工程師分鐘不能大於人員總分鐘（工程師已包含在總工時內，不重複加計）。' };
     const cost = Number(state.actualMinutes) / 60 * Number(state.actualHourlyCost) + Number(state.actualTravelCost) + Number(state.actualOtherCost);
@@ -219,6 +224,8 @@ export function generateQuoteSummary(dataState, problemText, config, dateStr) {
  ...(paid>0?['已收紀錄：$'+paid.toLocaleString()+'；'+(paid>c.total?'溢付待核對':'預估待付')+'：$'+Math.abs(c.total-paid).toLocaleString()]:[]),
  '',
  '【收送與服務約定】',
+ ...(dataState.service==='IN_STORE'?['客戶自行送件到門市，不收收送費；檢測費依本單約定。']:[]),
+ ...(dataState.service==='ON_SITE'?['到府檢測按本單收取出勤費；後續取回及回送依原約定確認，新增費用須先取得同意。']:[]),
  ...(dataState.service==='PICKUP'?['收送：'+LOGISTICS_LABELS[dataState.logisticsPlan],'取件／回送：'+(dataState.logisticsWindow||'待確認'),'收送不含現場拆裝檢修；優先取件不代表當日修復。']:[]),
  ...(c.pending.length?['待確認：'+c.pending.join('；')]:[]),
  '',
