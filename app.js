@@ -1,11 +1,12 @@
-import { initTeamWorkspace } from './team-workspace.js?v=1.9.2';
-import { initTraining } from './training.js?v=1.9.2';
-import { CONFIG } from './pricing-config.js?v=1.9.2';
-import { WARRANTY_DATA, WARRANTY_KINDS, WARRANTY_ACTIONS } from './warranty-data.js?v=1.9.2';
-import { formatQuoteId, generateQuoteSummary, normalizeMoney, calculateQuote, assessLogistics, reviewLogistics, summarizeLogistics, ACTUAL_COST_FIELDS, SERVICE_LABELS, LOGISTICS_LABELS, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_STATUS, parseBackup, mergeRecords, upsertRecord, matchesRecord } from './quote-core.js?v=1.9.2';
+import { initTeamWorkspace } from './team-workspace.js?v=1.10.0';
+import { initTraining } from './training.js?v=1.10.0';
+import { CONFIG } from './pricing-config.js?v=1.10.0';
+import { WARRANTY_DATA, WARRANTY_KINDS, WARRANTY_ACTIONS } from './warranty-data.js?v=1.10.0';
+import { formatQuoteId, generateQuoteSummary, normalizeMoney, calculateQuote, assessLogistics, reviewLogistics, summarizeLogistics, ACTUAL_COST_FIELDS, SERVICE_LABELS, LOGISTICS_LABELS, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_STATUS, parseBackup, mergeRecords, upsertRecord, matchesRecord } from './quote-core.js?v=1.10.0';
 
-import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from './driver-data.js?v=1.9.2';
+import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from './driver-data.js?v=1.10.0';
 
+        let quoteAccess=false;
         const newFields = () => ({ schemaVersion: 2, billingStage: 'DIAGNOSIS', logisticsPlan: 'DEDICATED', logisticsFee: '', feeConfirmed: false, routeConfirmed: false, windowConfirmed: false, actualConfirmed: false, actualMinutes: '', actualEngineerMinutes: '', actualHourlyCost: '', actualTravelCost: '', actualOtherCost: '', actualRevenue: '', actualNotes: '', logisticsWindow: '', repairFee: '', repairConfirmed: false, paidAmount: '', logisticsMinutes: '', hourlyCost: '', travelCost: '', logisticsOtherCost: '', targetMargin: '' });
         let state = { ...newFields(),
             device: 'DESKTOP', service: 'IN_STORE', zone: 'ZONE_A',
@@ -18,7 +19,7 @@ import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from
             department: '維修服務部', // 新增部門
             id: crypto.randomUUID().toUpperCase(),
             date: quoteDate(),
-            activeTab: 'quote'
+            activeTab: 'team'
         };
 
         // 歷史紀錄相關常數
@@ -170,6 +171,7 @@ import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from
         // --- 歷史紀錄功能區 ---
 
         function currentRecord() {
+            if(!quoteAccess) throw new Error('請先登入啟用中的員工帳號');
             if (!state.caseId) {
                 let ancestor = state;
                 const visited = new Set();
@@ -187,6 +189,7 @@ import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from
                 problem: UI.problemInput.value, total: quoteTotal(state, pricesFor(state)).toLocaleString('zh-TW') };
         }
         function addToHistory(record) {
+            if(!quoteAccess) {window.switchTab('team');return false;}
             let savedRecord = record?.state ? record : currentRecord();
             if (['ACCEPTED', 'DONE'].includes(savedRecord.state.status) && calculateQuote(savedRecord.state, pricesFor(savedRecord.state)).pending.length) {
                 notify('仍有待確認項目，不能保存為客戶同意或已完成；請先補齊，或改存草稿。'); return false;
@@ -532,6 +535,8 @@ import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from
 
         window.handlePrint = () => { if (addToHistory()) { $('customer-print-text').textContent=generateSummary(state,UI.problemInput.value.trim(),null,state.date); window.print(); } };
         window.switchTab = (tabId) => {
+            if(tabId==='quote' && !quoteAccess) { tabId='team'; notify('請先使用啟用中的主管或客服／行政帳號登入，才能使用檢測估價。保固與驅動查詢免登入。'); }
+            state.activeTab=tabId;
             ['quote', 'warranty', 'drivers', 'team', 'training'].forEach(s => {
                 const el = $(`section-${s}`);
                 const tab = $(`tab-${s}`);
@@ -708,7 +713,12 @@ import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from
         init();
         initTraining(window.switchTab);
         if(new URLSearchParams(location.search).get('tab')==='training') window.switchTab('training');
+        window.switchTab(['warranty','drivers','training'].includes(new URLSearchParams(location.search).get('tab')) ? new URLSearchParams(location.search).get('tab') : 'team');
         initTeamWorkspace({
+            onContext(value) {
+                quoteAccess=!!value.user && !!value.org && ['MANAGER','STAFF'].includes(value.role);
+                if(!quoteAccess) { $('customer-print-text').textContent=''; if(state.activeTab==='quote') window.switchTab('team'); }
+            },
             getRecord: currentRecord,
             onOpenRecord(record, meta) {
                 loadHistoryData({ ...record, state: { ...newFields(), ...record.state, ...meta.costs, cloudOrgId: meta.orgId, cloudCaseId: meta.caseId, cloudRevision: meta.revision } });

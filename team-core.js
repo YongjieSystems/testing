@@ -9,6 +9,8 @@ export function teamPayload(record,manager=false) {
     return {record:{state,problem:record.problem},costs};
 }
 export function teamError(error) {
+    if(error?.message==='Invalid login credentials') return '帳號或密碼不正確。請核對信箱拼字、英文大小寫；忘記密碼可按「忘記密碼／寄送重設信」。';
+    if(error?.code==='over_email_send_rate_limit') return '重設信寄送過於頻繁，請稍候再試，並只使用最新一封信。';
     if(['40001','PT409'].includes(error?.code)) return '有人已更新同一筆資料。你的表單尚未送出；請先保留內容，再重新載入最新版本。';
     if(error?.code==='42501') return '權限不足或帳號已停用。請重新整理登入狀態，必要時聯絡主管。';
     return typeof error?.message==='string' ? error.message : '連線未完成；目前表單內容仍保留，請稍後重試。';

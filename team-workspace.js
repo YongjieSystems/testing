@@ -1,13 +1,14 @@
 import { createClient } from './vendor/supabase.js?v=1.4.1';
-import { TEAM_CONFIG } from './team-config.js?v=1.9.2';
-import { TEAM_ROLES, teamPayload, teamError, localToIso, isoToTaipeiInput, teamFetch } from './team-core.js?v=1.9.2';
+import { TEAM_CONFIG } from './team-config.js?v=1.10.0';
+import { TEAM_ROLES, teamPayload, teamError, localToIso, isoToTaipeiInput, teamFetch } from './team-core.js?v=1.10.0';
 
-export function initTeamWorkspace({getRecord,onOpenRecord,onSaved}) {
+export function initTeamWorkspace({getRecord,onOpenRecord,onSaved,onContext=async()=>{}}) {
     const $=id=>document.getElementById(id);
     const status=text=>{ $('team-status').textContent=text; };
     const labels={REVIEW:'待主管核准',APPROVED:'已核准',DONE:'已完成',CANCELLED:'已取消',DRAFT:'草稿',PUBLISHED:'已發布',PENDING:'待處理',FAILED:'未完成'};
     const events={CASE_SAVED:'報價已同步',CASE_APPROVED:'主管已核准',CASE_ASSIGNED:'工程師已分派',ROUTE_DRAFT_SAVED:'排線草稿已保存',ROUTE_PUBLISHED:'排線已發布',ROUTE_CANCELLED:'排線已取消',STOP_REPORTED:'站點已回報',EMPLOYEE_CHANGED:'員工權限已調整',ACCOUNT_ACTIVATED:'帳號已開通',CASE_CLOSED:'案件已結束'};
     const client=TEAM_CONFIG.enabled ? createClient(TEAM_CONFIG.url,TEAM_CONFIG.publishableKey,{global:{fetch:teamFetch},db:{retry:false},auth:{persistSession:true,storage:sessionStorage,autoRefreshToken:true,detectSessionInUrl:false}}) : null;
+    let recovery=false;
     let org=null,role=null,user=null,cases=[],routes=[],stops=[],directory=[],members=[],selectedCase=null,routeDraft=null,busy=false;
     const check=result=>{ if(result.error) throw result.error; return result.data; };
     const rpc=async(name,args={})=>check(await client.rpc(name,args));
@@ -31,6 +32,7 @@ export function initTeamWorkspace({getRecord,onOpenRecord,onSaved}) {
         if(items.some(item=>item.value===previous)) select.value=previous;
     }
     function clear() {
+        onContext({client,user:null,org:null,role:null,cases:[],routes:[],stops:[]});
         role=null; org=null; cases=[]; routes=[]; stops=[]; directory=[]; members=[]; selectedCase=null; routeDraft=null;
         for(const id of ['team-case-list','team-route-list','team-employee-list','team-audit-list','team-stop-editor']) $(id).replaceChildren();
         $('team-private').hidden=true; $('team-manager').hidden=true; $('team-operator').hidden=true;
@@ -38,20 +40,21 @@ export function initTeamWorkspace({getRecord,onOpenRecord,onSaved}) {
         for(const id of ['team-password','team-new-password','team-confirm-password']) if($(id)) $(id).value='';
         $('team-account-link').replaceChildren(); $('team-user').textContent='尚未登入';
     }
-    async function refresh() {
+    async function refreshContext() {
         if(!client) { status('團隊服務尚未設定。'); return; }
         const verified=await client.auth.getUser();
         if(verified.error || !verified.data.user) { clear(); user=null; $('team-login').hidden=false; status('請使用已開通的公司帳號登入。新帳號須由主管提供一次性設定連結。'); return; }
         user=verified.data.user;
-        await rpc('yj_join_workspaces');
-        const own=check(await client.from('yj_memberships').select('org_id,role,display_name').eq('user_id',user.id).eq('active',true));
+        try { await rpc('yj_join_workspaces'); } catch(error) { clear(); throw error; }
+        let own; try { own=check(await client.from('yj_memberships').select('org_id,role,display_name').eq('user_id',user.id).eq('active',true)); } catch(error) { clear(); throw error; }
         if(!own.length) { clear(); $('team-login').hidden=true; status('已登入，但尚未列入啟用員工名單。請主管登錄此電子郵件。'); return; }
         if(!own.some(item=>item.org_id===org)) org=own[0].org_id;
         role=own.find(item=>item.org_id===org).role;
         options($('team-org'),own.map(item=>({value:item.org_id,label:item.display_name+' · '+TEAM_ROLES[item.role]}))); $('team-org').value=org;
         $('team-user').textContent=`${user.email}｜${TEAM_ROLES[role]}`;
         $('team-login').hidden=true; $('team-private').hidden=false; $('team-manager').hidden=!manager(); $('team-operator').hidden=!operator();
-        $('team-password-setup').hidden=user.user_metadata?.yj_password_setup!==true;
+        $('team-password-setup').hidden=!(recovery || user.user_metadata?.yj_password_setup===true);
+        if(!$('team-password-setup').hidden) await onContext({client,user,org,role:null,cases:[],routes:[],stops:[]});
         if(!manager()) { $('team-account-link').replaceChildren(); $('team-audit-list').replaceChildren(); }
         const fetched=await Promise.all([
             client.from('yj_cases').select('*').eq('org_id',org).order('updated_at',{ascending:false}).limit(200),
@@ -67,8 +70,10 @@ export function initTeamWorkspace({getRecord,onOpenRecord,onSaved}) {
             const audit=check(await client.from('yj_audit_events').select('event,entity_id,created_at,actor_id,details').eq('org_id',org).order('created_at',{ascending:false}).limit(30));
             $('team-audit-list').replaceChildren(...audit.map(item=>node('li',`${new Date(item.created_at).toLocaleString('zh-TW',{timeZone:'Asia/Taipei'})} · ${events[item.event] || item.event} · ${item.entity_id}${item.details?.reason ? ' · '+item.details.reason : ''}`,'text-xs break-all py-1')));
         }
+        await onContext({client,user,org,role:$('team-password-setup').hidden ? role : null,cases,routes,stops});
         status('已更新團隊資料。列表每 15 秒更新；編輯中的表單不會自動覆蓋，保存時會核對版本。');
     }
+    async function refresh() { try { await refreshContext(); } catch(error) { clear(); throw error; } }
     function renderCases() {
         const list=$('team-case-list'); list.replaceChildren();
         if(!cases.length) list.append(node('p','目前沒有可讀取的案件。'));
@@ -108,6 +113,7 @@ export function initTeamWorkspace({getRecord,onOpenRecord,onSaved}) {
                 status('新帳號已開通。請由該員工本人開啟連結、設定密碼；不要公開張貼連結。');
                 await refresh();
             });
+            if(item.active && item.user_id) button(row,'寄送密碼重設信（由員工本人設定）',()=>sendReset(item.email));
             list.append(row);
         }
     }
@@ -158,7 +164,7 @@ export function initTeamWorkspace({getRecord,onOpenRecord,onSaved}) {
     }
     action($('team-login-btn'),async()=>{
         if(!client) throw new Error('團隊服務尚未設定');
-        check(await client.auth.signInWithPassword({email:$('team-email').value.trim(),password:$('team-password').value}));
+        check(await client.auth.signInWithPassword({email:$('team-email').value.trim().toLowerCase(),password:$('team-password').value}));
         $('team-password').value=''; await refresh();
     });
     action($('team-signout'),async()=>{if(client) check(await client.auth.signOut({scope:'local'})); user=null; clear(); $('team-login').hidden=false; status('已登出此分頁，團隊資料已清除。');});
@@ -166,9 +172,21 @@ export function initTeamWorkspace({getRecord,onOpenRecord,onSaved}) {
         const password=$('team-new-password').value;
         if(password.length<12 || password!==$('team-confirm-password').value) throw new Error('請使用至少 12 字元且兩次相同的密碼');
         check(await client.auth.updateUser({password,data:{yj_password_setup:false}}));
-        $('team-new-password').value=''; $('team-confirm-password').value=''; await refresh(); status('密碼已設定，之後可使用電子郵件與密碼登入。');
+        recovery=false; $('team-new-password').value=''; $('team-confirm-password').value=''; await refresh(); status('密碼已設定，之後可使用電子郵件與密碼登入。');
     });
     action($('team-refresh'),refresh);
+    async function sendReset(email) {
+        email=email.trim().toLowerCase();
+        if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('請先填寫正確的登入電子郵件');
+        check(await client.auth.resetPasswordForEmail(email,{redirectTo:'https://yongjiesystems.github.io/testing/?reset=1'}));
+        status('若帳號可接收重設信，請到該信箱（含垃圾郵件）開啟最新連結，由本人設定至少 12 字元的新密碼。未收到請聯絡系統管理人員。');
+    }
+    action($('team-forgot-password'),()=>sendReset($('team-email').value));
+    action($('team-change-password'),async()=>{if(!user) throw new Error('請先登入'); recovery=true; $('team-password-setup').hidden=false; await onContext({client,user,org,role:null,cases:[],routes:[],stops:[]}); $('team-new-password').focus();});
+    client?.auth.onAuthStateChange((event,session)=>{
+        if(event==='SIGNED_OUT' || !session) { user=null;clear();$('team-login').hidden=false; }
+        else if(event==='PASSWORD_RECOVERY') { recovery=true;setTimeout(()=>run(refresh),0); }
+    });
     $('team-org').onchange=()=>run(async()=>{org=$('team-org').value; selectedCase=null; routeDraft=null; $('team-account-link').replaceChildren(); await refresh();});
     action($('team-upload'),async()=>{
         if(!operator()) throw new Error('只有客服或主管可同步估價');
@@ -198,6 +216,13 @@ export function initTeamWorkspace({getRecord,onOpenRecord,onSaved}) {
     run(async()=>{
         if(!client) {clear();status('團隊服務尚未啟用。');return;}
         const params=new URLSearchParams(location.hash.slice(1)); const token=params.get('team_token_hash');
+        if(params.get('error_description')) { history.replaceState(null,'',location.pathname+location.search); throw new Error('密碼重設連結已失效，請重新寄送並開啟最新一封信。'); }
+        if(params.get('type')==='recovery' && params.get('access_token') && params.get('refresh_token')) {
+            history.replaceState(null,'',location.pathname+location.search);
+            recovery=true;
+            check(await client.auth.setSession({access_token:params.get('access_token'),refresh_token:params.get('refresh_token')}));
+            window.switchTab('team');
+        }
         if(token) {
             history.replaceState(null,'',location.pathname+location.search);
             check(await client.auth.verifyOtp({token_hash:token,type:'email'}));
