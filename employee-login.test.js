@@ -1,3 +1,4 @@
+import {createLoginSession,watchLoginSession,LOGIN_MODES} from './login-session.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -11,21 +12,22 @@ function harness({role='STAFF',signedIn=false,setup=false,hash=''}={}) {
   append(...n){this.children.push(...n)} replaceChildren(...n){this.children=n} setAttribute(){} focus(){} addEventListener(n,fn){this.handlers[n]=fn}
  }
  const el=id=>{if(!nodes.has(id))nodes.set(id,new Element());return nodes.get(id)};
- let active=true,fail=false,logged=signedIn;
+ let active=true,fail=false,logged=signedIn,clock=Date.now(),authStorage;
  const u={id:'qa-user',email:'staff@example.com',user_metadata:{yj_password_setup:setup}};
- const auth={getUser:async()=>({data:{user:logged?u:null}}),onAuthStateChange:fn=>{events.auth=fn},signInWithPassword:async()=>{logged=true;return{data:{user:u}}},signOut:async()=>{logged=false;events.auth?.('SIGNED_OUT',null);return{}},resetPasswordForEmail:async(email,opt)=>{sent.push({email,opt});return{}},setSession:async()=>{logged=true;return{}},verifyOtp:async()=>{logged=true;return{}},updateUser:async()=>{u.user_metadata.yj_password_setup=false;return{}}};
+ const auth={startAutoRefresh(){},stopAutoRefresh(){},getUser:async()=>({data:{user:logged?u:null}}),onAuthStateChange:fn=>{events.auth=fn},signInWithPassword:async()=>{logged=true;authStorage.storage.setItem(authStorage.storageKey,'fake-session');return{data:{user:u}}},signOut:async()=>{authStorage.storage.removeItem(authStorage.storageKey);logged=false;events.auth?.('SIGNED_OUT',null);return{}},resetPasswordForEmail:async(email,opt)=>{sent.push({email,opt});return{}},setSession:async()=>{logged=true;return{}},verifyOtp:async()=>{logged=true;return{}},updateUser:async()=>{u.user_metadata.yj_password_setup=false;return{}}};
  const client={auth,rpc:async()=>({data:[]}),from(table){let selfOnly=false;const q={select(){return q},eq(k){if(k==='user_id')selfOnly=true;return q},order(){return q},limit(){return q},in(){return q},then(resolve){return Promise.resolve(fail?{error:{message:'network failed'}}:{data:table==='yj_memberships'&&selfOnly&&active?[{org_id:'qa-org',display_name:'QA',role}]:[]}).then(resolve)}};return q}};
- const context={console,URLSearchParams,setTimeout,crypto,sessionStorage:{},TEAM_CONFIG:{enabled:true},TEAM_ROLES:{STAFF:'客服',MANAGER:'主管'},teamFetch(){},teamError:e=>e.message,localToIso:()=>'',isoToTaipeiInput:()=>'',teamPayload:()=>{},createClient:()=>client,setInterval:fn=>{timers.push(fn);return 1},clearInterval(){},location:{hash,pathname:'/',search:''},history:{replaceState(){context.location.hash=''}},window:{addEventListener(){},switchTab(){}},document:{getElementById:el,querySelectorAll:()=>[],addEventListener(){},createElement:()=>new Element(),hidden:false,activeElement:null}};
+ const store=()=>{const m=new Map();return {getItem:k=>m.get(k)||null,setItem:(k,v)=>m.set(k,v),removeItem:k=>m.delete(k)}};
+ const context={createLoginSession:options=>createLoginSession({...options,now:()=>clock}),watchLoginSession:(lease,fn)=>watchLoginSession(lease,fn,{setInterval:f=>{timers.push(f);return 1},clearInterval(){}}),LOGIN_MODES,localStorage:store(),console,URLSearchParams,setTimeout,crypto,sessionStorage:store(),TEAM_CONFIG:{enabled:true},TEAM_ROLES:{STAFF:'客服',MANAGER:'主管'},teamFetch(){},teamError:e=>e.message,localToIso:()=>'',isoToTaipeiInput:()=>'',teamPayload:()=>{},createClient:(_url,_key,options)=>{authStorage=options.auth;return client},setInterval:fn=>{timers.push(fn);return 1},clearInterval(){},location:{hash,pathname:'/',search:''},history:{replaceState(){context.location.hash=''}},window:{addEventListener(){},switchTab(){}},document:{getElementById:el,querySelectorAll:()=>[],addEventListener(){},createElement:()=>new Element(),hidden:false,activeElement:null}};
  const source=fs.readFileSync(new URL('./team-workspace.js',import.meta.url),'utf8').replace(/^import .*;\r?\n/gm,'').replace('export function initTeamWorkspace','function initTeamWorkspace');
  vm.runInNewContext(source+'\nthis.start=initTeamWorkspace',context);
  context.start({getRecord(){},onSaved(){},onOpenRecord(){},onContext:value=>contexts.push(value)});
  const flush=async()=>{for(let i=0;i<12;i++)await new Promise(setImmediate)};
  const click=async id=>{el(id).handlers.click();await flush()};
- return{el,contexts,sent,flush,click,timers,events,set active(v){active=v},set fail(v){fail=v},get hash(){return context.location.hash}};
+ return{el,contexts,sent,flush,click,timers,events,advance:n=>clock+=n,set active(v){active=v},set fail(v){fail=v},get hash(){return context.location.hash}};
 }
 test('logged-out initialization cannot grant quote access; valid active staff can login then logout revokes',async()=>{
  const h=harness();await h.flush();assert.equal(h.contexts.at(-1).role,null);
- h.el('team-email').value=' STAFF@EXAMPLE.COM ';await h.click('team-login-btn');assert.equal(h.contexts.at(-1).role,'STAFF');
+ h.el('team-login-mode').value='DAY';h.el('team-email').value=' STAFF@EXAMPLE.COM ';await h.click('team-login-btn');assert.equal(h.contexts.at(-1).role,'STAFF');
  await h.click('team-signout');assert.equal(h.contexts.at(-1).user,null);
 });
 test('disabled membership and a failed membership refresh revoke existing access',async()=>{
@@ -48,4 +50,10 @@ test('public query tabs remain open, quotation tab and customer export require e
  const html=fs.readFileSync(new URL('./index.html',import.meta.url),'utf8'), app=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');
  assert.match(html,/id="section-quote" class="hidden /);assert.match(app,/tabId==='quote' && !quoteAccess/);
  assert.match(app,/\['warranty','drivers','training'\]/);assert.match(app,/function addToHistory\(record\) \{\s*if\(!quoteAccess\)/);
+});
+
+test('24-hour expiry closes the real coordinator quote gate and cannot reopen through a stale response',async()=>{
+ const h=harness();await h.flush();h.el('team-login-mode').value='DAY';await h.click('team-login-btn');assert.equal(h.contexts.at(-1).role,'STAFF');
+ h.advance(86400000);h.timers[0]();await h.flush();assert.equal(h.contexts.at(-1).role,null);assert.equal(h.el('team-login').hidden,false);
+ assert.match(h.el('team-status').textContent,/登入保存期限已到/);
 });

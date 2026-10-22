@@ -1,13 +1,13 @@
 {
   "name": "yongjie-inspection-quote",
   "private": true,
-  "version": "1.11.0",
+  "version": "1.12.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "node scripts/version-assets.mjs && vite build",
     "preview": "vite preview",
-    "test": "node --test quote-core.test.js warranty-data.test.js driver-data.test.js team-database.test.js team-core.test.js employee-login.test.js service-flow.test.js"
+    "test": "node --test quote-core.test.js warranty-data.test.js driver-data.test.js team-database.test.js team-core.test.js employee-login.test.js service-flow.test.js login-session.test.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.118.0"

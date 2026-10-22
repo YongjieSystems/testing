@@ -109,7 +109,7 @@
         @media print { #mobile-quote-bar { display:none !important; } }
     </style>
 
-    <link rel="stylesheet" href="./interface.css?v=1.11.0">
+    <link rel="stylesheet" href="./interface.css?v=1.12.0">
 <style>#customer-print-only{display:none}@media print{body>*{display:none!important}#customer-print-only{display:block!important;padding:20px}#customer-print-only pre{font:16px/1.8 "Microsoft JhengHei",sans-serif;white-space:pre-wrap;overflow-wrap:anywhere}}</style>
 </head>
 <body class="antialiased">
@@ -122,7 +122,7 @@
                     <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" /></svg>
                 </div>
                 <div>
-                    <h1 class="text-xl md:text-2xl font-black tracking-tight">永捷系統科技 <span class="text-blue-400 font-medium">檢測費估價程式 <small class="text-xs">v1.11.0</small></span></h1>
+                    <h1 class="text-xl md:text-2xl font-black tracking-tight">永捷系統科技 <span class="text-blue-400 font-medium">檢測費估價程式 <small class="text-xs">v1.12.0</small></span></h1>
                 </div>
             </div>
             <div class="hidden md:block text-right">
@@ -511,11 +511,12 @@
                 <p><a href="https://yongjiesystems.github.io/Maintenance/?v=2.4.1" target="_blank" rel="noopener noreferrer" class="text-blue-700 underline">開啟維修報價、檢測折抵與主管核准</a></p>
                 <p class="text-sm text-slate-600">本機估價不會自動上傳。登入後可明確同步目前報價；共用資料以團隊版本及主管核准紀錄為準。員工只能讀取後端允許的資料。</p>
                 <p id="team-user" class="font-bold">尚未登入</p>
-                <div class="flex flex-wrap gap-3"><button type="button" id="team-refresh" class="p-3 bg-blue-100 rounded-xl">更新團隊資料</button><button type="button" id="team-signout" class="p-3 bg-slate-200 rounded-xl">登出此分頁</button></div>
+                <div class="flex flex-wrap gap-3"><button type="button" id="team-refresh" class="p-3 bg-blue-100 rounded-xl">更新團隊資料</button><button type="button" id="team-signout" class="p-3 bg-slate-200 rounded-xl">登出／清除記住登入</button></div>
                 <p id="team-status" role="status" aria-live="polite" class="text-sm text-amber-900">正在檢查登入狀態…</p>
-                <div id="team-login" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <p id="team-login-retention" class="text-sm text-slate-600" role="status"></p><div id="team-login" class="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <label>登入電子郵件<input id="team-email" type="email" autocomplete="username" class="w-full border rounded-xl p-3"></label>
                     <label>密碼<input id="team-password" type="password" autocomplete="current-password" class="w-full border rounded-xl p-3"></label>
+                    <label class="md:col-span-3">登入保存方式<select id="team-login-mode" class="w-full border rounded-xl p-3"></select><span class="block text-sm text-slate-600 mt-2">24 小時／30 天從登入成功起算，關閉網頁後仍可恢復；共用電腦請選僅本次登入。登出會清除記住登入，無痕模式或清除網站資料也會失效。各程式分別保存。共用電腦離開前請按登出；瀏覽器還原分頁可能保留本次登入。</span></label>
                     <button type="button" id="team-login-btn" class="p-3 bg-blue-700 text-white rounded-xl">登入團隊</button>
                 </div>
                 <div class="flex flex-wrap gap-3"><button id="team-forgot-password" type="button" class="p-3 rounded-xl bg-blue-50 text-blue-800">忘記密碼／寄送重設信</button><button id="team-change-password" type="button" class="p-3 rounded-xl bg-slate-100">變更我的密碼（登入後）</button></div><p class="text-sm text-slate-600">三套程式使用同一組員工帳號，各網站請分別登入。主管可新增、停用員工及調整角色；重設信只寄到員工信箱，主管看不到密碼。</p><div id="team-password-setup" hidden class="space-y-3 border p-4 rounded-xl">
@@ -663,7 +664,7 @@
     </main>
     <div id="mobile-quote-bar" hidden class="no-print"><div><small id="mobile-total-caption">預估總額</small><br><strong>NT$ <span id="mobile-total">500</span></strong></div><button id="mobile-view-btn" type="button">看明細</button><button id="mobile-save-btn" type="button">保存報價</button></div>
 
-    <script type="module" src="./app.js?v=1.11.0"></script>
+    <script type="module" src="./app.js?v=1.12.0"></script>
 
 <section id="customer-print-only" aria-label="客戶報價"><pre id="customer-print-text"></pre></section>
 </body>

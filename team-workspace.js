@@ -1,14 +1,20 @@
+import { createLoginSession, watchLoginSession, LOGIN_MODES } from './login-session.js?v=1.12.0';
 import { createClient } from './vendor/supabase.js?v=1.4.1';
-import { TEAM_CONFIG } from './team-config.js?v=1.11.0';
-import { TEAM_ROLES, teamPayload, teamError, localToIso, isoToTaipeiInput, teamFetch } from './team-core.js?v=1.11.0';
+import { TEAM_CONFIG } from './team-config.js?v=1.12.0';
+import { TEAM_ROLES, teamPayload, teamError, localToIso, isoToTaipeiInput, teamFetch } from './team-core.js?v=1.12.0';
 
 export function initTeamWorkspace({getRecord,onOpenRecord,onSaved,onContext=async()=>{}}) {
     const $=id=>document.getElementById(id);
     const status=text=>{ $('team-status').textContent=text; };
     const labels={REVIEW:'待主管核准',APPROVED:'已核准',DONE:'已完成',CANCELLED:'已取消',DRAFT:'草稿',PUBLISHED:'已發布',PENDING:'待處理',FAILED:'未完成'};
     const events={CASE_SAVED:'報價已同步',CASE_APPROVED:'主管已核准',CASE_ASSIGNED:'工程師已分派',ROUTE_DRAFT_SAVED:'排線草稿已保存',ROUTE_PUBLISHED:'排線已發布',ROUTE_CANCELLED:'排線已取消',STOP_REPORTED:'站點已回報',EMPLOYEE_CHANGED:'員工權限已調整',ACCOUNT_ACTIVATED:'帳號已開通',CASE_CLOSED:'案件已結束'};
-    const client=TEAM_CONFIG.enabled ? createClient(TEAM_CONFIG.url,TEAM_CONFIG.publishableKey,{global:{fetch:teamFetch},db:{retry:false},auth:{persistSession:true,storage:sessionStorage,autoRefreshToken:true,detectSessionInUrl:false}}) : null;
+    const loginSession=createLoginSession({namespace:'yj-inspection-login-v1',local:localStorage,tab:sessionStorage});
+    loginSession.migrateLegacy(sessionStorage,'sb-buzcduwjeddaqwsrbwlf-auth-token');
+    const client=TEAM_CONFIG.enabled ? createClient(TEAM_CONFIG.url,TEAM_CONFIG.publishableKey,{global:{fetch:teamFetch},db:{retry:false},auth:{persistSession:true,storage:loginSession.storage,storageKey:loginSession.storageKey,autoRefreshToken:true,detectSessionInUrl:false}}) : null;
+    let contextGeneration=0;
     let recovery=false;
+    for(const [value,label] of Object.entries(LOGIN_MODES)) { const option=document.createElement('option'); option.value=value; option.textContent=label; $('team-login-mode').append(option); }
+    $('team-login-mode').value=loginSession.preference();
     let org=null,role=null,user=null,cases=[],routes=[],stops=[],directory=[],members=[],selectedCase=null,routeDraft=null,busy=false;
     const check=result=>{ if(result.error) throw result.error; return result.data; };
     const rpc=async(name,args={})=>check(await client.rpc(name,args));
@@ -32,25 +38,31 @@ export function initTeamWorkspace({getRecord,onOpenRecord,onSaved,onContext=asyn
         if(items.some(item=>item.value===previous)) select.value=previous;
     }
     function clear() {
+        contextGeneration++;
         onContext({client,user:null,org:null,role:null,cases:[],routes:[],stops:[]});
         role=null; org=null; cases=[]; routes=[]; stops=[]; directory=[]; members=[]; selectedCase=null; routeDraft=null;
         for(const id of ['team-case-list','team-route-list','team-employee-list','team-audit-list','team-stop-editor']) $(id).replaceChildren();
         $('team-private').hidden=true; $('team-manager').hidden=true; $('team-operator').hidden=true;
         $('team-password-setup').hidden=true;
         for(const id of ['team-password','team-new-password','team-confirm-password']) if($(id)) $(id).value='';
-        $('team-account-link').replaceChildren(); $('team-user').textContent='尚未登入';
+        $('team-account-link').replaceChildren(); $('team-user').textContent='尚未登入'; $('team-login-retention').textContent='';
     }
     async function refreshContext() {
         if(!client) { status('團隊服務尚未設定。'); return; }
+        const generation=++contextGeneration;
+        loginSession.active();
         const verified=await client.auth.getUser();
+        if(generation!==contextGeneration) return;
         if(verified.error || !verified.data.user) { clear(); user=null; $('team-login').hidden=false; status('請使用已開通的公司帳號登入。新帳號須由主管提供一次性設定連結。'); return; }
         user=verified.data.user;
         try { await rpc('yj_join_workspaces'); } catch(error) { clear(); throw error; }
         let own; try { own=check(await client.from('yj_memberships').select('org_id,role,display_name').eq('user_id',user.id).eq('active',true)); } catch(error) { clear(); throw error; }
+        if(generation!==contextGeneration) return;
         if(!own.length) { clear(); $('team-login').hidden=true; status('已登入，但尚未列入啟用員工名單。請主管登錄此電子郵件。'); return; }
         if(!own.some(item=>item.org_id===org)) org=own[0].org_id;
         role=own.find(item=>item.org_id===org).role;
         options($('team-org'),own.map(item=>({value:item.org_id,label:item.display_name+' · '+TEAM_ROLES[item.role]}))); $('team-org').value=org;
+        $('team-login-retention').textContent=loginSession.describe();
         $('team-user').textContent=`${user.email}｜${TEAM_ROLES[role]}`;
         $('team-login').hidden=true; $('team-private').hidden=false; $('team-manager').hidden=!manager(); $('team-operator').hidden=!operator();
         $('team-password-setup').hidden=!(recovery || user.user_metadata?.yj_password_setup===true);
@@ -60,16 +72,20 @@ export function initTeamWorkspace({getRecord,onOpenRecord,onSaved,onContext=asyn
             client.from('yj_cases').select('*').eq('org_id',org).order('updated_at',{ascending:false}).limit(200),
             client.from('yj_routes').select('*').eq('org_id',org).order('starts_at',{ascending:false}).limit(100)
         ]);
+        if(generation!==contextGeneration) return;
         cases=check(fetched[0]); routes=check(fetched[1]);
         // Fetch stops for the visible routes only; no company-wide private records reach engineers.
         stops=routes.length ? check(await client.from('yj_route_stops').select('*').in('route_id',routes.map(route=>route.id)).order('position')) : [];
         directory=operator() ? await rpc('yj_directory',{p_org:org}) : [];
         members=manager() ? check(await client.from('yj_memberships').select('*').eq('org_id',org).order('display_name')) : [];
+        if(generation!==contextGeneration) return;
         renderCases(); renderRoutes(); renderEmployees();
         if(manager()) {
             const audit=check(await client.from('yj_audit_events').select('event,entity_id,created_at,actor_id,details').eq('org_id',org).order('created_at',{ascending:false}).limit(30));
+            if(generation!==contextGeneration) return;
             $('team-audit-list').replaceChildren(...audit.map(item=>node('li',`${new Date(item.created_at).toLocaleString('zh-TW',{timeZone:'Asia/Taipei'})} · ${events[item.event] || item.event} · ${item.entity_id}${item.details?.reason ? ' · '+item.details.reason : ''}`,'text-xs break-all py-1')));
         }
+        if(generation!==contextGeneration) return;
         await onContext({client,user,org,role:$('team-password-setup').hidden ? role : null,cases,routes,stops});
         status('已更新團隊資料。列表每 15 秒更新；編輯中的表單不會自動覆蓋，保存時會核對版本。');
     }
@@ -164,10 +180,11 @@ export function initTeamWorkspace({getRecord,onOpenRecord,onSaved,onContext=asyn
     }
     action($('team-login-btn'),async()=>{
         if(!client) throw new Error('團隊服務尚未設定');
-        check(await client.auth.signInWithPassword({email:$('team-email').value.trim().toLowerCase(),password:$('team-password').value}));
-        $('team-password').value=''; await refresh();
+        loginSession.begin($('team-login-mode').value);
+        try { check(await client.auth.signInWithPassword({email:$('team-email').value.trim().toLowerCase(),password:$('team-password').value})); } finally { $('team-password').value=''; }
+        client.auth.startAutoRefresh(); await refresh();
     });
-    action($('team-signout'),async()=>{if(client) check(await client.auth.signOut({scope:'local'})); user=null; clear(); $('team-login').hidden=false; status('已登出此分頁，團隊資料已清除。');});
+    action($('team-signout'),async()=>{if(client) { const result=await client.auth.signOut({scope:'local'}); loginSession.clear(); if(result.error) status('此電腦已清除登入，連線恢復後請重新登入。'); } user=null; clear(); $('team-login').hidden=false; status('已登出並清除此程式在本瀏覽器記住的登入；本機報價仍保留。');});
     action($('team-set-password'),async()=>{
         const password=$('team-new-password').value;
         if(password.length<12 || password!==$('team-confirm-password').value) throw new Error('請使用至少 12 字元且兩次相同的密碼');
@@ -187,6 +204,7 @@ export function initTeamWorkspace({getRecord,onOpenRecord,onSaved,onContext=asyn
         if(event==='SIGNED_OUT' || !session) { user=null;clear();$('team-login').hidden=false; }
         else if(event==='PASSWORD_RECOVERY') { recovery=true;setTimeout(()=>run(refresh),0); }
     });
+    watchLoginSession(loginSession,()=>{ user=null; clear(); $('team-login').hidden=false; status('登入保存期限已到、已在其他分頁登出或變更帳號，請重新登入。'); client?.auth.stopAutoRefresh(); });
     $('team-org').onchange=()=>run(async()=>{org=$('team-org').value; selectedCase=null; routeDraft=null; $('team-account-link').replaceChildren(); await refresh();});
     action($('team-upload'),async()=>{
         if(!operator()) throw new Error('只有客服或主管可同步估價');
@@ -219,12 +237,13 @@ export function initTeamWorkspace({getRecord,onOpenRecord,onSaved,onContext=asyn
         if(params.get('error_description')) { history.replaceState(null,'',location.pathname+location.search); throw new Error('密碼重設連結已失效，請重新寄送並開啟最新一封信。'); }
         if(params.get('type')==='recovery' && params.get('access_token') && params.get('refresh_token')) {
             history.replaceState(null,'',location.pathname+location.search);
-            recovery=true;
+            recovery=true; loginSession.begin('SESSION');
             check(await client.auth.setSession({access_token:params.get('access_token'),refresh_token:params.get('refresh_token')}));
             window.switchTab('team');
         }
         if(token) {
             history.replaceState(null,'',location.pathname+location.search);
+            loginSession.begin('SESSION');
             check(await client.auth.verifyOtp({token_hash:token,type:'email'}));
             window.switchTab('team');
         }
