@@ -27,6 +27,7 @@ before(async()=>{
   await db.query('insert into public.yj_organizations(id,name,pricebook) values($1,$2,$3),($4,$5,$3)',[ids.org,'Test',CONFIG,ids.otherOrg,'Other']);
   for(const name of ['manager','staff','engineer','driver','outsider','otherManager','unverified']) await db.query('insert into auth.users values($1,$2,$3)',[ids[name],`${name}@example.test`,name==='unverified'?null:new Date().toISOString()]);
   for(const [name,role,org] of [['manager','MANAGER',ids.org],['staff','STAFF',ids.org],['engineer','ENGINEER',ids.org],['driver','DRIVER',ids.org],['otherManager','MANAGER',ids.otherOrg]]) await db.query('insert into public.yj_memberships(org_id,user_id,email,display_name,role) values($1,$2,$3,$4,$5)',[org,ids[name],`${name.toLowerCase()}@example.test`,name,role]);
+ await db.exec(await readFile(new URL('./supabase/engineer_staff_access.sql',import.meta.url),'utf8'));
 });
 after(()=>db.close());
 
@@ -120,4 +121,28 @@ test('database: the last active supervisor cannot be removed and unverified emai
 test('database: public callers cannot consume owner setup challenges or bind arbitrary users',async()=>{
   await assert.rejects(as('manager',"select public.yj_consume_bootstrap('arbitrary-bootstrap-token-should-never-work-1234')"),{code:'42501'});
   await assert.rejects(as('staff','select public.yj_finish_onboarding($1,$2,$3,null)',[ids.org,'outsider@example.test',ids.outsider]),{code:'42501'});
+});
+
+test('opt-in engineer has staff operations, keeps engineering assignments, cannot approve or manage, and revocation applies',async()=>{
+ await db.query('update public.yj_memberships set staff_access=true where user_id=$1',[ids.engineer]);
+ assert.equal((await db.query('select role from public.yj_memberships where user_id=$1',[ids.engineer])).rows[0].role,'ENGINEER');
+ assert.equal((await as('engineer','select yj_private.actor_role($1) role',[ids.org]))[0].role,'STAFF');
+ const created=await save({},0,null,'engineer');
+ assert.ok((await as('engineer','select * from public.yj_quote_versions')).length>0);
+ assert.equal((await as('engineer','select * from public.yj_case_costs')).length,0);
+ assert.equal((await as('engineer','select * from public.yj_memberships')).length,1);
+ assert.equal((await as('engineer','select * from public.yj_cases where org_id=$1',[ids.otherOrg])).length,0);
+ await assert.rejects(as('engineer',"select public.yj_approve_case($1,1,'no')",[created.id]),{code:'42501'});
+ await assert.rejects(as('engineer',"select public.yj_set_employee($1,'outsider@example.test','no','MANAGER',true)",[ids.org]),{code:'42501'});
+ await assert.rejects(as('engineer','update public.yj_memberships set staff_access=true'),{code:'42501'});
+ await as('manager',"select public.yj_approve_case($1,1,'QA')",[created.id]);
+ await as('manager','select public.yj_assign_case($1,0,$2)',[created.id,ids.engineer]);
+ const shifted=stops(created.id).map(s=>({...s,starts_at:s.starts_at.replace('2026-10-20','2026-10-29'),ends_at:s.ends_at.replace('2026-10-20','2026-10-29')}));
+ const planned=await route(shifted,ids.engineer,'2026-10-29T01:00:00Z','2026-10-29T03:00:00Z');
+ await assert.rejects(as('engineer','select public.yj_publish_route($1,1)',[planned.id]),{code:'42501'});
+ await as('manager','select public.yj_publish_route($1,1)',[planned.id]);
+ const stop=(await as('engineer','select id from public.yj_route_stops where route_id=$1 order by position',[planned.id]))[0];
+ await as('engineer',"select public.yj_update_stop($1,2,'DONE','QA')",[stop.id]);
+ await db.query('update public.yj_memberships set staff_access=false where user_id=$1',[ids.engineer]);
+ await assert.rejects(save({},0,null,'engineer'),{code:'42501'});
 });

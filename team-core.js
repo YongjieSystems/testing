@@ -1,3 +1,5 @@
+// Only a server-stored membership grant can opt an engineer into assistant operations.
+export const effectiveTeamRole = member => member?.role==='ENGINEER' && member.staff_access===true ? 'STAFF' : member?.role;
 export const TEAM_ROLES = Object.freeze({ MANAGER:'主管', STAFF:'客服／行政', ENGINEER:'工程師', DRIVER:'收送人員' });
 export const PRIVATE_COST_FIELDS = Object.freeze(['logisticsMinutes','hourlyCost','travelCost','logisticsOtherCost','targetMargin','actualMinutes','actualEngineerMinutes','actualHourlyCost','actualTravelCost','actualOtherCost','actualRevenue','actualNotes','actualConfirmed']);
 export function teamPayload(record,manager=false) {

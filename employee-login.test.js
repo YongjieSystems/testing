@@ -1,3 +1,4 @@
+import {effectiveTeamRole} from './team-core.js';
 import {createLoginSession,watchLoginSession,LOGIN_MODES} from './login-session.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -5,7 +6,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 
 // Exercise the real auth coordinator with a fake Auth/DB transport. No production passwords.
-function harness({role='STAFF',signedIn=false,setup=false,hash=''}={}) {
+function harness({role='STAFF',signedIn=false,setup=false,hash='',staffAccess=false}={}) {
  const nodes=new Map(),contexts=[],sent=[],events={},timers=[];
  class Element {
   constructor(){this.hidden=false;this.value='';this.textContent='';this.children=[];this.dataset={};this.isConnected=true;this.disabled=false;this.handlers={};}
@@ -15,9 +16,9 @@ function harness({role='STAFF',signedIn=false,setup=false,hash=''}={}) {
  let active=true,fail=false,logged=signedIn,clock=Date.now(),authStorage;
  const u={id:'qa-user',email:'staff@example.com',user_metadata:{yj_password_setup:setup}};
  const auth={startAutoRefresh(){},stopAutoRefresh(){},getUser:async()=>({data:{user:logged?u:null}}),onAuthStateChange:fn=>{events.auth=fn},signInWithPassword:async()=>{logged=true;authStorage.storage.setItem(authStorage.storageKey,'fake-session');return{data:{user:u}}},signOut:async()=>{authStorage.storage.removeItem(authStorage.storageKey);logged=false;events.auth?.('SIGNED_OUT',null);return{}},resetPasswordForEmail:async(email,opt)=>{sent.push({email,opt});return{}},setSession:async()=>{logged=true;return{}},verifyOtp:async()=>{logged=true;return{}},updateUser:async()=>{u.user_metadata.yj_password_setup=false;return{}}};
- const client={auth,rpc:async()=>({data:[]}),from(table){let selfOnly=false;const q={select(){return q},eq(k){if(k==='user_id')selfOnly=true;return q},order(){return q},limit(){return q},in(){return q},then(resolve){return Promise.resolve(fail?{error:{message:'network failed'}}:{data:table==='yj_memberships'&&selfOnly&&active?[{org_id:'qa-org',display_name:'QA',role}]:[]}).then(resolve)}};return q}};
+ const client={auth,rpc:async()=>({data:[]}),from(table){let selfOnly=false;const q={select(){return q},eq(k){if(k==='user_id')selfOnly=true;return q},order(){return q},limit(){return q},in(){return q},then(resolve){return Promise.resolve(fail?{error:{message:'network failed'}}:{data:table==='yj_memberships'&&selfOnly&&active?[{org_id:'qa-org',display_name:'QA',role,staff_access:staffAccess}]:[]}).then(resolve)}};return q}};
  const store=()=>{const m=new Map();return {getItem:k=>m.get(k)||null,setItem:(k,v)=>m.set(k,v),removeItem:k=>m.delete(k)}};
- const context={createLoginSession:options=>createLoginSession({...options,now:()=>clock}),watchLoginSession:(lease,fn)=>watchLoginSession(lease,fn,{setInterval:f=>{timers.push(f);return 1},clearInterval(){}}),LOGIN_MODES,localStorage:store(),console,URLSearchParams,setTimeout,crypto,sessionStorage:store(),TEAM_CONFIG:{enabled:true},TEAM_ROLES:{STAFF:'客服',MANAGER:'主管'},teamFetch(){},teamError:e=>e.message,localToIso:()=>'',isoToTaipeiInput:()=>'',teamPayload:()=>{},createClient:(_url,_key,options)=>{authStorage=options.auth;return client},setInterval:fn=>{timers.push(fn);return 1},clearInterval(){},location:{hash,pathname:'/',search:''},history:{replaceState(){context.location.hash=''}},window:{addEventListener(){},switchTab(){}},document:{getElementById:el,querySelectorAll:()=>[],addEventListener(){},createElement:()=>new Element(),hidden:false,activeElement:null}};
+ const context={effectiveTeamRole,createLoginSession:options=>createLoginSession({...options,now:()=>clock}),watchLoginSession:(lease,fn)=>watchLoginSession(lease,fn,{setInterval:f=>{timers.push(f);return 1},clearInterval(){}}),LOGIN_MODES,localStorage:store(),console,URLSearchParams,setTimeout,crypto,sessionStorage:store(),TEAM_CONFIG:{enabled:true},TEAM_ROLES:{STAFF:'客服',MANAGER:'主管',ENGINEER:'工程師'},teamFetch(){},teamError:e=>e.message,localToIso:()=>'',isoToTaipeiInput:()=>'',teamPayload:()=>{},createClient:(_url,_key,options)=>{authStorage=options.auth;return client},setInterval:fn=>{timers.push(fn);return 1},clearInterval(){},location:{hash,pathname:'/',search:''},history:{replaceState(){context.location.hash=''}},window:{addEventListener(){},switchTab(){}},document:{getElementById:el,querySelectorAll:()=>[],addEventListener(){},createElement:()=>new Element(),hidden:false,activeElement:null}};
  const source=fs.readFileSync(new URL('./team-workspace.js',import.meta.url),'utf8').replace(/^import .*;\r?\n/gm,'').replace('export function initTeamWorkspace','function initTeamWorkspace');
  vm.runInNewContext(source+'\nthis.start=initTeamWorkspace',context);
  context.start({getRecord(){},onSaved(){},onOpenRecord(){},onContext:value=>contexts.push(value)});
@@ -56,4 +57,12 @@ test('24-hour expiry closes the real coordinator quote gate and cannot reopen th
  const h=harness();await h.flush();h.el('team-login-mode').value='DAY';await h.click('team-login-btn');assert.equal(h.contexts.at(-1).role,'STAFF');
  h.advance(86400000);h.timers[0]();await h.flush();assert.equal(h.contexts.at(-1).role,null);assert.equal(h.el('team-login').hidden,false);
  assert.match(h.el('team-status').textContent,/登入保存期限已到/);
+});
+
+test('opt-in engineer gets assistant quote access without manager controls; ordinary engineer remains restricted',async()=>{
+ const allowed=harness({signedIn:true,role:'ENGINEER',staffAccess:true});await allowed.flush();
+ assert.equal(allowed.contexts.at(-1).role,'STAFF');assert.equal(allowed.el('team-manager').hidden,true);assert.equal(allowed.el('team-operator').hidden,false);
+ assert.match(allowed.el('team-user').textContent,/助理同等/);
+ allowed.active=false;await allowed.click('team-refresh');assert.equal(allowed.contexts.at(-1).role,null);
+ const regular=harness({signedIn:true,role:'ENGINEER'});await regular.flush();assert.equal(regular.contexts.at(-1).role,'ENGINEER');assert.equal(regular.el('team-operator').hidden,true);
 });

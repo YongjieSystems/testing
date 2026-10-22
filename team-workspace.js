@@ -1,7 +1,7 @@
-import { createLoginSession, watchLoginSession, LOGIN_MODES } from './login-session.js?v=1.12.0';
+import { createLoginSession, watchLoginSession, LOGIN_MODES } from './login-session.js?v=1.13.0';
 import { createClient } from './vendor/supabase.js?v=1.4.1';
-import { TEAM_CONFIG } from './team-config.js?v=1.12.0';
-import { TEAM_ROLES, teamPayload, teamError, localToIso, isoToTaipeiInput, teamFetch } from './team-core.js?v=1.12.0';
+import { TEAM_CONFIG } from './team-config.js?v=1.13.0';
+import { effectiveTeamRole, TEAM_ROLES, teamPayload, teamError, localToIso, isoToTaipeiInput, teamFetch } from './team-core.js?v=1.13.0';
 
 export function initTeamWorkspace({getRecord,onOpenRecord,onSaved,onContext=async()=>{}}) {
     const $=id=>document.getElementById(id);
@@ -56,14 +56,15 @@ export function initTeamWorkspace({getRecord,onOpenRecord,onSaved,onContext=asyn
         if(verified.error || !verified.data.user) { clear(); user=null; $('team-login').hidden=false; status('請使用已開通的公司帳號登入。新帳號須由主管提供一次性設定連結。'); return; }
         user=verified.data.user;
         try { await rpc('yj_join_workspaces'); } catch(error) { clear(); throw error; }
-        let own; try { own=check(await client.from('yj_memberships').select('org_id,role,display_name').eq('user_id',user.id).eq('active',true)); } catch(error) { clear(); throw error; }
+        let own; try { own=check(await client.from('yj_memberships').select('org_id,role,display_name,staff_access').eq('user_id',user.id).eq('active',true)); } catch(error) { clear(); throw error; }
         if(generation!==contextGeneration) return;
         if(!own.length) { clear(); $('team-login').hidden=true; status('已登入，但尚未列入啟用員工名單。請主管登錄此電子郵件。'); return; }
         if(!own.some(item=>item.org_id===org)) org=own[0].org_id;
-        role=own.find(item=>item.org_id===org).role;
+        const membership=own.find(item=>item.org_id===org);
+        role=effectiveTeamRole(membership);
         options($('team-org'),own.map(item=>({value:item.org_id,label:item.display_name+' · '+TEAM_ROLES[item.role]}))); $('team-org').value=org;
         $('team-login-retention').textContent=loginSession.describe();
-        $('team-user').textContent=`${user.email}｜${TEAM_ROLES[role]}`;
+        $('team-user').textContent=`${user.email}｜${TEAM_ROLES[membership.role]}${membership.role!==role?'（助理同等作業權限）':''}`;
         $('team-login').hidden=true; $('team-private').hidden=false; $('team-manager').hidden=!manager(); $('team-operator').hidden=!operator();
         $('team-password-setup').hidden=!(recovery || user.user_metadata?.yj_password_setup===true);
         if(!$('team-password-setup').hidden) await onContext({client,user,org,role:null,cases:[],routes:[],stops:[]});

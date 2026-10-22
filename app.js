@@ -1,10 +1,10 @@
-import { initTeamWorkspace } from './team-workspace.js?v=1.12.0';
-import { initTraining } from './training.js?v=1.12.0';
-import { CONFIG } from './pricing-config.js?v=1.12.0';
-import { WARRANTY_DATA, WARRANTY_KINDS, WARRANTY_ACTIONS } from './warranty-data.js?v=1.12.0';
-import { formatQuoteId, generateQuoteSummary, normalizeMoney, calculateQuote, assessLogistics, reviewLogistics, summarizeLogistics, ACTUAL_COST_FIELDS, SERVICE_LABELS, SERVICE_DESCRIPTIONS, LOGISTICS_LABELS, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_STATUS, parseBackup, mergeRecords, upsertRecord, matchesRecord } from './quote-core.js?v=1.12.0';
+import { initTeamWorkspace } from './team-workspace.js?v=1.13.0';
+import { initTraining } from './training.js?v=1.13.0';
+import { CONFIG } from './pricing-config.js?v=1.13.0';
+import { WARRANTY_DATA, WARRANTY_KINDS, WARRANTY_ACTIONS } from './warranty-data.js?v=1.13.0';
+import { formatQuoteId, generateQuoteSummary, normalizeMoney, calculateQuote, assessLogistics, reviewLogistics, summarizeLogistics, ACTUAL_COST_FIELDS, SERVICE_LABELS, SERVICE_DESCRIPTIONS, LOGISTICS_LABELS, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_STATUS, parseBackup, mergeRecords, upsertRecord, matchesRecord } from './quote-core.js?v=1.13.0';
 
-import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from './driver-data.js?v=1.12.0';
+import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from './driver-data.js?v=1.13.0';
 
         let quoteAccess=false;
         const newFields = () => ({ schemaVersion: 2, billingStage: 'DIAGNOSIS', logisticsPlan: 'DEDICATED', logisticsFee: '', feeConfirmed: false, routeConfirmed: false, windowConfirmed: false, actualConfirmed: false, actualMinutes: '', actualEngineerMinutes: '', actualHourlyCost: '', actualTravelCost: '', actualOtherCost: '', actualRevenue: '', actualNotes: '', logisticsWindow: '', repairFee: '', repairConfirmed: false, paidAmount: '', logisticsMinutes: '', hourlyCost: '', travelCost: '', logisticsOtherCost: '', targetMargin: '' });
@@ -535,7 +535,7 @@ import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from
 
         window.handlePrint = () => { if (addToHistory()) { $('customer-print-text').textContent=generateSummary(state,UI.problemInput.value.trim(),null,state.date); window.print(); } };
         window.switchTab = (tabId) => {
-            if(tabId==='quote' && !quoteAccess) { tabId='team'; notify('請先使用啟用中的主管或客服／行政帳號登入，才能使用檢測估價。保固與驅動查詢免登入。'); }
+            if(tabId==='quote' && !quoteAccess) { tabId='team'; notify('請先使用啟用中的主管、客服／行政或已開通助理權限的工程師帳號登入，才能使用檢測估價。保固與驅動查詢免登入。'); }
             state.activeTab=tabId;
             ['quote', 'warranty', 'drivers', 'team', 'training'].forEach(s => {
                 const el = $(`section-${s}`);
