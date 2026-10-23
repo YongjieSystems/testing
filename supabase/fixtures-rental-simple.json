@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "id": "QA-SIMPLE-RENTAL",
+  "inquiry": {
+    "customer": "QA SIMPLE",
+    "contact": "",
+    "phone": "",
+    "staff": "QA",
+    "purpose": "",
+    "start": "2026-11-01",
+    "end": "2026-12-01",
+    "readyAt": "",
+    "address": "",
+    "access": "",
+    "software": "",
+    "network": "",
+    "delivery": "客戶自取自還",
+    "urgency": "正常預約",
+    "notes": "",
+    "payment": "交付前支付",
+    "validUntil": "2026-10-30",
+    "tax": "included",
+    "depositMode": "collect",
+    "deposit": "4000",
+    "depositReason": "",
+    "stockConfirmed": false,
+    "scopeConfirmed": false,
+    "periodsConfirmed": false,
+    "licenseConfirmed": false,
+    "transportConfirmed": false,
+    "reviewed": false
+  },
+  "lines": [
+    {
+      "id": "04a1907e-b718-44c9-9d59-8a2323610723",
+      "kind": "equipment",
+      "planId": "pc-month",
+      "name": "文書庫存桌機＋24吋螢幕",
+      "qty": "1",
+      "periods": "1",
+      "unit": "月",
+      "price": "",
+      "pages": "0",
+      "scope": "原8代內CPU方案；含一台24吋螢幕，最低承租及維護範圍依本次約定。",
+      "discountable": true,
+      "override": "",
+      "overrideReason": "",
+      "start": "",
+      "end": ""
+    }
+  ],
+  "discount": {
+    "type": "amount",
+    "value": "0",
+    "reason": ""
+  }
+}

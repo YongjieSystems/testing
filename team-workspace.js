@@ -1,12 +1,15 @@
-import { createLoginSession, watchLoginSession, LOGIN_MODES } from './login-session.js?v=1.14.1';
+import {createNoticeBoard} from './notice-board.js?v=2.0.0';
+import {generateQuoteSummary} from './quote-core.js?v=2.0.0';
+import { createLoginSession, watchLoginSession, LOGIN_MODES } from './login-session.js?v=2.0.0';
 import { createClient } from './vendor/supabase.js?v=1.4.1';
-import { TEAM_CONFIG } from './team-config.js?v=1.14.1';
-import { effectiveTeamRole, TEAM_ROLES, teamPayload, teamError, localToIso, isoToTaipeiInput, teamFetch } from './team-core.js?v=1.14.1';
+import { TEAM_CONFIG } from './team-config.js?v=2.0.0';
+import { effectiveTeamRole, TEAM_ROLES, teamPayload, teamError, localToIso, isoToTaipeiInput, teamFetch } from './team-core.js?v=2.0.0';
 
-export function initTeamWorkspace({getRecord,onOpenRecord,onSaved,onContext=async()=>{}}) {
+export function initTeamWorkspace({getRecord,onOpenRecord,onSaved,onContext=async()=>{},kind='INSPECTION'}) {
     const $=id=>document.getElementById(id);
+    const notices=createNoticeBoard();document.body?.classList.add('simple-workflow');
     const status=text=>{ $('team-status').textContent=text; };
-    const labels={REVIEW:'待主管核准',APPROVED:'已核准',DONE:'已完成',CANCELLED:'已取消',DRAFT:'草稿',PUBLISHED:'已發布',PENDING:'待處理',FAILED:'未完成'};
+    const labels={REVIEW:'已保存',APPROVED:'已保存（舊核准紀錄）',DONE:'已完成',CANCELLED:'已取消',DRAFT:'草稿',PUBLISHED:'已發布',PENDING:'待處理',FAILED:'未完成'};
     const events={CASE_SAVED:'報價已同步',CASE_APPROVED:'主管已核准',CASE_ASSIGNED:'工程師已分派',ROUTE_DRAFT_SAVED:'排線草稿已保存',ROUTE_PUBLISHED:'排線已發布',ROUTE_CANCELLED:'排線已取消',STOP_REPORTED:'站點已回報',EMPLOYEE_CHANGED:'員工權限已調整',ACCOUNT_ACTIVATED:'帳號已開通',CASE_CLOSED:'案件已結束'};
     const loginSession=createLoginSession({namespace:'yj-inspection-login-v1',local:localStorage,tab:sessionStorage});
     loginSession.migrateLegacy(sessionStorage,'sb-buzcduwjeddaqwsrbwlf-auth-token');
@@ -38,7 +41,7 @@ export function initTeamWorkspace({getRecord,onOpenRecord,onSaved,onContext=asyn
         if(items.some(item=>item.value===previous)) select.value=previous;
     }
     function clear() {
-        contextGeneration++;
+        contextGeneration++;notices.setContext(null);
         onContext({client,user:null,org:null,role:null,cases:[],routes:[],stops:[]});
         role=null; org=null; cases=[]; routes=[]; stops=[]; directory=[]; members=[]; selectedCase=null; routeDraft=null;
         for(const id of ['team-case-list','team-route-list','team-employee-list','team-audit-list','team-stop-editor']) $(id).replaceChildren();
@@ -70,7 +73,7 @@ export function initTeamWorkspace({getRecord,onOpenRecord,onSaved,onContext=asyn
         if(!$('team-password-setup').hidden) await onContext({client,user,org,role:null,cases:[],routes:[],stops:[]});
         if(!manager()) { $('team-account-link').replaceChildren(); $('team-audit-list').replaceChildren(); }
         const fetched=await Promise.all([
-            client.from('yj_cases').select('*').eq('org_id',org).order('updated_at',{ascending:false}).limit(200),
+            client.from('yj_cases').select('*').eq('org_id',org).eq('record_kind',kind).order('updated_at',{ascending:false}).limit(200),
             client.from('yj_routes').select('*').eq('org_id',org).order('starts_at',{ascending:false}).limit(100)
         ]);
         if(generation!==contextGeneration) return;
@@ -80,7 +83,7 @@ export function initTeamWorkspace({getRecord,onOpenRecord,onSaved,onContext=asyn
         directory=operator() ? await rpc('yj_directory',{p_org:org}) : [];
         members=manager() ? check(await client.from('yj_memberships').select('*').eq('org_id',org).order('display_name')) : [];
         if(generation!==contextGeneration) return;
-        renderCases(); renderRoutes(); renderEmployees();
+        renderCases(); renderRoutes(); renderEmployees();notices.setContext({client,user,org,role});
         if(manager()) {
             const audit=check(await client.from('yj_audit_events').select('event,entity_id,created_at,actor_id,details').eq('org_id',org).order('created_at',{ascending:false}).limit(30));
             if(generation!==contextGeneration) return;
@@ -107,7 +110,14 @@ export function initTeamWorkspace({getRecord,onOpenRecord,onSaved,onContext=asyn
                     onOpenRecord(snapshot.record,{orgId:org,caseId:item.id,revision:latest.revision,costs:costs ? {...costs.costs,actualConfirmed:costs.quote_revision===latest.revision && costs.costs.actualConfirmed===true} : {}});
                     status(`已載入版本 ${latest.revision}${costs && costs.quote_revision!==latest.revision ? '；成本資料來自較早報價，請主管重新核對' : ''}`);
                 });
+                button(row,'複製客戶報價',async()=>{const record=await rpc('yj_export_inspection',{p_case:item.id,p_expected:item.revision});await navigator.clipboard.writeText(generateQuoteSummary(record.state,record.problem,record.state.pricing,record.state.date));status('已複製最新共用版本。');});
                 if(manager()) button(row,'選取供主管處理',async()=>{selectedCase=item; $('team-selected-case').textContent=`已選取：${item.customer || item.id}（報價版本 ${item.revision}）`;});
+            }
+            if(operator()&&!['DONE','CANCELLED'].includes(item.workflow)) {
+                const actions=node('details');actions.append(node('summary','案件進度與分工（選用）'));
+                const engineer=node('select');engineer.className='w-full border p-3 rounded-xl';engineer.setAttribute('aria-label','分派工程師');options(engineer,directory.filter(x=>x.role==='ENGINEER').map(x=>({value:x.user_id,label:x.display_name})),'不分派');engineer.value=item.assigned_to||'';actions.append(engineer);
+                button(actions,'保存分工',async()=>{await rpc('yj_assign_case',{p_case:item.id,p_expected:item.assignment_version,p_engineer:engineer.value||null});await refresh();});
+                button(actions,'標記已完成',async()=>{await rpc('yj_close_case',{p_case:item.id,p_expected:item.revision,p_status:'DONE',p_reason:'經辦人確認工作完成'});await refresh();});row.append(actions);
             }
             list.append(row);
         }
@@ -145,7 +155,7 @@ export function initTeamWorkspace({getRecord,onOpenRecord,onSaved,onContext=asyn
                 const stopRow=node('div',undefined,'bg-slate-50 rounded-xl p-3 space-y-2');
                 const job=cases.find(item=>item.id===stop.case_id);
                 stopRow.append(node('p',`${stop.position}. ${stop.leg==='PICKUP'?'取件':'回送'} · ${job?.customer || stop.case_id} · ${labels[stop.status] || stop.status}`,'font-bold text-sm'),node('p',stop.address,'text-sm break-words'),node('p',`${new Date(stop.starts_at).toLocaleTimeString('zh-TW',{timeZone:'Asia/Taipei',hour:'2-digit',minute:'2-digit'})} ～ ${new Date(stop.ends_at).toLocaleTimeString('zh-TW',{timeZone:'Asia/Taipei',hour:'2-digit',minute:'2-digit'})}`,'text-xs'));
-                if(route.status==='PUBLISHED' && stop.status==='PENDING' && (manager() || route.driver_id===user.id)) {
+                if(route.status==='PUBLISHED' && stop.status==='PENDING' && (operator() || route.driver_id===user.id)) {
                     const note=node('input'); note.placeholder='交接備註；無法完成須填原因'; note.maxLength=1000; note.className='w-full border p-2 rounded-lg'; note.setAttribute('aria-label',`站點 ${stop.position} 回報備註`); stopRow.append(note);
                     for(const [label,value] of [['回報已完成','DONE'],['回報無法完成','FAILED']]) button(stopRow,label,async()=>{
                         await rpc('yj_update_stop',{p_stop:stop.id,p_route_revision:route.revision,p_status:value,p_note:note.value}); await refresh();
@@ -159,8 +169,8 @@ export function initTeamWorkspace({getRecord,onOpenRecord,onSaved,onContext=asyn
                 $('team-stop-editor').replaceChildren(); stops.filter(item=>item.route_id===route.id).forEach(item=>addStop(item));
                 $('team-route-editing').textContent=`正在編輯：${route.name}（版本 ${route.revision}）`;
             });
-            if(manager() && route.status==='DRAFT') button(row,'核准發布排線',async()=>{await rpc('yj_publish_route',{p_route:route.id,p_expected:route.revision}); await refresh();});
-            if(manager() && ['DRAFT','PUBLISHED'].includes(route.status)) {
+            if(operator() && route.status==='DRAFT') button(row,'發布收送安排',async()=>{await rpc('yj_publish_route',{p_route:route.id,p_expected:route.revision}); await refresh();});
+            if(operator() && ['DRAFT','PUBLISHED'].includes(route.status)) {
                 const reason=node('input'); reason.placeholder='取消路線原因'; reason.maxLength=500; reason.className='border p-2 rounded-lg w-full'; reason.setAttribute('aria-label','取消路線原因'); row.append(reason);
                 button(row,'取消此路線',async()=>{await rpc('yj_cancel_route',{p_route:route.id,p_expected:route.revision,p_reason:reason.value}); await refresh();});
             }
@@ -213,7 +223,7 @@ export function initTeamWorkspace({getRecord,onOpenRecord,onSaved,onContext=asyn
         const id=record.state.cloudOrgId===org ? record.state.cloudCaseId : (/^[0-9a-f-]{36}$/i.test(record.state.caseId || '') ? record.state.caseId : crypto.randomUUID());
         const expected=record.state.cloudOrgId===org && record.state.cloudCaseId ? record.state.cloudRevision : 0;
         const result=await rpc('yj_save_case',{p_org:org,p_case:id,p_expected:expected,p_record:payload.record,p_costs:payload.costs});
-        onSaved(result,{orgId:org}); await refresh(); status(`已同步至團隊，版本 ${result.revision}；報價內容更新後須由主管核准才能發布排線。`);
+        onSaved(result,{orgId:org}); await refresh(); status(`已同步至團隊，版本 ${result.revision}；已保存共用，同事可接手，不必等待主管核准。`);
     });
     const chosen=()=>{if(!selectedCase) throw new Error('請先從案件列表選取供主管處理的案件');return selectedCase;};
     action($('team-approve'),async()=>{const item=chosen();await rpc('yj_approve_case',{p_case:item.id,p_expected:item.revision,p_reason:$('team-case-reason').value});selectedCase=null;await refresh();});
@@ -227,7 +237,7 @@ export function initTeamWorkspace({getRecord,onOpenRecord,onSaved,onContext=asyn
         if(!$('team-stop-editor').children.length) throw new Error('請至少加入一個取件或回送站點');
         const items=[...$('team-stop-editor').children].map(row=>{const val=key=>row.querySelector(`[data-stop="${key}"]`).value;return {case_id:val('case'),leg:val('leg'),address:val('address'),starts_at:localToIso(val('starts_at')),ends_at:localToIso(val('ends_at'))};});
         const result=await rpc('yj_save_route',{p_org:org,p_route:routeDraft?.id || null,p_expected:routeDraft?.revision || 0,p_name:$('team-route-name').value,p_driver:$('team-route-driver').value,p_start:localToIso($('team-route-start').value),p_end:localToIso($('team-route-end').value),p_stops:items});
-        routeDraft={id:result.id,revision:result.revision}; await refresh();$('team-route-editing').textContent=`草稿已存（版本 ${result.revision}），須由主管核准發布。`;
+        routeDraft={id:result.id,revision:result.revision}; await refresh();$('team-route-editing').textContent=`草稿已存（版本 ${result.revision}），確認時間與人員後即可發布。`;
     });
     const timer=setInterval(()=>{if(user && !busy && !document.hidden && !document.activeElement?.closest('#section-team input, #section-team textarea, #section-team select')) run(refresh);},15000);
     window.addEventListener('pagehide',()=>{clearInterval(timer);$('team-account-link').replaceChildren();});

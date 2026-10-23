@@ -109,7 +109,7 @@
         @media print { #mobile-quote-bar { display:none !important; } }
     </style>
 
-    <link rel="stylesheet" href="./interface.css?v=1.14.1">
+    <link rel="stylesheet" href="./interface.css?v=2.0.0">
 <style>#customer-print-only{display:none}@media print{body>*{display:none!important}#customer-print-only{display:block!important;padding:20px}#customer-print-only pre{font:16px/1.8 "Microsoft JhengHei",sans-serif;white-space:pre-wrap;overflow-wrap:anywhere}}</style>
 </head>
 <body class="antialiased">
@@ -122,7 +122,7 @@
                     <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" /></svg>
                 </div>
                 <div>
-                    <h1 class="text-xl md:text-2xl font-black tracking-tight">永捷系統科技 <span class="text-blue-400 font-medium">檢測費估價程式 <small class="text-xs">v1.14.1</small></span></h1>
+                    <h1 class="text-xl md:text-2xl font-black tracking-tight">永捷系統科技 <span class="text-blue-400 font-medium">檢測費估價程式 <small class="text-xs">v2.0.0</small></span></h1>
                 </div>
             </div>
             <div class="hidden md:block text-right">
@@ -137,7 +137,7 @@
             <button type="button" onclick="switchTab('quote')" id="tab-quote" class="flex-1 min-w-[100px] py-3 px-4 rounded-xl font-bold transition-all tab-active">檢測報價</button>
             <button type="button" onclick="switchTab('warranty')" id="tab-warranty" class="flex-1 min-w-[100px] py-3 px-4 rounded-xl font-bold transition-all tab-inactive">保固查詢</button>
             <button type="button" onclick="switchTab('drivers')" id="tab-drivers" class="flex-1 min-w-[100px] py-3 px-4 rounded-xl font-bold transition-all tab-inactive">驅動程式</button>
-            <button type="button" onclick="switchTab('team')" id="tab-team" class="flex-1 min-w-[100px] py-3 px-4 rounded-xl font-bold transition-all tab-inactive">團隊作業</button>
+            <button type="button" onclick="switchTab('team')" id="tab-team" class="flex-1 min-w-[100px] py-3 px-4 rounded-xl font-bold transition-all tab-inactive">團隊紀錄</button>
             <button type="button" onclick="switchTab('training')" id="tab-training" class="flex-1 min-w-[100px] py-3 px-4 rounded-xl font-bold transition-all tab-inactive">操作說明／教育訓練</button>
         </div>
     </nav>
@@ -150,7 +150,7 @@
                 <section class="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-200">
                     <div class="flex items-center gap-3 mb-10">
                         <div class="w-1.5 h-8 bg-blue-600 rounded-full"></div>
-                        <h2 class="text-2xl font-black text-slate-800 tracking-tight">服務參數設定</h2>
+                        <h2 class="text-2xl font-black text-slate-800 tracking-tight">服務參數設定</h2><p class="workflow-hint">① 填本次需求　② 看客戶預覽　③ 保存共用／交付報價<br>不用等主管核准；維修費另開獨立維修單。</p>
                     </div>
                     <div class="space-y-10">
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -181,7 +181,7 @@
                         <p id="legacy-note" hidden class="text-sm text-amber-800">舊版報價：沿用原計價規則。請建立新報價使用收送與維修階段功能。</p>
                         <div id="fulfillment-controls" class="space-y-5 border rounded-2xl p-5 bg-slate-50">
                             <h2 id="fulfillment-title" class="font-bold text-lg">案件計費</h2>
-                            <label class="block">計費階段<select data-quote-field="billingStage" class="w-full border rounded-xl p-3"><option value="DIAGNOSIS">檢測估價／不維修</option><option value="REPAIR">維修報價（免另收檢測費）</option></select></label>
+                            <label class="block">計費階段<select data-quote-field="billingStage" class="w-full border rounded-xl p-3"><option value="DIAGNOSIS">檢測估價／不維修</option><option value="REPAIR" hidden disabled>舊版維修計費（唯讀，請另開維修單）</option></select></label>
                             <div id="repair-controls" hidden class="space-y-3">
                                 <label class="block">維修總費用（含本次同意範圍的零件及工資；其他加項請勿重複輸入）<input type="number" min="0" max="1000000" step="1" data-quote-field="repairFee" class="w-full border rounded-xl p-3"></label>
                                 <label class="block"><input type="checkbox" data-quote-field="repairConfirmed"> 客戶已同意此維修金額與範圍</label>
@@ -479,7 +479,7 @@
                     </button>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 no-print"><button type="button" id="save-quote-btn" class="bg-emerald-700 text-white rounded-xl p-3 font-bold">保存報價</button><button type="button" id="save-draft-btn" class="bg-slate-200 rounded-xl p-3 font-bold">保存草稿</button><button type="button" id="load-draft-btn" class="bg-slate-200 rounded-xl p-3 font-bold">載入草稿</button></div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 no-print"><button type="button" id="save-quote-btn" class="bg-emerald-700 text-white rounded-xl p-3 font-bold">保存本機報價</button><button type="button" id="save-draft-btn" class="bg-slate-200 rounded-xl p-3 font-bold">保存草稿</button><button type="button" id="load-draft-btn" class="bg-slate-200 rounded-xl p-3 font-bold">載入草稿</button></div>
                 <button type="button" id="new-quote-btn" class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold no-print">建立新報價</button>
                 <p id="app-status" role="status" aria-live="polite" class="no-print text-sm text-orange-700"></p>
                 <details class="customer-preview no-print"><summary>客戶報價預覽</summary><p>以下與複製摘要內容相同。交付前核對金額、故障現象與待確認項目。</p><pre id="customer-summary-preview"></pre></details>
@@ -508,8 +508,8 @@
         <section id="section-team" class="hidden no-print mb-20 space-y-5">
             <div class="bg-white rounded-2xl p-6 border space-y-4">
                 <h2 class="text-2xl font-black">團隊作業</h2>
-                <p><a href="https://yongjiesystems.github.io/Maintenance/?v=2.4.1" target="_blank" rel="noopener noreferrer" class="text-blue-700 underline">開啟維修報價、檢測折抵與主管核准</a></p>
-                <p class="text-sm text-slate-600">本機估價不會自動上傳。登入後可明確同步目前報價；共用資料以團隊版本及主管核准紀錄為準。員工只能讀取後端允許的資料。</p>
+                <p><a href="https://yongjiesystems.github.io/Maintenance/?v=2.4.1" target="_blank" rel="noopener noreferrer" class="text-blue-700 underline">開啟獨立維修估價</a></p>
+                <p class="text-sm text-slate-600">本機估價不會自動上傳。按「保存到團隊」供同事接手，不需主管核准；共用資料以最新保存版本為準，歷史與經辦紀錄仍保留。</p>
                 <p id="team-user" class="font-bold">尚未登入</p>
                 <div class="flex flex-wrap gap-3"><button type="button" id="team-refresh" class="p-3 bg-blue-100 rounded-xl">更新團隊資料</button><button type="button" id="team-signout" class="p-3 bg-slate-200 rounded-xl">登出／清除記住登入</button></div>
                 <p id="team-status" role="status" aria-live="polite" class="text-sm text-amber-900">正在檢查登入狀態…</p>
@@ -531,8 +531,8 @@
                 <label class="block bg-white p-4 rounded-xl">工作團隊<select id="team-org" class="w-full p-3 border rounded-xl"></select></label>
                 <div id="team-operator" hidden class="bg-white rounded-2xl p-6 border space-y-4">
                     <h3 class="text-xl font-bold">估價同步與集中排線</h3>
-                    <p class="text-sm">客服同步客戶報價；主管同步時另包含目前表單的內部成本。雲端費用由核定價目重新計算，改價或減免須重新核准。發生版本衝突時，不會覆寫同事的修改。</p>
-                    <button type="button" id="team-upload" class="p-3 bg-emerald-700 text-white rounded-xl">同步目前估價至團隊</button>
+                    <p class="text-sm">保存到團隊供同事查詢及接手，不需要主管核准。主管可事後查看版本與操作紀錄。發生版本衝突時，不會覆寫同事的修改。</p>
+                    <button type="button" id="team-upload" class="p-3 bg-emerald-700 text-white rounded-xl">保存到團隊</button>
                     <details class="border rounded-xl p-4"><summary class="font-bold cursor-pointer">編排路線草稿</summary>
                         <p class="text-sm my-3">依行程順序加入站點，開始與結束時間包含該站交接及作業；相鄰站點須預留交通時間。系統檢查時間衝突，不會自動估算交通或最佳路徑。所有日期時間均以臺北時間輸入及顯示。</p>
                         <p id="team-route-editing" class="font-bold">新路線草稿</p>
@@ -551,11 +551,11 @@
                     <section class="bg-white rounded-2xl p-6 border space-y-4"><h3 class="text-xl font-bold">集中排線／我的任務（最近 100 條）</h3><p class="text-sm">工程師與收送人員只會取得分派給自己的已發布路線。取件、回送分開記錄，依站點順序回報；無法完成請記錄原因。</p><div id="team-route-list" class="space-y-3"></div></section>
                 </div>
                 <div id="team-manager" hidden class="bg-white rounded-2xl p-6 border space-y-5">
-                    <h3 class="text-xl font-bold">主管管理</h3>
+                    <h3 class="text-xl font-bold">員工與紀錄管理</h3>
                     <p id="team-selected-case" class="font-bold">請從案件列表選取供主管處理的案件</p>
                     <label class="block">核准／結案／取消原因<input id="team-case-reason" maxlength="500" class="w-full border p-3 rounded-xl"></label>
                     <label class="block">技術工程師<select id="team-case-engineer" class="w-full border p-3 rounded-xl"></select></label>
-                    <div class="flex flex-wrap gap-3"><button id="team-approve" type="button" class="p-3 bg-emerald-700 text-white rounded-xl">核准最新報價與減免</button><button id="team-assign" type="button" class="p-3 bg-blue-100 rounded-xl">分派技術工程師</button><button id="team-close-case" type="button" class="p-3 bg-slate-200 rounded-xl">結束此案件</button><button id="team-cancel-case" type="button" class="p-3 bg-slate-200 rounded-xl">取消此案件</button></div>
+                    <div class="flex flex-wrap gap-3"><button id="team-approve" type="button" class="p-3 bg-emerald-700 text-white rounded-xl">舊版核准（停用）</button><button id="team-assign" type="button" class="p-3 bg-blue-100 rounded-xl">分派技術工程師</button><button id="team-close-case" type="button" class="p-3 bg-slate-200 rounded-xl">結束此案件</button><button id="team-cancel-case" type="button" class="p-3 bg-slate-200 rounded-xl">取消此案件</button></div>
                     <details class="border p-4 rounded-xl"><summary class="font-bold cursor-pointer">員工名單與權限</summary>
                         <p class="text-sm my-3">先登錄名單，再為新帳號產生一次性開通連結，由本人設定密碼。這裡不會寄送電子郵件、不會重設既有帳號；既有帳號恢復需由專案擁有者處理。停用會撤銷後端權限，不能停用最後一位已登入主管。</p>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -648,8 +648,8 @@
                 <label class="block font-bold">選擇學習路徑<select id="training-track" class="block w-full md:w-auto border rounded-xl p-3 mt-2"><option value="basic">新人基本操作</option><option value="integration">檢測 → 維修 → 收送完整流程</option><option value="dispatch">客服與收送流程</option><option value="manager">主管管理與成本</option></select></label>
                 <p id="training-progress" role="status" class="font-bold text-blue-800"></p>
                 <p id="training-storage" role="status" class="text-xs text-slate-500">學習紀錄只存在此瀏覽器，不會送到主管或雲端。勾選不代表取得操作權限或主管已核准。</p>
-                <div class="flex flex-wrap gap-3"><a href="./manuals/employee-handbook-2026-10-23.pdf" target="_blank" rel="noopener noreferrer" class="inline-block bg-blue-700 text-white rounded-xl p-3 font-bold">開啟／列印員工手冊 PDF</a><a href="./manuals/employee-handbook-2026-10-23.pdf" download class="inline-block bg-slate-200 text-slate-800 rounded-xl p-3 font-bold">下載員工手冊 PDF</a></div>
-                <p class="text-xs text-slate-500">登入新制：估價須員工帳號，保固與驅動免登入。忘記密碼請在團隊作業寄送重設信；助理可依主管口頭確認直接交付客戶報價。<br>三套程式共用完整手冊｜2026/10/23 第3版・22 頁。含新版客戶預覽、複製摘要、列印與另存PDF步驟；可下載保存或選印需要的頁面。</p>
+                <div class="flex flex-wrap gap-3"><a href="./manuals/employee-handbook-2026-10-23-simple.pdf" target="_blank" rel="noopener noreferrer" class="inline-block bg-blue-700 text-white rounded-xl p-3 font-bold">開啟／列印員工手冊 PDF</a><a href="./manuals/employee-handbook-2026-10-23-simple.pdf" download class="inline-block bg-slate-200 text-slate-800 rounded-xl p-3 font-bold">下載員工手冊 PDF</a></div>
+                <p class="text-xs text-slate-500">登入新制：估價須員工帳號，保固與驅動免登入。忘記密碼請在團隊作業寄送重設信；助理可依主管口頭確認直接交付客戶報價。<br>三套程式共用完整手冊｜2026/10/23 第4版・22 頁。含新版客戶預覽、複製摘要、列印與另存PDF步驟；可下載保存或選印需要的頁面。</p>
             </section>
             <p class="bg-blue-50 border rounded-xl p-4 leading-7">跨程式順序：檢測同步 → 維修連結原案 → 維修與折抵同步 → 檢測及維修分別核准 → 發布收送路線 → 交接與收款核對。<br><a href="https://yongjiesystems.github.io/Maintenance/?v=2.4.1" target="_blank" rel="noopener noreferrer" class="text-blue-800 underline font-bold">開啟維修估價程式（按「操作說明／教育訓練」查看維修端步驟）</a></p>
             <div id="training-steps" class="space-y-4"></div>
@@ -662,9 +662,9 @@
             </section>
         </div>
     </main>
-    <div id="mobile-quote-bar" hidden class="no-print"><div><small id="mobile-total-caption">預估總額</small><br><strong>NT$ <span id="mobile-total">500</span></strong></div><button id="mobile-view-btn" type="button">看明細</button><button id="mobile-save-btn" type="button">保存報價</button></div>
+    <div id="mobile-quote-bar" hidden class="no-print"><div><small id="mobile-total-caption">預估總額</small><br><strong>NT$ <span id="mobile-total">500</span></strong></div><button id="mobile-view-btn" type="button">看明細</button><button id="mobile-save-btn" type="button">保存本機報價</button></div>
 
-    <script type="module" src="./app.js?v=1.14.1"></script>
+    <script type="module" src="./app.js?v=2.0.0"></script>
 
 <section id="customer-print-only" aria-label="客戶報價"><pre id="customer-print-text"></pre></section>
 </body>

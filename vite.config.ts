@@ -5,8 +5,8 @@ export default defineConfig({
   plugins: [{
     name: 'employee-manual',
     generateBundle() {
-      this.emitFile({type:'asset',fileName:'manuals/employee-handbook-2026-10-23.pdf',
-        source:readFileSync(new URL('./manuals/employee-handbook-2026-10-23.pdf',import.meta.url))});
+      this.emitFile({type:'asset',fileName:'manuals/employee-handbook-2026-10-23-simple.pdf',
+        source:readFileSync(new URL('./manuals/employee-handbook-2026-10-23-simple.pdf',import.meta.url))});
     },
   }],
   base: './',
