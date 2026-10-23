@@ -1,3 +1,4 @@
+import {QUOTE_DECLARATIONS} from './customer-declaration.js?v=2.0.1';
 export function normalizeMoney(value) {
     const number = Number(value);
     return Number.isFinite(number) ? Math.min(1000000, Math.max(0, Math.trunc(number))) : 0;
@@ -217,20 +218,17 @@ export function generateQuoteSummary(dataState, problemText, config, dateStr) {
  '設備：'+(dataState.deviceModel || config.INSPECTION[dataState.device].label),
  '服務：'+SERVICE_LABELS[dataState.service],
  ...(problemText?.trim()?['故障現象：'+problemText.trim()]:[]),
+ ...(dataState.service==='IN_STORE'?['客戶自行送件到門市，不收收送費；檢測費依本單約定。']:[]),
+ ...(dataState.service==='ON_SITE'?['到府檢測按本單收取出勤費；後續取回及回送依原約定確認，新增費用須先取得同意。']:[]),
+ ...(dataState.service==='PICKUP'?['收送：'+LOGISTICS_LABELS[dataState.logisticsPlan],'取件／回送：'+(dataState.logisticsWindow||'待確認'),'收送不含現場拆裝檢修；優先取件不代表當日修復。']:[]),
  '',
  '【費用明細】',
  ...c.lines.filter(l=>l.amount||l.key==='base').map(l=>(l.key==='special'?'優惠折讓':l.label)+'：'+(l.amount<0?'−':'')+'$'+Math.abs(l.amount).toLocaleString('zh-TW')),
  (c.pending.length?'目前小計（尚有待確認項目）':'預估合計')+'：NT$ '+c.total.toLocaleString('zh-TW')+'（含稅）',
  ...(paid>0?['已收紀錄：$'+paid.toLocaleString()+'；'+(paid>c.total?'溢付待核對':'預估待付')+'：$'+Math.abs(c.total-paid).toLocaleString()]:[]),
- '',
- '【收送與服務約定】',
- ...(dataState.service==='IN_STORE'?['客戶自行送件到門市，不收收送費；檢測費依本單約定。']:[]),
- ...(dataState.service==='ON_SITE'?['到府檢測按本單收取出勤費；後續取回及回送依原約定確認，新增費用須先取得同意。']:[]),
- ...(dataState.service==='PICKUP'?['收送：'+LOGISTICS_LABELS[dataState.logisticsPlan],'取件／回送：'+(dataState.logisticsWindow||'待確認'),'收送不含現場拆裝檢修；優先取件不代表當日修復。']:[]),
  ...(c.pending.length?['待確認：'+c.pending.join('；')]:[]),
  '',
- '檢測不含零件耗材；不維修仍收約定檢測及收送／出勤費。',
- '修復時限依檢測結果與雙方約定；急件處理不代表保證當日修復。',
- '維修及檢測費折抵另依確認報價；新增費用須先取得同意。',
+ '【報價聲明】',
+ ...QUOTE_DECLARATIONS.map((text,index)=>(index+1)+'. '+text),
  ].join('\n');
 }

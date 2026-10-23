@@ -186,7 +186,7 @@ test('actual costs, notes and case identity survive backup import without changi
 test('compact customer inspection text keeps fees and pickup conditions without internal metadata',()=>{
  const input={...state,id:'customer-test',schemaVersion:2,service:'PICKUP',source:'OTHER',logisticsPlan:'PRIORITY',logisticsFee:'300',feeConfirmed:true,logisticsWindow:'週一取件／週三回送',windowConfirmed:true,staffName:'PRIVATE_STAFF',department:'PRIVATE_DEPT',actualNotes:'PRIVATE_COST',hourlyCost:'987',paidAmount:'200'};
  const t=generateQuoteSummary(input,'無法開機\n電源燈未亮',productionConfig,'2026-10-20');
- assert.match(t,/故障現象：無法開機\n電源燈未亮/);assert.match(t,/收送費.*\$300/);assert.match(t,/週一取件／週三回送/);assert.match(t,/已收紀錄：\$200/);assert.match(t,/含稅/);assert.match(t,/新增費用須先取得同意/);assert.doesNotMatch(t,/PRIVATE_|987|報價人員|設備來源|優先等級|處理狀態/);
+ assert.match(t,/故障現象：無法開機\n電源燈未亮/);assert.match(t,/收送費.*\$300/);assert.match(t,/週一取件／週三回送/);assert.match(t,/已收紀錄：\$200/);assert.match(t,/含稅/);assert.match(t,/新增費用須先取得客戶同意/);assert.doesNotMatch(t,/PRIVATE_|987|報價人員|設備來源|優先等級|處理狀態/);
 });
 test('customer pending pickup is never presented as free or confirmed scheduling',()=>{
  const t=generateQuoteSummary({...state,schemaVersion:2,service:'PICKUP',logisticsPlan:'SCHEDULED',logisticsFee:'',logisticsWindow:''},'',productionConfig,'2026-10-20');
@@ -209,6 +209,14 @@ test('remote service uses 500 for new quotes while saved price snapshots remain 
 test('customer quotation reads service, fees, then agreements and retains repair timing warning',()=>{
  const t=generateQuoteSummary({...state,schemaVersion:2},'無法列印',productionConfig,'2026-10-20');
  assert.ok(t.indexOf('【服務內容】')<t.indexOf('【費用明細】'));
- assert.ok(t.indexOf('【費用明細】')<t.indexOf('【收送與服務約定】'));
+ assert.ok(t.indexOf('【費用明細】')<t.indexOf('【報價聲明】'));
  assert.match(t,/故障現象：無法列印/);assert.match(t,/不代表保證當日修復/);
+});
+
+
+test('all service summaries end with the same five clear customer declarations without internal costs',async()=>{
+ const {QUOTE_DECLARATIONS}=await import('./customer-declaration.js');assert.equal(QUOTE_DECLARATIONS.length,5);
+ for(const service of ['IN_STORE','ON_SITE','PICKUP']){const text=generateQuoteSummary({...state,schemaVersion:2,service,actualNotes:'SECRET_COST',staffName:'SECRET_STAFF'},'電源燈不亮',productionConfig,'2026-10-23');
+ assert.equal(text.split('【報價聲明】').length,2);assert.equal(text.split('【報價聲明】')[1].trim(),QUOTE_DECLARATIONS.map((t,i)=>(i+1)+'. '+t).join('\n'));
+ assert.match(text,/不維修仍須支付已約定/);assert.match(text,/新增費用須先取得客戶同意/);assert.match(text,/本報價為含稅價格/);assert.doesNotMatch(text,/成本邏輯|油資|營運|運營|SECRET_|【收送與服務約定】|檢測費折抵另依/);}
 });

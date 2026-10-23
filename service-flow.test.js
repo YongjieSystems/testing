@@ -64,3 +64,14 @@ test('real fulfillment renderer hides and disables custom analysis in store/onsi
  assert.equal(customFields[0].value,'450');assert.equal(s.actualNotes,'INTERNAL_ONLY');
  assert.equal(customFields.every(f=>!f.disabled),true);
 });
+
+
+test('actual inspection preview, copy and print callbacks produce the same customer declaration',async()=>{
+ const source=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8'),elements=new Map();
+ const get=id=>{if(!elements.has(id))elements.set(id,{textContent:''});return elements.get(id)};
+ const snippets=[source.match(/function updateCustomerPreview\(\) \{[\s\S]*?\n        \}/)[0],source.match(/function generateSummary\([^)]*\) \{[\s\S]*?\n        \}/)[0],source.match(/function copyToClipboard\(\) \{[\s\S]*?\n        \}/)[0],source.match(/window.handlePrint = .*$/m)[0]].join('\n');
+ for(const service of ['IN_STORE','ON_SITE','PICKUP']){let copied='',printed=0;const context={...core,state:{...base,service,date:'2026-10-23'},UI:{problemInput:{value:' 無法開機 '},dispTotal:{innerText:'500'},btnCopy:{innerHTML:'複製摘要'}},pricesFor:()=>CONFIG,$:get,addToHistory:()=>true,navigator:{clipboard:{writeText:async text=>{copied=text}}},setTimeout(){},notify(){},window:{print(){printed++}}};vm.runInNewContext(snippets+';this.preview=updateCustomerPreview;this.copy=copyToClipboard;',context);
+ context.preview();context.copy();await Promise.resolve();assert.equal(copied,get('customer-summary-preview').textContent);context.window.handlePrint();assert.equal(printed,1);assert.equal(get('customer-print-text').textContent,copied);assert.match(copied,/【報價聲明】/);assert.doesNotMatch(copied,/成本邏輯|INTERNAL_ONLY|【收送與服務約定】/);
+ }
+ const html=fs.readFileSync(new URL('./index.html',import.meta.url),'utf8');const statement=html.match(/<ol id="quote-declaration-list"[\s\S]*?<\/ol>/)[0];const {QUOTE_DECLARATIONS}=await import('./customer-declaration.js');for(const text of QUOTE_DECLARATIONS)assert.ok(statement.includes(text));assert.doesNotMatch(statement,/成本|油資|同意維修不另加檢測費/);
+});
