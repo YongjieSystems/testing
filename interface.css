@@ -1,4 +1,40 @@
 :root { color-scheme: light; --ui-font: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", system-ui, sans-serif; }
+/* Warranty lookup: larger type and clear controls for comfortable daily reading. */
+@media screen {
+ #section-warranty {font-size:18px;color:#17304d;}
+ #section-warranty > div {padding:32px;border-radius:24px;border:1px solid #cbd8e7;box-shadow:0 8px 28px #17304d08;}
+ #section-warranty h2 {font-size:30px;line-height:1.5;}
+ #section-warranty h3 {font-size:22px;color:#172b47;}
+ #section-warranty p {font-size:18px;color:#364c65;line-height:1.85;}
+ #section-warranty .warranty-guide {padding:18px 22px;background:#edf4ff;border-left:4px solid #2459c4;border-radius:12px;margin-bottom:28px;}
+ #section-warranty .warranty-guide strong {display:block;color:#173f84;font-size:20px;margin-bottom:6px;}
+ #section-warranty #brand-grid,#section-warranty #brand-service-grid {grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;}
+ #section-warranty .brand-card {min-height:174px;padding:20px 14px;border:2px solid #c9d6e6;border-radius:18px;gap:10px;background:#fff;box-shadow:0 2px 5px #17304d05;}
+ #section-warranty .brand-card:hover,#section-warranty .brand-card:focus-visible {border-color:#2459c4;background:#f0f6ff;transform:none;}
+ #section-warranty .brand-card[aria-pressed="true"] {border-color:#2459c4;background:#eaf2ff;box-shadow:0 0 0 1px #2459c4;}
+ #section-warranty .brand-card > div {background:#e8eff9;color:#214a83;width:54px;height:54px;font-size:22px;}
+ #section-warranty .brand-card > span:first-of-type {font-size:20px;line-height:1.6;font-weight:700;color:#172b47;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;}
+ #section-warranty .brand-card > span:last-of-type {font-size:16px;font-weight:600;color:#164ba5;line-height:1.6;}
+ #section-warranty #brand-detail {background:#f2f6fc;border-color:#b7cce9;scroll-margin-top:100px;}
+ #section-warranty #detail-name {font-size:26px;}
+ #section-warranty #detail-checked {font-size:16px;color:#495d73;}
+ #section-warranty #brand-detail a,#section-warranty #brand-detail button {font-size:18px;min-height:52px;padding:14px 22px;}
+ #section-warranty #detail-link {background:#174eaf;color:#fff;}
+}
+@media screen and (max-width:1000px) {
+ #section-warranty #brand-grid,#section-warranty #brand-service-grid {grid-template-columns:repeat(3,minmax(0,1fr));}
+}
+@media screen and (max-width:700px) {
+ #section-warranty #brand-grid,#section-warranty #brand-service-grid {grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+ #section-warranty .brand-card {padding:16px 10px;min-height:166px;}
+ #section-warranty > div {padding:20px;}
+ #section-warranty h2 {font-size:26px;}
+ #section-warranty .warranty-guide {padding:16px;}
+ #section-warranty #brand-detail a,#section-warranty #brand-detail button {width:100%;}
+}
+@media screen and (max-width:380px) {
+ #section-warranty #brand-grid,#section-warranty #brand-service-grid {grid-template-columns:1fr;}
+}
 body, .statement-box { font-family: var(--ui-font); line-height: 1.65; }
 button, input, select, textarea { font-family: inherit; }
 button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }

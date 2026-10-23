@@ -1,10 +1,10 @@
-import { initTeamWorkspace } from './team-workspace.js?v=1.13.1';
-import { initTraining } from './training.js?v=1.13.1';
-import { CONFIG } from './pricing-config.js?v=1.13.1';
-import { WARRANTY_DATA, WARRANTY_KINDS, WARRANTY_ACTIONS } from './warranty-data.js?v=1.13.1';
-import { formatQuoteId, generateQuoteSummary, normalizeMoney, calculateQuote, assessLogistics, reviewLogistics, summarizeLogistics, ACTUAL_COST_FIELDS, SERVICE_LABELS, SERVICE_DESCRIPTIONS, LOGISTICS_LABELS, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_STATUS, parseBackup, mergeRecords, upsertRecord, matchesRecord } from './quote-core.js?v=1.13.1';
+import { initTeamWorkspace } from './team-workspace.js?v=1.13.2';
+import { initTraining } from './training.js?v=1.13.2';
+import { CONFIG } from './pricing-config.js?v=1.13.2';
+import { WARRANTY_DATA, WARRANTY_KINDS, WARRANTY_ACTIONS } from './warranty-data.js?v=1.13.2';
+import { formatQuoteId, generateQuoteSummary, normalizeMoney, calculateQuote, assessLogistics, reviewLogistics, summarizeLogistics, ACTUAL_COST_FIELDS, SERVICE_LABELS, SERVICE_DESCRIPTIONS, LOGISTICS_LABELS, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_STATUS, parseBackup, mergeRecords, upsertRecord, matchesRecord } from './quote-core.js?v=1.13.2';
 
-import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from './driver-data.js?v=1.13.1';
+import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from './driver-data.js?v=1.13.2';
 
         let quoteAccess=false;
         const newFields = () => ({ schemaVersion: 2, billingStage: 'DIAGNOSIS', logisticsPlan: 'DEDICATED', logisticsFee: '', feeConfirmed: false, routeConfirmed: false, windowConfirmed: false, actualConfirmed: false, actualMinutes: '', actualEngineerMinutes: '', actualHourlyCost: '', actualTravelCost: '', actualOtherCost: '', actualRevenue: '', actualNotes: '', logisticsWindow: '', repairFee: '', repairConfirmed: false, paidAmount: '', logisticsMinutes: '', hourlyCost: '', travelCost: '', logisticsOtherCost: '', targetMargin: '' });
@@ -361,7 +361,10 @@ import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from
             WARRANTY_DATA.forEach(brand => {
                 const btn = document.createElement('button');
                 btn.className = "brand-card bg-white border-2 border-slate-100 p-4 rounded-2xl transition-all flex flex-col items-center justify-center gap-2 group";
+                btn.type = 'button';
+                btn.setAttribute('aria-pressed', 'false');
                 btn.onclick = () => {
+                    document.querySelectorAll('#section-warranty .brand-card').forEach(card => card.setAttribute('aria-pressed', String(card === btn)));
                     const detail = $('brand-detail');
                     const phoneBtn = $('detail-phone');
                     detail.classList.remove('hidden');
@@ -389,7 +392,7 @@ import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from
                         phoneBtn.classList.add('hidden');
                     }
 
-                    detail.scrollIntoView({ behavior: 'smooth' });
+                    detail.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
                 };
                 btn.innerHTML = `<div class="w-12 h-12 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center font-black">${brand.icon}</div><span class="text-[10px] font-bold text-slate-600 truncate w-full text-center">${brand.name}</span>`;
                 const badge = document.createElement('span');
