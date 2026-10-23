@@ -194,3 +194,51 @@ button:disabled { opacity: .6; cursor: wait; }
 
 @media screen { #section-drivers label {font-size:18px;font-weight:700;color:#17304d;} #section-drivers input,#section-drivers select,#section-drivers button {font-size:18px;} #section-drivers input,#section-drivers select {min-height:54px;margin-top:8px;} #section-drivers .driver-guide {margin-bottom:24px;} #section-drivers summary,#section-drivers li,#section-drivers #driver-warranty {font-size:18px;line-height:1.85;color:#23456d;} #section-drivers #driver-detail {scroll-margin-top:100px;} }
 @media screen and (max-width:700px) { #section-drivers label {flex:1 1 100%;min-width:0;} #section-drivers select,#section-drivers #driver-reset {width:100%;} }
+
+/* Comfortable quotation entry: screen only; quoted prices and print layouts are unchanged. */
+@media screen {
+ body {font-family:"Microsoft JhengHei","PingFang TC",system-ui,sans-serif;font-size:18px;line-height:1.8;color:#17304d;}
+ button,input,select,textarea {font-family:inherit;}
+ button {font-size:18px!important;min-height:52px;line-height:1.6!important;white-space:normal;}
+ input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea {font-size:18px!important;min-height:54px;line-height:1.7;border-color:#8da2bc!important;background-color:#fff;color:#172b47;}
+ input::placeholder,textarea::placeholder {color:#52657c;opacity:1;}
+ input[type=checkbox],input[type=radio] {width:24px;height:24px;flex-shrink:0;accent-color:#174eaf;}
+ label {font-size:18px!important;line-height:1.75!important;}
+ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible {outline:3px solid #2459c4;outline-offset:3px;}
+ .customer-preview summary {font-size:20px!important;min-height:52px;}
+ .customer-preview pre {font-size:18px!important;line-height:1.9;overflow-wrap:anywhere;}
+ .customer-preview p {font-size:17px!important;color:#425773;}
+}
+@media screen and (max-width:600px) {
+ button {min-height:52px;}
+ input,textarea,select {max-width:100%;}
+ .customer-preview {padding:16px;}
+ .customer-preview pre {padding:12px!important;font-size:18px!important;max-height:none!important;}
+}
+
+@media screen {
+ #section-quote .text-xs,#section-quote .text-sm,#section-team .text-xs,#section-team .text-sm {font-size:17px!important;line-height:1.8;}
+ #section-quote [class*="text-[10px]"],#section-quote [class*="text-[11px]"] {font-size:16px!important;}
+ #section-quote label,#section-quote .text-slate-400,#section-quote .text-slate-500,#section-team .text-slate-400,#section-team .text-slate-500 {color:#425773!important;}
+ #section-quote h2,#section-team h2 {font-size:24px;}
+ #device-options button,#urgency-options button {font-size:18px!important;padding:14px 12px;min-height:60px;}
+ #section-quote .border-slate-100 {border-color:#b8c9dd;}
+ #section-quote .statement-box {font-size:17px!important;line-height:1.85;}
+ #display-total {font-size:clamp(40px,5vw,58px);}
+ #history-list button {font-size:17px!important;}
+ #section-quote .grid>*,#section-team .grid>* {min-width:0;}
+ #section-quote label[class*="tracking-"] {letter-spacing:0;}
+ #display-id {white-space:normal;overflow-wrap:anywhere;font-size:16px;}
+}
+@media screen and (max-width:900px) {
+ #section-quote {grid-template-columns:1fr!important;}
+}
+@media screen and (max-width:600px) {
+ #section-quote .grid-cols-2,#section-quote .grid-cols-3,#section-team .grid-cols-2,#section-team .grid-cols-3 {grid-template-columns:1fr!important;}
+ #section-quote section,#quote-card>div {padding:18px;}
+ #quote-card [id$="-row"] {flex-wrap:wrap;}
+ #mobile-quote-bar {flex-wrap:wrap;}
+ #mobile-quote-bar button {flex:1 1 120px;}
+ nav>div {grid-template-columns:repeat(2,minmax(0,1fr));}
+ nav button {font-size:17px!important;}
+}

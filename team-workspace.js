@@ -1,7 +1,7 @@
-import { createLoginSession, watchLoginSession, LOGIN_MODES } from './login-session.js?v=1.13.3';
+import { createLoginSession, watchLoginSession, LOGIN_MODES } from './login-session.js?v=1.14.0';
 import { createClient } from './vendor/supabase.js?v=1.4.1';
-import { TEAM_CONFIG } from './team-config.js?v=1.13.3';
-import { effectiveTeamRole, TEAM_ROLES, teamPayload, teamError, localToIso, isoToTaipeiInput, teamFetch } from './team-core.js?v=1.13.3';
+import { TEAM_CONFIG } from './team-config.js?v=1.14.0';
+import { effectiveTeamRole, TEAM_ROLES, teamPayload, teamError, localToIso, isoToTaipeiInput, teamFetch } from './team-core.js?v=1.14.0';
 
 export function initTeamWorkspace({getRecord,onOpenRecord,onSaved,onContext=async()=>{}}) {
     const $=id=>document.getElementById(id);
