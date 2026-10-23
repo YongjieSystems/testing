@@ -196,6 +196,7 @@ button:disabled { opacity: .6; cursor: wait; }
 @media screen and (max-width:700px) { #section-drivers label {flex:1 1 100%;min-width:0;} #section-drivers select,#section-drivers #driver-reset {width:100%;} }
 
 /* Comfortable quotation entry: screen only; quoted prices and print layouts are unchanged. */
+@media screen { #section-quote button.btn-active {color:#fff!important;} }
 @media screen {
  body {font-family:"Microsoft JhengHei","PingFang TC",system-ui,sans-serif;font-size:18px;line-height:1.8;color:#17304d;}
  button,input,select,textarea {font-family:inherit;}
@@ -239,6 +240,6 @@ button:disabled { opacity: .6; cursor: wait; }
  #quote-card [id$="-row"] {flex-wrap:wrap;}
  #mobile-quote-bar {flex-wrap:wrap;}
  #mobile-quote-bar button {flex:1 1 120px;}
- nav>div {grid-template-columns:repeat(2,minmax(0,1fr));}
+ nav>div {display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;}
  nav button {font-size:17px!important;}
 }
