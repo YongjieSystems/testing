@@ -154,3 +154,43 @@ button:disabled { opacity: .6; cursor: wait; }
  nav>div {grid-template-columns:repeat(3,minmax(0,1fr))!important;}
  nav button {min-height:48px;padding:10px 6px!important;font-size:13px;line-height:1.5;}
 }
+
+/* Driver downloads use the same accessible reading scale as warranty lookup. */
+@media screen {
+ #section-drivers {font-size:18px;color:#17304d;}
+ #section-drivers > div {padding:32px;border-radius:24px;border:1px solid #cbd8e7;box-shadow:0 8px 28px #17304d08;}
+ #section-drivers h2 {font-size:30px;line-height:1.5;}
+ #section-drivers h3 {font-size:22px;color:#172b47;}
+ #section-drivers p {font-size:18px;color:#364c65;line-height:1.85;}
+ #section-drivers .driver-guide {padding:18px 22px;background:#edf4ff;border-left:4px solid #2459c4;border-radius:12px;margin-bottom:28px;}
+ #section-drivers .driver-guide strong {display:block;color:#173f84;font-size:20px;margin-bottom:6px;}
+ #section-drivers #driver-grid,#section-drivers #driver-guide-grid {grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;}
+ #section-drivers .brand-card {min-height:174px;padding:20px 14px;border:2px solid #c9d6e6;border-radius:18px;gap:10px;background:#fff;box-shadow:0 2px 5px #17304d05;}
+ #section-drivers .brand-card:hover,#section-drivers .brand-card:focus-visible {border-color:#2459c4;background:#f0f6ff;transform:none;}
+ #section-drivers .brand-card[aria-pressed="true"] {border-color:#2459c4;background:#eaf2ff;box-shadow:0 0 0 1px #2459c4;}
+ #section-drivers .brand-card > div {background:#e8eff9;color:#214a83;width:54px;height:54px;font-size:22px;}
+ #section-drivers .brand-card > span:first-of-type {font-size:20px;line-height:1.6;font-weight:700;color:#172b47;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;}
+ #section-drivers .brand-card > span:last-of-type {font-size:16px;font-weight:600;color:#164ba5;line-height:1.6;}
+ #section-drivers #driver-detail {background:#f2f6fc;border-color:#b7cce9;scroll-margin-top:100px;}
+ #section-drivers #driver-name {font-size:26px;}
+ #section-drivers #driver-host {font-size:16px;color:#495d73;}
+ #section-drivers #driver-detail a,#section-drivers #driver-detail button {font-size:18px;min-height:52px;padding:14px 22px;}
+ #section-drivers #driver-link {background:#174eaf;color:#fff;}
+}
+@media screen and (max-width:1000px) {
+ #section-drivers #driver-grid,#section-drivers #driver-guide-grid {grid-template-columns:repeat(3,minmax(0,1fr));}
+}
+@media screen and (max-width:700px) {
+ #section-drivers #driver-grid,#section-drivers #driver-guide-grid {grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+ #section-drivers .brand-card {padding:16px 10px;min-height:166px;}
+ #section-drivers > div {padding:20px;}
+ #section-drivers h2 {font-size:26px;}
+ #section-drivers .driver-guide {padding:16px;}
+ #section-drivers #driver-detail a,#section-drivers #driver-detail button {width:100%;}
+}
+@media screen and (max-width:380px) {
+ #section-drivers #driver-grid,#section-drivers #driver-guide-grid {grid-template-columns:1fr;}
+}
+
+@media screen { #section-drivers label {font-size:18px;font-weight:700;color:#17304d;} #section-drivers input,#section-drivers select,#section-drivers button {font-size:18px;} #section-drivers input,#section-drivers select {min-height:54px;margin-top:8px;} #section-drivers .driver-guide {margin-bottom:24px;} #section-drivers summary,#section-drivers li,#section-drivers #driver-warranty {font-size:18px;line-height:1.85;color:#23456d;} #section-drivers #driver-detail {scroll-margin-top:100px;} }
+@media screen and (max-width:700px) { #section-drivers label {flex:1 1 100%;min-width:0;} #section-drivers select,#section-drivers #driver-reset {width:100%;} }
