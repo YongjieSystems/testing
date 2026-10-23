@@ -10,13 +10,13 @@ const draft={categoryId:'desktop',modelId:'generic-desktop',issueId:'issue_001',
 before(async()=>{
  await db.exec(`create role anon;create role authenticated;create schema auth;create table auth.users(id uuid primary key,email text,email_confirmed_at timestamptz);create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;grant usage on schema auth to anon,authenticated;grant execute on function auth.uid() to anon,authenticated;`);
  await db.exec(await read('./supabase/migrations/202610180001_team_workspace.sql'));
- await db.exec(await read('../Maintenance/supabase/repair_workspace.sql'));
- await db.exec(await read('../equipment-rental-calculator/supabase/rental_workspace.sql'));
+ await db.exec(await read('./supabase/fixtures/repair_workspace.sql'));
+ await db.exec(await read('./supabase/fixtures/rental_workspace.sql'));
  await db.exec(await read('./supabase/engineer_staff_access.sql'));
  await db.exec(await read('./supabase/simple_workflow.sql'));
  await db.exec(await read('./supabase/simple_workflow_hardening.sql'));
  await db.query('insert into public.yj_organizations(id,name,pricebook) values($1,$2,$3),($4,$5,$3)',[ids.org,'QA SIMPLE',CONFIG,ids.other,'OTHER']);
- await db.query('insert into yj_private.repair_pricebook values($1,$2)',[ids.org,JSON.parse(await read('../Maintenance/supabase/fixtures/repair-prices.json'))]);
+ await db.query('insert into yj_private.repair_pricebook values($1,$2)',[ids.org,JSON.parse(await read('./supabase/fixtures/repair-prices.json'))]);
  for(const [who,role] of [['manager','MANAGER'],['staff','STAFF'],['engineer','ENGINEER'],['driver','DRIVER'],['disabled','STAFF'],['outsider',null]]){await db.query('insert into auth.users values($1,$2,now())',[ids[who],who+'@example.com']);if(role)await db.query('insert into public.yj_memberships(org_id,user_id,email,display_name,role,active,staff_access) values($1,$2,$3,$4,$5,$6,$7)',[ids.org,ids[who],who+'@example.com',who,role,who!=='disabled',who==='engineer'])}
 });
 after(()=>db.close());

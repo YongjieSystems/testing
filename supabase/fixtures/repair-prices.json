@@ -1,0 +1,985 @@
+[
+  {
+    "id": "desktop",
+    "name": "桌上型電腦",
+    "iconName": "Monitor",
+    "models": [
+      {
+        "id": "generic-desktop",
+        "name": "一般組裝電腦",
+        "issues": [
+          {
+            "id": "issue_001",
+            "name": "無法開機 (No Power)",
+            "description": "按下電源鍵無反應，風扇未轉動",
+            "estimatedCostMin": 800,
+            "estimatedCostMax": 3500,
+            "estimatedTimeHours": 2,
+            "potentialParts": [
+              "電源供應器 (PSU)",
+              "主機板電容",
+              "電源開關模組"
+            ]
+          },
+          {
+            "id": "issue_002",
+            "name": "畫面破圖 / 藍屏",
+            "description": "顯示卡異常或記憶體錯誤",
+            "estimatedCostMin": 1500,
+            "estimatedCostMax": 8000,
+            "estimatedTimeHours": 3,
+            "potentialParts": [
+              "獨立顯示卡",
+              "記憶體 (RAM)",
+              "顯示排線"
+            ]
+          },
+          {
+            "id": "issue_clean_maintenance",
+            "name": "主機內部清潔保養",
+            "description": "更換散熱膏、整線、風扇除塵",
+            "estimatedCostMin": 800,
+            "estimatedCostMax": 1500,
+            "estimatedTimeHours": 1.5,
+            "potentialParts": [
+              "散熱膏",
+              "風扇"
+            ]
+          },
+          {
+            "id": "issue_hdd_failure",
+            "name": "硬碟故障",
+            "description": "更換硬碟 / 系統轉移",
+            "estimatedCostMin": 1500,
+            "estimatedCostMax": 4500,
+            "estimatedTimeHours": 3,
+            "potentialParts": [
+              "SSD硬碟",
+              "機械硬碟",
+              "作業系統"
+            ]
+          },
+          {
+            "id": "issue_no_display_signal",
+            "name": "有開機但螢幕沒畫面",
+            "description": "疑難雜症",
+            "estimatedCostMin": 800,
+            "estimatedCostMax": 4500,
+            "estimatedTimeHours": 2,
+            "potentialParts": [
+              "記憶體",
+              "顯示卡",
+              "螢幕線插錯"
+            ]
+          },
+          {
+            "id": "issue_boot_loop",
+            "name": "開機卡在 LOGO / 無限重開",
+            "description": "疑難雜症",
+            "estimatedCostMin": 800,
+            "estimatedCostMax": 3500,
+            "estimatedTimeHours": 2.5,
+            "potentialParts": [
+              "硬碟異常",
+              "BIOS 設定錯誤",
+              "系統更新"
+            ]
+          },
+          {
+            "id": "issue_system_slow",
+            "name": "系統很慢、卡到懷疑人生",
+            "description": "疑難雜症",
+            "estimatedCostMin": 800,
+            "estimatedCostMax": 4500,
+            "estimatedTimeHours": 2.5,
+            "potentialParts": [
+              "傳統硬碟老化",
+              "記憶體不足",
+              "開機程式過多"
+            ]
+          },
+          {
+            "id": "issue_network_failure",
+            "name": "網路連不上",
+            "description": "疑難雜症",
+            "estimatedCostMin": 800,
+            "estimatedCostMax": 3000,
+            "estimatedTimeHours": 2,
+            "potentialParts": [
+              "網卡驅動",
+              "網路線壞掉",
+              "路由器/集線器故障"
+            ]
+          },
+          {
+            "id": "issue_assembly_byo",
+            "name": "代客組裝(自備零件)",
+            "description": "協助客戶升級",
+            "estimatedCostMin": 1200,
+            "estimatedCostMax": 3000,
+            "estimatedTimeHours": 2.5,
+            "potentialParts": [
+              "客戶零件",
+              "作業系統",
+              "軟體"
+            ]
+          },
+          {
+            "id": "issue_complex_troubleshooting",
+            "name": "疑難雜症",
+            "description": "疑難雜症處理",
+            "estimatedCostMin": 800,
+            "estimatedCostMax": 5000,
+            "estimatedTimeHours": 2,
+            "potentialParts": [
+              "處理器",
+              "塔扇",
+              "冷排",
+              "主機板",
+              "記憶體",
+              "電源供應器",
+              "硬碟",
+              "風扇",
+              "線材",
+              "機殼",
+              "CMOS電池",
+              "SATA線",
+              "RGB",
+              "電源開關",
+              "顯示卡",
+              "作業系統",
+              "軟體",
+              "技術處理"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "gaming-desktop",
+        "name": "高階電競主機",
+        "issues": [
+          {
+            "id": "issue_003",
+            "name": "水冷散熱異常",
+            "description": "CPU 溫度過高，幫浦異音",
+            "estimatedCostMin": 3000,
+            "estimatedCostMax": 6000,
+            "estimatedTimeHours": 4,
+            "potentialParts": [
+              "一體式水冷",
+              "散熱膏",
+              "風扇控制器"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "laptop",
+    "name": "筆記型電腦",
+    "iconName": "Laptop",
+    "models": [
+      {
+        "id": "ultrabook",
+        "name": "高效能筆電",
+        "issues": [
+          {
+            "id": "issue_004",
+            "name": "液晶螢幕破裂",
+            "description": "顯示黑屏、線條或玻璃破裂",
+            "estimatedCostMin": 3500,
+            "estimatedCostMax": 6500,
+            "estimatedTimeHours": 2.5,
+            "potentialParts": [
+              "LCD 面板",
+              "螢幕排線"
+            ]
+          },
+          {
+            "id": "issue_005",
+            "name": "電池無法蓄電",
+            "description": "拔除電源隨即關機",
+            "estimatedCostMin": 2000,
+            "estimatedCostMax": 3500,
+            "estimatedTimeHours": 1,
+            "potentialParts": [
+              "鋰電池模組",
+              "主機板",
+              "變壓器"
+            ]
+          },
+          {
+            "id": "issue_laptop_os",
+            "name": "筆電重灌 / 系統安裝 / 軟體",
+            "description": "系統錯誤或客戶軟體安裝",
+            "estimatedCostMin": 800,
+            "estimatedCostMax": 1500,
+            "estimatedTimeHours": 2,
+            "potentialParts": [
+              "作業系統",
+              "軟體",
+              "除錯"
+            ]
+          },
+          {
+            "id": "issue_overheating",
+            "name": "溫度異常 / 效能降低",
+            "description": "溫度異常、散熱不佳、風扇不轉",
+            "estimatedCostMin": 1500,
+            "estimatedCostMax": 3000,
+            "estimatedTimeHours": 2,
+            "potentialParts": [
+              "風扇",
+              "散熱套件",
+              "散熱膏"
+            ]
+          },
+          {
+            "id": "issue_laptop_no_power",
+            "name": "無法開機(無過電)",
+            "description": "按電源無反應且無燈號",
+            "estimatedCostMin": 3500,
+            "estimatedCostMax": 6000,
+            "estimatedTimeHours": 4,
+            "potentialParts": [
+              "主機板",
+              "晶片更換",
+              "電阻/電容/電感",
+              "飛線"
+            ]
+          },
+          {
+            "id": "issue_laptop_bsod",
+            "name": "使用時異常 / 藍屏",
+            "description": "無故當機，病毒及速度過慢",
+            "estimatedCostMin": 1500,
+            "estimatedCostMax": 4500,
+            "estimatedTimeHours": 3,
+            "potentialParts": [
+              "主機板",
+              "硬碟",
+              "作業系統",
+              "記憶體",
+              "軟體"
+            ]
+          },
+          {
+            "id": "issue_laptop_complex",
+            "name": "疑難雜症",
+            "description": "疑難雜症處理",
+            "estimatedCostMin": 800,
+            "estimatedCostMax": 5000,
+            "estimatedTimeHours": 2,
+            "potentialParts": [
+              "處理器",
+              "主機板",
+              "散熱器",
+              "記憶體",
+              "WIFI模組",
+              "硬碟",
+              "喇叭",
+              "螢幕",
+              "排線",
+              "變壓器",
+              "外殼"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "office-laptop",
+        "name": "文書筆電",
+        "issues": [
+          {
+            "id": "issue_office_004",
+            "name": "液晶螢幕破裂",
+            "description": "顯示黑屏、線條或玻璃破裂",
+            "estimatedCostMin": 3500,
+            "estimatedCostMax": 6500,
+            "estimatedTimeHours": 2.5,
+            "potentialParts": [
+              "LCD 面板",
+              "螢幕排線"
+            ]
+          },
+          {
+            "id": "issue_office_005",
+            "name": "電池無法蓄電",
+            "description": "拔除電源隨即關機",
+            "estimatedCostMin": 2000,
+            "estimatedCostMax": 3500,
+            "estimatedTimeHours": 1,
+            "potentialParts": [
+              "鋰電池模組",
+              "主機板",
+              "變壓器"
+            ]
+          },
+          {
+            "id": "issue_office_os",
+            "name": "筆電重灌 / 系統安裝 / 軟體",
+            "description": "系統錯誤或客戶軟體安裝",
+            "estimatedCostMin": 800,
+            "estimatedCostMax": 1500,
+            "estimatedTimeHours": 2,
+            "potentialParts": [
+              "作業系統",
+              "軟體",
+              "除錯"
+            ]
+          },
+          {
+            "id": "issue_office_overheating",
+            "name": "溫度異常 / 效能降低",
+            "description": "溫度異常、散熱不佳、風扇不轉",
+            "estimatedCostMin": 1500,
+            "estimatedCostMax": 3000,
+            "estimatedTimeHours": 2,
+            "potentialParts": [
+              "風扇",
+              "散熱套件",
+              "散熱膏"
+            ]
+          },
+          {
+            "id": "issue_office_no_power",
+            "name": "無法開機(無過電)",
+            "description": "按電源無反應且無燈號",
+            "estimatedCostMin": 3500,
+            "estimatedCostMax": 6000,
+            "estimatedTimeHours": 4,
+            "potentialParts": [
+              "主機板",
+              "晶片更換",
+              "電阻/電容/電感",
+              "飛線"
+            ]
+          },
+          {
+            "id": "issue_office_bsod",
+            "name": "使用時異常 / 藍屏",
+            "description": "無故當機，病毒及速度過慢",
+            "estimatedCostMin": 1500,
+            "estimatedCostMax": 4500,
+            "estimatedTimeHours": 3,
+            "potentialParts": [
+              "主機板",
+              "硬碟",
+              "作業系統",
+              "記憶體",
+              "軟體"
+            ]
+          },
+          {
+            "id": "issue_office_complex",
+            "name": "疑難雜症",
+            "description": "疑難雜症處理",
+            "estimatedCostMin": 800,
+            "estimatedCostMax": 5000,
+            "estimatedTimeHours": 2,
+            "potentialParts": [
+              "處理器",
+              "主機板",
+              "散熱器",
+              "記憶體",
+              "WIFI模組",
+              "硬碟",
+              "喇叭",
+              "螢幕",
+              "排線",
+              "變壓器",
+              "外殼"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "laser-printer",
+    "name": "雷射印表機",
+    "iconName": "Printer",
+    "models": [
+      {
+        "id": "office-laser",
+        "name": "黑白 / 彩色 / 多功能雷射",
+        "issues": [
+          {
+            "id": "issue_006",
+            "name": "列印髒汙 / 黑線",
+            "description": "感光鼓受損或碳粉外漏",
+            "estimatedCostMin": 1500,
+            "estimatedCostMax": 4000,
+            "estimatedTimeHours": 1.5,
+            "potentialParts": [
+              "感光鼓",
+              "碳粉匣",
+              "清潔刮刀",
+              "異物"
+            ]
+          },
+          {
+            "id": "issue_007",
+            "name": "經常性卡紙",
+            "description": "進紙輪磨損或定影組異常",
+            "estimatedCostMin": 1200,
+            "estimatedCostMax": 3000,
+            "estimatedTimeHours": 2,
+            "potentialParts": [
+              "進紙滾輪",
+              "分頁器",
+              "電磁閥",
+              "進紙組",
+              "定影組"
+            ]
+          },
+          {
+            "id": "issue_laser_no_power",
+            "name": "無法開機(不過電)",
+            "description": "無法開機，插電及開關沒反應，沒燈號",
+            "estimatedCostMin": 2500,
+            "estimatedCostMax": 5500,
+            "estimatedTimeHours": 2.5,
+            "potentialParts": [
+              "電源板",
+              "主機板",
+              "變壓器"
+            ]
+          },
+          {
+            "id": "issue_laser_skew",
+            "name": "列印紙張歪斜及碳粉不均",
+            "description": "碳粉列印傾斜，顏色不均",
+            "estimatedCostMin": 2000,
+            "estimatedCostMax": 5000,
+            "estimatedTimeHours": 2,
+            "potentialParts": [
+              "轉印單元",
+              "雷射組"
+            ]
+          },
+          {
+            "id": "issue_laser_59c0",
+            "name": "59.C0",
+            "description": "主傳動處理",
+            "estimatedCostMin": 2500,
+            "estimatedCostMax": 5500,
+            "estimatedTimeHours": 2.5,
+            "potentialParts": [
+              "取紙輪",
+              "電磁閥",
+              "主傳動",
+              "齒輪組"
+            ]
+          },
+          {
+            "id": "issue_laser_complex",
+            "name": "疑難雜症",
+            "description": "疑難雜症技術處理",
+            "estimatedCostMin": 800,
+            "estimatedCostMax": 6000,
+            "estimatedTimeHours": 2,
+            "potentialParts": [
+              "取紙輪",
+              "分頁器",
+              "進紙組",
+              "電磁閥",
+              "主傳動",
+              "齒輪組",
+              "轉印單元",
+              "紙匣",
+              "碳粉",
+              "光鼓",
+              "加熱器",
+              "掃描平台",
+              "ADF",
+              "主機板",
+              "電源板",
+              "取粉螺桿",
+              "外殼",
+              "雙面列印器",
+              "雷射組",
+              "韌體更新"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "inkjet-printer",
+    "name": "噴墨印表機",
+    "iconName": "Droplet",
+    "models": [
+      {
+        "id": "tank-printer",
+        "name": "連續供墨機型",
+        "issues": [
+          {
+            "id": "issue_008",
+            "name": "噴頭堵塞 / 斷線",
+            "description": "久未列印導致墨水堵塞",
+            "estimatedCostMin": 800,
+            "estimatedCostMax": 2500,
+            "estimatedTimeHours": 3,
+            "potentialParts": [
+              "噴頭",
+              "墨水管線",
+              "廢墨棉"
+            ]
+          },
+          {
+            "id": "issue_tank_no_power",
+            "name": "無法開機(不過電)",
+            "description": "無法開機且無燈號",
+            "estimatedCostMin": 1500,
+            "estimatedCostMax": 3500,
+            "estimatedTimeHours": 2,
+            "potentialParts": [
+              "電源板",
+              "主機板",
+              "變壓器"
+            ]
+          },
+          {
+            "id": "issue_tank_paper_feed",
+            "name": "無法進紙",
+            "description": "無法進紙 / 多張進紙",
+            "estimatedCostMin": 1200,
+            "estimatedCostMax": 3500,
+            "estimatedTimeHours": 2,
+            "potentialParts": [
+              "取紙輪",
+              "進紙組",
+              "分頁器",
+              "異物",
+              "雙面列印器",
+              "齒輪組",
+              "電磁閥"
+            ]
+          },
+          {
+            "id": "issue_tank_complex",
+            "name": "疑難雜症",
+            "description": "疑難雜症處理",
+            "estimatedCostMin": 800,
+            "estimatedCostMax": 5000,
+            "estimatedTimeHours": 2,
+            "potentialParts": [
+              "取紙輪",
+              "分頁器",
+              "進紙組",
+              "電磁閥",
+              "齒輪組",
+              "紙匣",
+              "墨水",
+              "掃描平台",
+              "ADF",
+              "主機板",
+              "電源板",
+              "外殼",
+              "雙面列印器",
+              "感應器",
+              "集墨棉",
+              "歸零程式",
+              "套件組",
+              "噴頭",
+              "晶片",
+              "機芯"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "cartridge-printer",
+        "name": "一般墨匣",
+        "issues": [
+          {
+            "id": "issue_cartridge_008",
+            "name": "噴頭堵塞 / 斷線",
+            "description": "久未列印導致墨水堵塞",
+            "estimatedCostMin": 800,
+            "estimatedCostMax": 2500,
+            "estimatedTimeHours": 3,
+            "potentialParts": [
+              "噴頭",
+              "墨水管線",
+              "廢墨棉"
+            ]
+          },
+          {
+            "id": "issue_cartridge_no_power",
+            "name": "無法開機(不過電)",
+            "description": "無法開機且無燈號",
+            "estimatedCostMin": 1500,
+            "estimatedCostMax": 3500,
+            "estimatedTimeHours": 2,
+            "potentialParts": [
+              "電源板",
+              "主機板",
+              "變壓器"
+            ]
+          },
+          {
+            "id": "issue_cartridge_paper_feed",
+            "name": "無法進紙",
+            "description": "無法進紙 / 多張進紙",
+            "estimatedCostMin": 1200,
+            "estimatedCostMax": 3500,
+            "estimatedTimeHours": 2,
+            "potentialParts": [
+              "取紙輪",
+              "進紙組",
+              "分頁器",
+              "異物",
+              "雙面列印器",
+              "齒輪組",
+              "電磁閥"
+            ]
+          },
+          {
+            "id": "issue_cartridge_complex",
+            "name": "疑難雜症",
+            "description": "疑難雜症處理",
+            "estimatedCostMin": 800,
+            "estimatedCostMax": 5000,
+            "estimatedTimeHours": 2,
+            "potentialParts": [
+              "取紙輪",
+              "分頁器",
+              "進紙組",
+              "電磁閥",
+              "齒輪組",
+              "紙匣",
+              "墨水",
+              "掃描平台",
+              "ADF",
+              "主機板",
+              "電源板",
+              "外殼",
+              "雙面列印器",
+              "感應器",
+              "集墨棉",
+              "歸零程式",
+              "套件組",
+              "噴頭",
+              "晶片",
+              "機芯"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "nas",
+    "name": "NAS 儲存裝置",
+    "iconName": "HardDrive",
+    "models": [
+      {
+        "id": "4bay-nas",
+        "name": "1/2/4/8/16-Bay & 機架式 企業級NAS",
+        "issues": [
+          {
+            "id": "issue_009",
+            "name": "硬碟燈號異常 (Degraded)",
+            "description": "RAID 降級或硬碟損壞",
+            "estimatedCostMin": 3000,
+            "estimatedCostMax": 12000,
+            "estimatedTimeHours": 5,
+            "potentialParts": [
+              "NAS 專用硬碟",
+              "SATA 背板"
+            ]
+          },
+          {
+            "id": "issue_010",
+            "name": "無法連線 (Network Error)",
+            "description": "網路晶片故障或系統崩潰",
+            "estimatedCostMin": 2000,
+            "estimatedCostMax": 5000,
+            "estimatedTimeHours": 3,
+            "potentialParts": [
+              "主機板",
+              "網路卡"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "motherboard",
+    "name": "精密主機板",
+    "iconName": "Cpu",
+    "models": [
+      {
+        "id": "industrial-mb",
+        "name": "工控主機板",
+        "issues": [
+          {
+            "id": "issue_011",
+            "name": "電容爆漿 / 漏液",
+            "description": "長時間高溫運作導致元件老化",
+            "estimatedCostMin": 1500,
+            "estimatedCostMax": 4500,
+            "estimatedTimeHours": 4,
+            "potentialParts": [
+              "固態電容",
+              "MOSFET",
+              "穩壓晶片"
+            ]
+          },
+          {
+            "id": "issue_012",
+            "name": "BIOS 資料遺失",
+            "description": "韌體損壞無法開機",
+            "estimatedCostMin": 800,
+            "estimatedCostMax": 1500,
+            "estimatedTimeHours": 1,
+            "potentialParts": [
+              "BIOS 晶片",
+              "CMOS 電池"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "surveillance",
+    "name": "監控及弱電",
+    "iconName": "Video",
+    "models": [
+      {
+        "id": "sv-host-camera",
+        "name": "維修主機及鏡頭",
+        "issues": [
+          {
+            "id": "issue_sv_001",
+            "name": "各廠牌主機及鏡頭",
+            "description": "維修更換",
+            "estimatedCostMin": 1500,
+            "estimatedCostMax": 6000,
+            "estimatedTimeHours": 2,
+            "potentialParts": [
+              "需更換主機",
+              "需更換鏡頭"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "sv-network-equipment",
+        "name": "維修網路設備",
+        "issues": [
+          {
+            "id": "issue_sv_002",
+            "name": "各廠牌網路設備",
+            "description": "維修更換",
+            "estimatedCostMin": 800,
+            "estimatedCostMax": 3500,
+            "estimatedTimeHours": 1.5,
+            "potentialParts": [
+              "需更換網路線",
+              "需更換接頭",
+              "需更換分享器",
+              "需更換集線器",
+              "需更換AP",
+              "需更換路由器",
+              "需更換天線",
+              "需更換防火牆",
+              "需更換小烏龜",
+              "需更換NAS",
+              "需更換設定",
+              "需更換零件"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "sv-cable-repair",
+        "name": "網路線路維修",
+        "issues": [
+          {
+            "id": "issue_sv_003",
+            "name": "各廠牌網路線路維修",
+            "description": "維修更換",
+            "estimatedCostMin": 1200,
+            "estimatedCostMax": 4000,
+            "estimatedTimeHours": 2,
+            "potentialParts": [
+              "需更換網路線",
+              "需更換接頭",
+              "需更換分享器",
+              "需更換集線器",
+              "需更換AP",
+              "需更換路由器",
+              "需更換天線",
+              "需更換防火牆",
+              "需更換小烏龜",
+              "需更換NAS",
+              "需更換設定",
+              "需更換零件"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "sv-cable-reorg",
+        "name": "網路線路重整",
+        "issues": [
+          {
+            "id": "issue_sv_004",
+            "name": "網路線路重整",
+            "description": "維修更換",
+            "estimatedCostMin": 2500,
+            "estimatedCostMax": 8000,
+            "estimatedTimeHours": 4,
+            "potentialParts": [
+              "需更換網路線",
+              "需更換接頭",
+              "需更換分享器",
+              "需更換集線器",
+              "需更換AP",
+              "需更換路由器",
+              "需更換天線",
+              "需更換防火牆",
+              "需更換小烏龜",
+              "需更換NAS",
+              "需更換設定",
+              "需更換零件"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "sv-pbx-repair",
+        "name": "電話總機及線路維修",
+        "issues": [
+          {
+            "id": "issue_sv_005",
+            "name": "電話總機及線路維修",
+            "description": "維修更換",
+            "estimatedCostMin": 1500,
+            "estimatedCostMax": 5000,
+            "estimatedTimeHours": 2.5,
+            "potentialParts": [
+              "需更換網路線",
+              "需更換接頭",
+              "需更換集線器",
+              "需更換路由器",
+              "需更換天線",
+              "需更換設定",
+              "需更換零件"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "sv-network-wiring",
+        "name": "網路及RJ配線",
+        "issues": [
+          {
+            "id": "issue_sv_006",
+            "name": "網路及RJ配線",
+            "description": "維修更換",
+            "estimatedCostMin": 2000,
+            "estimatedCostMax": 6000,
+            "estimatedTimeHours": 3,
+            "potentialParts": [
+              "需增加網路線",
+              "需增加電話線",
+              "需更換網路線",
+              "需更換接頭",
+              "需更換集線盒",
+              "需更換總機",
+              "需更換天線",
+              "需更換設定",
+              "需更換零件"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "3c-install",
+    "name": "3C設備安裝",
+    "iconName": "Wrench",
+    "models": [
+      {
+        "id": "print-server",
+        "name": "列印伺服器",
+        "issues": [
+          {
+            "id": "issue_install_print_server",
+            "name": "一般安裝",
+            "description": "遠端安裝或到府安裝",
+            "estimatedCostMin": 800,
+            "estimatedCostMax": 1500,
+            "estimatedTimeHours": 1,
+            "potentialParts": [
+              "設定費"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "other-device-install",
+        "name": "其他設備",
+        "issues": [
+          {
+            "id": "issue_install_other",
+            "name": "一般安裝",
+            "description": "遠端安裝或到府安裝",
+            "estimatedCostMin": 800,
+            "estimatedCostMax": 2000,
+            "estimatedTimeHours": 1,
+            "potentialParts": [
+              "設定費"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "new-used-equipment",
+    "name": "全新/二手設備交機",
+    "iconName": "Package",
+    "models": [
+      {
+        "id": "new-handover-model",
+        "name": "全新設備交機",
+        "issues": [
+          {
+            "id": "issue_new_handover_base",
+            "name": "全新交機服務",
+            "description": "基本交機檢測與設定",
+            "estimatedCostMin": 0,
+            "estimatedCostMax": 0,
+            "estimatedTimeHours": 1,
+            "potentialParts": []
+          }
+        ]
+      },
+      {
+        "id": "used-handover-model",
+        "name": "二手設備交機",
+        "issues": [
+          {
+            "id": "issue_used_handover_base",
+            "name": "二手交機服務",
+            "description": "基本交機檢測與設定",
+            "estimatedCostMin": 0,
+            "estimatedCostMax": 0,
+            "estimatedTimeHours": 1,
+            "potentialParts": []
+          }
+        ]
+      }
+    ]
+  }
+]
