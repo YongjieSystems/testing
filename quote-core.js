@@ -1,4 +1,4 @@
-import {QUOTE_DECLARATIONS} from './customer-declaration.js?v=2.0.2';
+import {QUOTE_DECLARATIONS} from './customer-declaration.js?v=2.0.3';
 export function normalizeMoney(value) {
     const number = Number(value);
     return Number.isFinite(number) ? Math.min(1000000, Math.max(0, Math.trunc(number))) : 0;
