@@ -1,9 +1,9 @@
-import {createNoticeBoard} from './notice-board.js?v=2.0.1';
-import {generateQuoteSummary} from './quote-core.js?v=2.0.1';
-import { createLoginSession, watchLoginSession, LOGIN_MODES } from './login-session.js?v=2.0.1';
+import {createNoticeBoard} from './notice-board.js?v=2.0.2';
+import {generateQuoteSummary} from './quote-core.js?v=2.0.2';
+import { createLoginSession, watchLoginSession, LOGIN_MODES } from './login-session.js?v=2.0.2';
 import { createClient } from './vendor/supabase.js?v=1.4.1';
-import { TEAM_CONFIG } from './team-config.js?v=2.0.1';
-import { effectiveTeamRole, TEAM_ROLES, teamPayload, teamError, localToIso, isoToTaipeiInput, teamFetch } from './team-core.js?v=2.0.1';
+import { TEAM_CONFIG } from './team-config.js?v=2.0.2';
+import { effectiveTeamRole, TEAM_ROLES, teamPayload, teamError, localToIso, isoToTaipeiInput, teamFetch } from './team-core.js?v=2.0.2';
 
 export function initTeamWorkspace({getRecord,onOpenRecord,onSaved,onContext=async()=>{},kind='INSPECTION'}) {
     const $=id=>document.getElementById(id);

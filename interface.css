@@ -257,3 +257,15 @@ button:disabled { opacity: .6; cursor: wait; }
  .workflow-hint {padding:14px 18px;margin:12px 0;border:1px solid #bdd2e9;border-radius:12px;background:#f0f6ff;color:#17304d;font-size:18px;}
 }
 @media print {.workspace-notices,.workflow-hint {display:none!important;}}
+
+/* Match the maintenance editor's fixed prefix column and comfortable touch target. */
+@media screen {
+ #section-quote input:not([type=checkbox]):not([type=radio]),#section-quote select {min-height:58px;box-sizing:border-box;}
+ #section-quote .money-input {display:block;position:relative;width:100%;min-width:0;}
+ #section-quote .money-prefix {position:absolute;left:1px;top:1px;bottom:1px;width:54px;display:flex;align-items:center;justify-content:center;border-right:1px solid #d5dfeb;color:#425773;font-size:16px;font-weight:600;line-height:1;pointer-events:none;}
+ #section-quote .money-prefix svg {display:block;width:20px;height:20px;flex:none;}
+ #section-quote .money-input>input {width:100%;min-width:0;height:58px;min-height:58px;padding:12px 14px 12px 70px!important;margin:0;box-sizing:border-box;line-height:1.6;text-align:left;}
+ #section-quote label:has(>.money-input) {min-width:0;}
+ #section-quote label>.money-input {margin-top:8px;}
+ #section-quote .grid>* {min-width:0;}
+}

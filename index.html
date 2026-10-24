@@ -109,7 +109,7 @@
         @media print { #mobile-quote-bar { display:none !important; } }
     </style>
 
-    <link rel="stylesheet" href="./interface.css?v=2.0.1">
+    <link rel="stylesheet" href="./interface.css?v=2.0.2">
 <style>#customer-print-only{display:none}@media print{body>*{display:none!important}#customer-print-only{display:block!important;padding:20px}#customer-print-only pre{font:16px/1.8 "Microsoft JhengHei",sans-serif;white-space:pre-wrap;overflow-wrap:anywhere}}</style>
 </head>
 <body class="antialiased">
@@ -122,7 +122,7 @@
                     <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" /></svg>
                 </div>
                 <div>
-                    <h1 class="text-xl md:text-2xl font-black tracking-tight">永捷系統科技 <span class="text-blue-400 font-medium">檢測費估價程式 <small class="text-xs">v2.0.1</small></span></h1>
+                    <h1 class="text-xl md:text-2xl font-black tracking-tight">永捷系統科技 <span class="text-blue-400 font-medium">檢測費估價程式 <small class="text-xs">v2.0.2</small></span></h1>
                 </div>
             </div>
             <div class="hidden md:block text-right">
@@ -183,13 +183,13 @@
                             <h2 id="fulfillment-title" class="font-bold text-lg">案件計費</h2>
                             <label class="block">計費階段<select data-quote-field="billingStage" class="w-full border rounded-xl p-3"><option value="DIAGNOSIS">檢測估價／不維修</option><option value="REPAIR" hidden disabled>舊版維修計費（唯讀，請另開維修單）</option></select></label>
                             <div id="repair-controls" hidden class="space-y-3">
-                                <label class="block">維修總費用（含本次同意範圍的零件及工資；其他加項請勿重複輸入）<input type="number" min="0" max="1000000" step="1" data-quote-field="repairFee" class="w-full border rounded-xl p-3"></label>
+                                <label class="block">維修總費用（含本次同意範圍的零件及工資；其他加項請勿重複輸入）<span class="money-input"><span aria-hidden="true" class="money-prefix">NT$</span><input type="number" inputmode="decimal" min="0" max="1000000" step="1" data-quote-field="repairFee" class="w-full border rounded-xl p-3"></span></label>
                                 <label class="block"><input type="checkbox" data-quote-field="repairConfirmed"> 客戶已同意此維修金額與範圍</label>
                             </div>
                             <div id="logistics-controls" hidden class="space-y-3">
                                 <p class="text-sm text-blue-900">客製化安排：先確認方案、完整收送費及時段；需要評估是否划算時，再展開下方內部成本分析。成本資料不會出現在客戶報價。</p>
                                 <label class="block">收送方案<select data-quote-field="logisticsPlan" class="w-full border rounded-xl p-3"><option value="SCHEDULED">順路排線收送</option><option value="DEDICATED">預約專程收送</option><option value="PRIORITY">優先收送</option><option value="COURIER">外包物流</option></select></label>
-                                <label class="block">完整收送費（含約定取件及回送；優先調度費請一併包含）<input type="number" min="0" max="1000000" step="1" data-quote-field="logisticsFee" class="w-full border rounded-xl p-3" placeholder="待確認，不預設為免費"></label>
+                                <label class="block">完整收送費（含約定取件及回送；優先調度費請一併包含）<span class="money-input"><span aria-hidden="true" class="money-prefix"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3m10-8h4l3 4v4h-3"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg></span><input type="number" inputmode="decimal" min="0" max="1000000" step="1" data-quote-field="logisticsFee" class="w-full border rounded-xl p-3" placeholder="待確認，不預設為免費"></span></label>
                                 <label class="block"><input type="checkbox" data-quote-field="feeConfirmed"> 收送價格與範圍已確認</label>
                                 <label class="block">取件／回送的約定時段及方式<input maxlength="500" data-quote-field="logisticsWindow" class="w-full border rounded-xl p-3" placeholder="分別記錄去程及回程；尚未知請註明待確認"></label>
                                 <label class="block"><input type="checkbox" data-quote-field="windowConfirmed"> 取件與回送時段已與客戶確認（不是僅填寫待確認）</label>
@@ -199,9 +199,9 @@
                                     <p class="text-sm my-3">各欄採相同含稅／未稅基準。完整週期包含取件、回送、空車、等待及交接。無費用填 0，未知留白。僅供內部試算，非主管核准系統；勿輸入機密薪資。工時已含薪資成本，不再重複加機會成本。</p>
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
 <label>完整週期人員分鐘<input type="number" min="0" max="1000000" step="1" data-quote-field="logisticsMinutes" class="w-full border rounded-xl p-3"></label>
-<label>每小時分攤成本（元）<input type="number" min="0" max="1000000" step="1" data-quote-field="hourlyCost" class="w-full border rounded-xl p-3"></label>
-<label>雙程車資／交通成本（元）<input type="number" min="0" max="1000000" step="1" data-quote-field="travelCost" class="w-full border rounded-xl p-3"></label>
-<label>包材、保管及其他成本（元）<input type="number" min="0" max="1000000" step="1" data-quote-field="logisticsOtherCost" class="w-full border rounded-xl p-3"></label>
+<label>每小時分攤成本（元）<span class="money-input"><span aria-hidden="true" class="money-prefix">NT$</span><input type="number" inputmode="decimal" min="0" max="1000000" step="1" data-quote-field="hourlyCost" class="w-full border rounded-xl p-3"></span></label>
+<label>雙程車資／交通成本（元）<span class="money-input"><span aria-hidden="true" class="money-prefix"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3m10-8h4l3 4v4h-3"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg></span><input type="number" inputmode="decimal" min="0" max="1000000" step="1" data-quote-field="travelCost" class="w-full border rounded-xl p-3"></span></label>
+<label>包材、保管及其他成本（元）<span class="money-input"><span aria-hidden="true" class="money-prefix">NT$</span><input type="number" inputmode="decimal" min="0" max="1000000" step="1" data-quote-field="logisticsOtherCost" class="w-full border rounded-xl p-3"></span></label>
 <label>目標收送毛利率（%）<input type="number" min="0" max="99" step="1" data-quote-field="targetMargin" class="w-full border rounded-xl p-3"></label>
                                     </div><p id="cost-assessment" role="status" class="text-sm mt-3 text-amber-900"></p>
                                 </details>
@@ -210,10 +210,10 @@
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
 <label>實際人員總分鐘（含工程師）<input type="number" min="0" max="1000000" step="1" data-quote-field="actualMinutes" class="w-full border rounded-xl p-3"></label>
 <label>其中工程師分鐘<input type="number" min="0" max="1000000" step="1" data-quote-field="actualEngineerMinutes" class="w-full border rounded-xl p-3"></label>
-<label>實際人員平均每小時分攤成本（元）<input type="number" min="0" max="1000000" step="1" data-quote-field="actualHourlyCost" class="w-full border rounded-xl p-3"></label>
-<label>實際分攤交通／外包物流成本（元）<input type="number" min="0" max="1000000" step="1" data-quote-field="actualTravelCost" class="w-full border rounded-xl p-3"></label>
-<label>實際其他成本（元）<input type="number" min="0" max="1000000" step="1" data-quote-field="actualOtherCost" class="w-full border rounded-xl p-3"></label>
-<label>實際收送淨收入（元）<input type="number" min="0" max="1000000" step="1" data-quote-field="actualRevenue" class="w-full border rounded-xl p-3"></label>
+<label>實際人員平均每小時分攤成本（元）<span class="money-input"><span aria-hidden="true" class="money-prefix">NT$</span><input type="number" inputmode="decimal" min="0" max="1000000" step="1" data-quote-field="actualHourlyCost" class="w-full border rounded-xl p-3"></span></label>
+<label>實際分攤交通／外包物流成本（元）<span class="money-input"><span aria-hidden="true" class="money-prefix"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3m10-8h4l3 4v4h-3"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg></span><input type="number" inputmode="decimal" min="0" max="1000000" step="1" data-quote-field="actualTravelCost" class="w-full border rounded-xl p-3"></span></label>
+<label>實際其他成本（元）<span class="money-input"><span aria-hidden="true" class="money-prefix">NT$</span><input type="number" inputmode="decimal" min="0" max="1000000" step="1" data-quote-field="actualOtherCost" class="w-full border rounded-xl p-3"></span></label>
+<label>實際收送淨收入（元）<span class="money-input"><span aria-hidden="true" class="money-prefix">NT$</span><input type="number" inputmode="decimal" min="0" max="1000000" step="1" data-quote-field="actualRevenue" class="w-full border rounded-xl p-3"></span></label>
                                     </div>
                                     <label class="block mt-3">成本差異原因／交接紀錄<textarea data-quote-field="actualNotes" maxlength="500" class="w-full border rounded-xl p-3" placeholder="例如：等待、重跑、臨時改址、包材、多人搬運"></textarea></label>
                                     <label class="block mt-3"><input type="checkbox" data-quote-field="actualConfirmed"> 本案實際收送收入、工時與支出已核對</label>
@@ -221,7 +221,7 @@
                                     <p class="text-sm mt-3">請按「保存報價」保存。只有最新版本為「已完成」且實際資料核對完整，才會納入下方統計；不會自動調整客戶費用。</p>
                                 </details>
                             </div>
-                            <label class="block">本案已付款總額（僅記錄，請核對收款紀錄）<input type="number" min="0" max="1000000" step="1" data-quote-field="paidAmount" class="w-full border rounded-xl p-3"></label>
+                            <label class="block">本案已付款總額（僅記錄，請核對收款紀錄）<span class="money-input"><span aria-hidden="true" class="money-prefix">NT$</span><input type="number" inputmode="decimal" min="0" max="1000000" step="1" data-quote-field="paidAmount" class="w-full border rounded-xl p-3"></span></label>
                         </div>
                         <div>
                             <label class="block text-xs font-black text-slate-400 mb-5 uppercase tracking-[0.2em]">04 檢修優先／假日處理（不含收送）</label>
@@ -252,16 +252,16 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
                             <div>
                                 <label class="block text-xs font-black text-slate-400 mb-5 uppercase tracking-[0.2em]">07 特殊減免 (需主管同意)</label>
-                                <div class="relative">
-                                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
-                                    <input type="number" id="special-discount-input" min="0" max="1000000" step="1" placeholder="0" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-3.5 pl-10 pr-6 text-sm font-bold focus:border-blue-500 focus:bg-white outline-none transition-all placeholder:text-slate-300">
+                                <div class="money-input">
+                                    <span aria-hidden="true" class="money-prefix">NT$</span>
+                                    <input type="number" inputmode="decimal" id="special-discount-input" min="0" max="1000000" step="1" placeholder="0" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-3.5 pl-10 pr-6 text-sm font-bold focus:border-blue-500 focus:bg-white outline-none transition-all placeholder:text-slate-300">
                                 </div>
                             </div>
                             <div>
                                 <label class="block text-xs font-black text-slate-400 mb-5 uppercase tracking-[0.2em]">08 原廠檢測費(代送)</label>
-                                <div class="relative">
-                                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
-                                    <input type="number" id="manufacturer-fee-input" min="0" max="1000000" step="1" placeholder="0" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-3.5 pl-10 pr-6 text-sm font-bold focus:border-blue-500 focus:bg-white outline-none transition-all placeholder:text-slate-300">
+                                <div class="money-input">
+                                    <span aria-hidden="true" class="money-prefix">NT$</span>
+                                    <input type="number" inputmode="decimal" id="manufacturer-fee-input" min="0" max="1000000" step="1" placeholder="0" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-3.5 pl-10 pr-6 text-sm font-bold focus:border-blue-500 focus:bg-white outline-none transition-all placeholder:text-slate-300">
                                 </div>
                             </div>
                         </div>
@@ -270,16 +270,16 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
                             <div>
                                 <label class="block text-xs font-black text-slate-400 mb-5 uppercase tracking-[0.2em]">09 其他費用 (手動加項)</label>
-                                <div class="relative">
-                                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
-                                    <input type="number" id="other-fee-input" min="0" max="1000000" step="1" placeholder="0" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-3.5 pl-10 pr-6 text-sm font-bold focus:border-blue-500 focus:bg-white outline-none transition-all placeholder:text-slate-300">
+                                <div class="money-input">
+                                    <span aria-hidden="true" class="money-prefix">NT$</span>
+                                    <input type="number" inputmode="decimal" id="other-fee-input" min="0" max="1000000" step="1" placeholder="0" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-3.5 pl-10 pr-6 text-sm font-bold focus:border-blue-500 focus:bg-white outline-none transition-all placeholder:text-slate-300">
                                 </div>
                             </div>
                             <div>
                                 <label class="block text-xs font-black text-slate-400 mb-5 uppercase tracking-[0.2em]">10 合約客戶 (手動折抵)</label>
-                                <div class="relative">
-                                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
-                                    <input type="number" id="contract-discount-input" min="0" max="1000000" step="1" placeholder="0" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-3.5 pl-10 pr-6 text-sm font-bold focus:border-blue-500 focus:bg-white outline-none transition-all placeholder:text-slate-300">
+                                <div class="money-input">
+                                    <span aria-hidden="true" class="money-prefix">NT$</span>
+                                    <input type="number" inputmode="decimal" id="contract-discount-input" min="0" max="1000000" step="1" placeholder="0" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-3.5 pl-10 pr-6 text-sm font-bold focus:border-blue-500 focus:bg-white outline-none transition-all placeholder:text-slate-300">
                                 </div>
                             </div>
                         </div>
@@ -666,7 +666,7 @@
     </main>
     <div id="mobile-quote-bar" hidden class="no-print"><div><small id="mobile-total-caption">預估總額</small><br><strong>NT$ <span id="mobile-total">500</span></strong></div><button id="mobile-view-btn" type="button">看明細</button><button id="mobile-save-btn" type="button">保存本機報價</button></div>
 
-    <script type="module" src="./app.js?v=2.0.1"></script>
+    <script type="module" src="./app.js?v=2.0.2"></script>
 
 <section id="customer-print-only" aria-label="客戶報價"><pre id="customer-print-text"></pre></section>
 </body>
