@@ -1,12 +1,15 @@
-import { initTeamWorkspace } from './team-workspace.js?v=2.0.3';
-import { initTraining } from './training.js?v=2.0.3';
-import { CONFIG } from './pricing-config.js?v=2.0.3';
-import { WARRANTY_DATA, WARRANTY_KINDS, WARRANTY_ACTIONS } from './warranty-data.js?v=2.0.3';
-import { formatQuoteId, generateQuoteSummary, normalizeMoney, calculateQuote, assessLogistics, reviewLogistics, summarizeLogistics, ACTUAL_COST_FIELDS, SERVICE_LABELS, SERVICE_DESCRIPTIONS, LOGISTICS_LABELS, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_STATUS, parseBackup, mergeRecords, upsertRecord, matchesRecord } from './quote-core.js?v=2.0.3';
+import { initTeamWorkspace } from './team-workspace.js?v=2.1.0';
+import { FAULT_TEMPLATES, NOTE_TEMPLATES, appendTemplate, inspectionHints, askOutput } from './quote-workflow.js?v=2.1.0';
+import { initTraining } from './training.js?v=2.1.0';
+import { CONFIG } from './pricing-config.js?v=2.1.0';
+import { WARRANTY_DATA, WARRANTY_KINDS, WARRANTY_ACTIONS } from './warranty-data.js?v=2.1.0';
+import { formatQuoteId, generateQuoteSummary, normalizeMoney, calculateQuote, assessLogistics, reviewLogistics, summarizeLogistics, ACTUAL_COST_FIELDS, SERVICE_LABELS, SERVICE_DESCRIPTIONS, LOGISTICS_LABELS, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_STATUS, parseBackup, mergeRecords, upsertRecord, matchesRecord } from './quote-core.js?v=2.1.0';
 
-import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from './driver-data.js?v=2.0.3';
+import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from './driver-data.js?v=2.1.0';
 
-        let quoteAccess=false;
+        let quoteAccess=false, teamController=null, savedKey='', savedLabel='尚未保存到團隊';
+        let workflowBusy=false,workflowOrg=null;
+        const workflowKey=()=>{const {activeTab,...content}=state;return JSON.stringify([content,UI.problemInput?.value||'']);};
         const newFields = () => ({ schemaVersion: 2, billingStage: 'DIAGNOSIS', logisticsPlan: 'DEDICATED', logisticsFee: '', feeConfirmed: false, routeConfirmed: false, windowConfirmed: false, actualConfirmed: false, actualMinutes: '', actualEngineerMinutes: '', actualHourlyCost: '', actualTravelCost: '', actualOtherCost: '', actualRevenue: '', actualNotes: '', logisticsWindow: '', repairFee: '', repairConfirmed: false, paidAmount: '', logisticsMinutes: '', hourlyCost: '', travelCost: '', logisticsOtherCost: '', targetMargin: '' });
         let state = { ...newFields(),
             device: 'DESKTOP', service: 'IN_STORE', zone: 'ZONE_A',
@@ -139,11 +142,15 @@ import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from
                 updateStaffDisplay();
             });
 
+            const templates=$('note-template');templates.replaceChildren(new Option('加入常用故障／備註（可修改）',''));for(const text of [...FAULT_TEMPLATES,...NOTE_TEMPLATES])templates.add(new Option(text,text));
+            $('quote-date').value=state.date;$('quote-date').onchange=e=>{state.date=e.target.value;render();};
+            $('section-quote').addEventListener('input',updateWorkflowStatus);$('section-quote').addEventListener('change',updateWorkflowStatus);
             render();
             updateStaffDisplay(); // 初始化顯示
         }
 
         function updateCustomerPreview() {
+            updateWorkflowStatus();
             const preview=$('customer-summary-preview');
             if(preview) preview.textContent=generateQuoteSummary(state,UI.problemInput.value,pricesFor(state),state.date);
         }
@@ -278,7 +285,7 @@ import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from
             UI.departmentSelect.value = state.department || '維修服務部';
             UI.distSelect.value = state.zone;
             state.date ||= record.timestamp?.split(' ')[0]?.replaceAll('/', '-') || quoteDate();
-            UI.problemInput.value = record.problem || '';
+            UI.problemInput.value = record.problem || '';if($('quote-date'))$('quote-date').value=state.date;
             state.customerName ||= ''; state.deviceModel ||= ''; state.status ||= 'DRAFT';
             $('customer-name').value = state.customerName;
             $('device-model').value = state.deviceModel;
@@ -539,7 +546,7 @@ import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from
             updateCustomerPreview();
         }
 
-        window.handlePrint = () => { if (addToHistory()) { $('customer-print-text').textContent=generateSummary(state,UI.problemInput.value.trim(),null,state.date); window.print(); } };
+        window.handlePrint = () => requestCustomerOutput('print');
         window.switchTab = (tabId) => {
             if(tabId==='quote' && !quoteAccess) { tabId='team'; notify('請先使用啟用中的主管、客服／行政或已開通助理權限的工程師帳號登入，才能使用檢測估價。保固與驅動查詢免登入。'); }
             state.activeTab=tabId;
@@ -554,27 +561,37 @@ import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from
             $(`tab-${tabId}`)?.classList.replace('tab-inactive', 'tab-active');
         };
 
-        function copyToClipboard() {
-
-
-            if (!addToHistory()) return;
-            const dateStr = state.date;
-
-            const problem = UI.problemInput.value.trim();
-            const total = UI.dispTotal.innerText;
-            const summary = generateSummary(state, problem, total, dateStr);
-
-            ($('customer-print-text').textContent=summary, navigator.clipboard.writeText(summary)).then(() => {
-                const oldHTML = UI.btnCopy.innerHTML;
-                UI.btnCopy.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg> 已複製內容`;
-                setTimeout(() => UI.btnCopy.innerHTML = oldHTML, 2000);
-            }).catch(() => notify('複製失敗，請確認瀏覽器剪貼簿權限，或改用列印。'));
+        function updateWorkflowStatus() {
+            const el=$('workflow-status');if(!el || !UI.problemInput)return;
+            const h=inspectionHints(state,UI.problemInput.value,calculateQuote(state,pricesFor(state)).pending);
+            el.textContent=(savedKey===workflowKey()?savedLabel:savedLabel+' · 有內容尚未保存')+(h.errors.length||h.warnings.length?'｜'+[...h.errors,...h.warnings].join('；'):'');
         }
+        async function saveToTeam() {
+            if(!quoteAccess || !teamController)throw Error('請先使用員工帳號登入');
+            const h=inspectionHints(state,UI.problemInput.value);if(h.errors.length)throw Error(h.errors.join('；'));
+            const result=await teamController.saveCurrent();updateWorkflowStatus();return result;
+        }
+        function requestCustomerOutput(mode) {
+            if(!quoteAccess){window.switchTab('team');return;}
+            const captured=workflowKey();
+            const review=inspectionHints(state,UI.problemInput.value,calculateQuote(state,pricesFor(state)).pending);
+            const execute=async()=>{
+                if(!quoteAccess)throw Error('請先登入員工帳號');
+                if(captured!==workflowKey() && savedKey!==workflowKey())throw Error('確認期間內容已變更，請重新按複製或列印');
+                const summary=generateSummary(state,UI.problemInput.value.trim(),null,state.date);
+                $('customer-print-text').textContent=summary;
+                if(mode==='print')window.print();else await navigator.clipboard.writeText(summary);
+                notify(mode==='print'?'已開啟客戶報價列印。':'✓ 已複製客戶報價。');
+            };
+            if(review.errors.length||review.warnings.length||savedKey!==workflowKey())askOutput($('workflow-confirm'),review,savedKey!==workflowKey(),execute,saveToTeam,notify);
+            else execute().catch(e=>notify(e.message||'輸出失敗，請檢查剪貼簿權限'));
+        }
+        function copyToClipboard() { requestCustomerOutput('copy'); }
 
         function renderIdentity() {
             $('display-customer').textContent = state.customerName || '未填寫';
             $('display-model').textContent = state.deviceModel || '未填寫';
-            $('display-quote-status').textContent = QUOTE_STATUS[state.status] || '草稿';
+            $('display-quote-status').textContent = QUOTE_STATUS[state.status] || '草稿';updateCustomerPreview();
         }
         function downloadJSON(value, filename) {
             const url = URL.createObjectURL(new Blob([JSON.stringify(value, null, 2)], { type: 'application/json' }));
@@ -641,8 +658,8 @@ import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from
             for (const [id, key] of [['customer-name','customerName'],['device-model','deviceModel'],['quote-status','status']]) {
                 $(id).addEventListener('input', event => { state[key] = event.target.value; renderIdentity(); });
             }
-            $('save-quote-btn').onclick = addToHistory;
-            $('mobile-save-btn').onclick = addToHistory;
+            $('save-quote-btn').onclick = () => {if(workflowBusy)return;workflowBusy=true;$('save-quote-btn').disabled=true;saveToTeam().catch(e=>notify(e.message)).finally(()=>{workflowBusy=false;$('save-quote-btn').disabled=false;});};
+            $('mobile-save-btn').onclick = ()=>$('save-quote-btn').click();
             $('mobile-view-btn').onclick = () => $('quote-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
             $('history-search').oninput = renderHistory;
             $('history-status').onchange = renderHistory;
@@ -696,7 +713,7 @@ import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from
             };
             $('note-template').onchange = event => {
                 if (!event.target.value) return;
-                UI.problemInput.value = [UI.problemInput.value.trim(), event.target.value].filter(Boolean).join('\n');
+                try{UI.problemInput.value = appendTemplate(UI.problemInput.value,event.target.value);}catch(e){notify(e.message);}
                 updateProblemDisplay(); event.target.value = '';
             };
             $('export-backup-btn').onclick = () => {
@@ -725,18 +742,22 @@ import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from
         initTraining(window.switchTab);
         if(new URLSearchParams(location.search).get('tab')==='training') window.switchTab('training');
         window.switchTab(['warranty','drivers','training'].includes(new URLSearchParams(location.search).get('tab')) ? new URLSearchParams(location.search).get('tab') : 'team');
-        initTeamWorkspace({
+        teamController=initTeamWorkspace({
             onContext(value) {
+                if(workflowOrg!==value.org || !value.user){savedKey='';savedLabel='尚未保存到目前團隊';workflowOrg=value.org;updateWorkflowStatus();}
                 quoteAccess=!!value.user && !!value.org && ['MANAGER','STAFF'].includes(value.role);
                 if(!quoteAccess) { $('customer-print-text').textContent=''; if(state.activeTab==='quote') window.switchTab('team'); }
             },
             getRecord: currentRecord,
             onOpenRecord(record, meta) {
                 loadHistoryData({ ...record, state: { ...newFields(), ...record.state, ...meta.costs, cloudOrgId: meta.orgId, cloudCaseId: meta.caseId, cloudRevision: meta.revision } });
-                window.switchTab('quote'); notify(`已載入團隊案件版本 ${meta.revision}；修改後請回「團隊作業」同步。`);
+                savedKey=workflowKey();savedLabel=`已載入團隊第${meta.revision}版`;updateWorkflowStatus();window.switchTab('quote'); notify(`已載入團隊案件版本 ${meta.revision}；修改後請回「團隊作業」同步。`);
             },
             onSaved(result, meta) {
+                if(state.id!==meta.submitted?.state?.id){notify('先前案件已保存；目前已切換表單，請至團隊紀錄查閱。');return;}
+                const unchanged=JSON.stringify({...currentRecord().state,activeTab:undefined})===JSON.stringify({...meta.submitted?.state,activeTab:undefined}) && UI.problemInput.value===meta.submitted?.problem;
+                if(!unchanged){state.cloudOrgId=meta.orgId;state.cloudCaseId=result.id;state.cloudRevision=result.revision;savedKey='';savedLabel='已保存送出時版本；目前另有修改';updateWorkflowStatus();return;}
                 loadHistoryData({ ...result.record, state: { ...state, ...result.record.state, cloudOrgId: meta.orgId, cloudCaseId: result.id, cloudRevision: result.revision } });
-                notify(`已同步至團隊，報價版本 ${result.revision}。`);
+                savedKey=workflowKey();savedLabel=`已保存到團隊 · 第${result.revision}版 · ${new Date().toLocaleString('zh-TW',{timeZone:'Asia/Taipei'})} · ${state.staffName || '本次經辦'}`;updateWorkflowStatus();notify(savedLabel);
             }
         });

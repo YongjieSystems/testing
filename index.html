@@ -109,7 +109,7 @@
         @media print { #mobile-quote-bar { display:none !important; } }
     </style>
 
-    <link rel="stylesheet" href="./interface.css?v=2.0.3">
+    <link rel="stylesheet" href="./interface.css?v=2.1.0">
 <style>#customer-print-only{display:none}@media print{body>*{display:none!important}#customer-print-only{display:block!important;padding:20px}#customer-print-only pre{font:16px/1.8 "Microsoft JhengHei",sans-serif;white-space:pre-wrap;overflow-wrap:anywhere}}</style>
 </head>
 <body class="antialiased">
@@ -122,7 +122,7 @@
                     <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" /></svg>
                 </div>
                 <div>
-                    <h1 class="text-xl md:text-2xl font-black tracking-tight">永捷系統科技 <span class="text-blue-400 font-medium">檢測費估價程式 <small class="text-xs">v2.0.3</small></span></h1>
+                    <h1 class="text-xl md:text-2xl font-black tracking-tight">永捷系統科技 <span class="text-blue-400 font-medium">檢測費估價程式 <small class="text-xs">v2.1.0</small></span></h1>
                 </div>
             </div>
             <div class="hidden md:block text-right">
@@ -157,7 +157,7 @@
                             <div><label for="customer-name" class="block text-sm font-bold text-slate-700 mb-2">客戶稱呼 / 公司（選填）</label><input id="customer-name" maxlength="100" class="w-full border-2 border-slate-100 rounded-xl p-3" placeholder="例如：王先生 / 永捷科技"></div>
                             <div><label for="device-model" class="block text-sm font-bold text-slate-700 mb-2">設備型號 / 資產編號（選填）</label><input id="device-model" maxlength="160" class="w-full border-2 border-slate-100 rounded-xl p-3" placeholder="例如：ThinkPad T14 / PC-001"></div>
                             <div><label for="quote-status" class="block text-sm font-bold text-slate-700 mb-2">處理狀態</label><select id="quote-status" class="w-full border-2 border-slate-100 rounded-xl p-3"><option value="DRAFT">草稿</option><option value="QUOTED">已報價</option><option value="ACCEPTED">客戶同意</option><option value="DONE">已完成</option><option value="CANCELLED">已取消</option></select></div>
-                            <p class="text-xs text-slate-500 leading-6 self-end">本頁保存為本機紀錄。登入「團隊作業」後可手動同步目前估價，共用列表約每 15 秒更新；本機備份與雲端資料分開管理。</p>
+                            <div><label for="quote-date" class="block text-sm font-bold mb-2">報價日期</label><input id="quote-date" type="date" class="w-full border rounded-xl p-3"></div><p class="text-sm text-slate-700">按「保存到團隊」讓同事查詢；本機備援只留在這個瀏覽器。報價不需主管核准。</p>
                         </div>
                         <div>
                             <label class="block text-xs font-black text-slate-400 mb-5 uppercase tracking-[0.2em]">01 設備種類</label>
@@ -251,7 +251,7 @@
                         <!-- 07 特殊減免 與 08 原廠檢測費(代送) 並排 -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
                             <div>
-                                <label class="block text-xs font-black text-slate-400 mb-5 uppercase tracking-[0.2em]">07 特殊減免 (需主管同意)</label>
+                                <label class="block text-xs font-black text-slate-400 mb-5 uppercase tracking-[0.2em]">07 特殊減免（依公司約定）</label>
                                 <div class="money-input">
                                     <span aria-hidden="true" class="money-prefix">NT$</span>
                                     <input type="number" inputmode="decimal" id="special-discount-input" min="0" max="1000000" step="1" placeholder="0" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-3.5 pl-10 pr-6 text-sm font-bold focus:border-blue-500 focus:bg-white outline-none transition-all placeholder:text-slate-300">
@@ -287,7 +287,7 @@
                         <div>
                             <label class="block text-xs font-black text-slate-400 mb-5 uppercase tracking-[0.2em]">11 故障現象（會附在客戶報價）</label>
                             <label for="note-template" class="sr-only">加入常見故障備註</label><select id="note-template" class="w-full mb-3 rounded-xl border p-3 text-sm"><option value="">加入常見故障備註…</option><option>無法開機，請確認電源與硬體狀態。</option><option>系統速度緩慢，請檢查儲存裝置與系統狀態。</option><option>無法列印，請檢查連線、驅動程式與耗材。</option><option>網路連線不穩，請檢查設備及線路。</option><option>涉及資料處理，請先與客戶確認備份需求。</option></select>
-                            <textarea id="problem-input" placeholder="請詳細描述設備故障狀況或特殊維修需求..." class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-5 px-6 text-sm font-medium focus:border-blue-500 focus:bg-white outline-none transition-all resize-none h-32"></textarea>
+                            <textarea maxlength="4000" id="problem-input" placeholder="請詳細描述設備故障狀況或特殊維修需求..." class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-5 px-6 text-sm font-medium focus:border-blue-500 focus:bg-white outline-none transition-all resize-none h-32"></textarea>
                         </div>
 
                         <!-- 12 報價人員 / 部門 -->
@@ -470,20 +470,21 @@
                         <p class="text-white text-[10px] font-bold tracking-[0.4em] opacity-40 italic uppercase">© 2026 Johnny-Yang All rights reserved.</p>
                     </div>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 no-print">
-                    <button type="button" id="print-btn" onclick="handlePrint()" class="bg-slate-800 text-white py-4.5 px-6 rounded-2xl font-bold hover:bg-black transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-3">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-                        列印客戶版報價
-                    </button>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 no-print">
+                    <button type="button" id="save-quote-btn" class="bg-emerald-700 text-white rounded-xl p-3 font-bold">保存到團隊</button>
                     <button type="button" id="copy-btn" class="bg-white border-2 border-slate-200 text-slate-700 py-4.5 px-6 rounded-2xl font-bold hover:border-blue-600 hover:text-blue-700 transition-all active:scale-[0.98] flex items-center justify-center gap-3">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
-                        複製文字摘要
+                        複製客戶報價
+                    </button>
+                    <button type="button" id="print-btn" onclick="handlePrint()" class="bg-slate-800 text-white py-4.5 px-6 rounded-2xl font-bold hover:bg-black transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-3">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                        列印客戶報價
                     </button>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 no-print"><button type="button" id="save-quote-btn" class="bg-emerald-700 text-white rounded-xl p-3 font-bold">保存本機報價</button><button type="button" id="save-draft-btn" class="bg-slate-200 rounded-xl p-3 font-bold">保存草稿</button><button type="button" id="load-draft-btn" class="bg-slate-200 rounded-xl p-3 font-bold">載入草稿</button></div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 no-print"><button type="button" id="save-draft-btn" class="bg-slate-200 rounded-xl p-3 font-bold">本機備援草稿</button><button type="button" id="load-draft-btn" class="bg-slate-200 rounded-xl p-3 font-bold">載入草稿</button></div>
                 <button type="button" id="new-quote-btn" class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold no-print">建立新報價</button>
-                <p id="app-status" role="status" aria-live="polite" class="no-print text-sm text-orange-700"></p>
+                <div class="quote-workflow no-print"><strong>保存與交付</strong><p id="workflow-status" role="status"></p><div id="workflow-confirm" hidden></div><p>本機備援只留在這台瀏覽器，團隊保存成功後同事才能查詢。</p></div><p id="app-status" role="status" aria-live="polite" class="no-print text-sm text-orange-700"></p>
                 <details class="customer-preview no-print"><summary>客戶報價預覽</summary><p>以下與複製摘要內容相同。交付前核對金額、故障現象與待確認項目。</p><pre id="customer-summary-preview"></pre></details>
                 <!-- 歷史紀錄區塊 -->
                 <div id="history-section" class="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-200 no-print">
@@ -650,8 +651,8 @@
                 <label class="block font-bold">選擇學習路徑<select id="training-track" class="block w-full md:w-auto border rounded-xl p-3 mt-2"><option value="basic">新人基本操作</option><option value="money">新版金額欄位</option><option value="rental">租賃計價、收送與押金</option><option value="team">共用紀錄與收送</option><option value="manager">主管與公司公告</option></select></label>
                 <p id="training-progress" role="status" class="font-bold text-blue-800"></p>
                 <p id="training-storage" role="status" class="text-xs text-slate-500">學習紀錄只存在此瀏覽器，不會送到主管或雲端。勾選不代表取得操作權限或主管已核准。</p>
-                <div class="flex flex-wrap gap-3"><a href="./manuals/employee-handbook-2026-10-24.pdf" target="_blank" rel="noopener noreferrer" class="inline-block bg-blue-700 text-white rounded-xl p-3 font-bold">開啟／列印員工手冊 PDF</a><a href="./manuals/employee-handbook-2026-10-24.pdf" download class="inline-block bg-slate-200 text-slate-800 rounded-xl p-3 font-bold">下載員工手冊 PDF</a></div>
-                <p class="text-xs text-slate-500">登入新制：估價須員工帳號，保固與驅動免登入。忘記密碼請在團隊作業寄送重設信；助理可依主管口頭確認直接交付客戶報價。<br>三套程式共用完整手冊｜2026/10/24 第5版・22 頁。含新版金額欄位、租賃公版／客製化計價、收送、押金、客戶預覽與列印步驟。</p>
+                <div class="flex flex-wrap gap-3"><a href="./manuals/employee-handbook-2026-11-05.pdf" target="_blank" rel="noopener noreferrer" class="inline-block bg-blue-700 text-white rounded-xl p-3 font-bold">開啟／列印員工手冊 PDF</a><a href="./manuals/employee-handbook-2026-11-05.pdf" download class="inline-block bg-slate-200 text-slate-800 rounded-xl p-3 font-bold">下載員工手冊 PDF</a></div>
+                <p class="text-xs text-slate-500">登入新制：估價須員工帳號，保固與驅動免登入。忘記密碼請在團隊作業寄送重設信；助理可依主管口頭確認直接交付客戶報價。<br>三套程式共用完整手冊｜2026/11/05 第6版・22 頁。含統一保存與輸出、日期及漏填提醒、常用範本、公版／客製化、收送及押金。</p>
             </section>
             <p class="bg-blue-50 border rounded-xl p-4 leading-7">跨程式順序：檢測同步 → 維修連結原案 → 維修與折抵同步 → 檢測及維修分別核准 → 發布收送路線 → 交接與收款核對。<br><a href="https://yongjiesystems.github.io/Maintenance/?v=2.4.1" target="_blank" rel="noopener noreferrer" class="text-blue-800 underline font-bold">開啟維修估價程式（按「操作說明／教育訓練」查看維修端步驟）</a></p>
             <div id="training-steps" class="space-y-4"></div>
@@ -664,9 +665,9 @@
             </section>
         </div>
     </main>
-    <div id="mobile-quote-bar" hidden class="no-print"><div><small id="mobile-total-caption">預估總額</small><br><strong>NT$ <span id="mobile-total">500</span></strong></div><button id="mobile-view-btn" type="button">看明細</button><button id="mobile-save-btn" type="button">保存本機報價</button></div>
+    <div id="mobile-quote-bar" hidden class="no-print"><div><small id="mobile-total-caption">預估總額</small><br><strong>NT$ <span id="mobile-total">500</span></strong></div><button id="mobile-view-btn" type="button">看明細</button><button id="mobile-save-btn" type="button">保存到團隊</button></div>
 
-    <script type="module" src="./app.js?v=2.0.3"></script>
+    <script type="module" src="./app.js?v=2.1.0"></script>
 
 <section id="customer-print-only" aria-label="客戶報價"><pre id="customer-print-text"></pre></section>
 </body>

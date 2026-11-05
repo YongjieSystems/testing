@@ -1,9 +1,9 @@
-import {createNoticeBoard} from './notice-board.js?v=2.0.3';
-import {generateQuoteSummary} from './quote-core.js?v=2.0.3';
-import { createLoginSession, watchLoginSession, LOGIN_MODES } from './login-session.js?v=2.0.3';
+import {createNoticeBoard} from './notice-board.js?v=2.1.0';
+import {generateQuoteSummary} from './quote-core.js?v=2.1.0';
+import { createLoginSession, watchLoginSession, LOGIN_MODES } from './login-session.js?v=2.1.0';
 import { createClient } from './vendor/supabase.js?v=1.4.1';
-import { TEAM_CONFIG } from './team-config.js?v=2.0.3';
-import { effectiveTeamRole, TEAM_ROLES, teamPayload, teamError, localToIso, isoToTaipeiInput, teamFetch } from './team-core.js?v=2.0.3';
+import { TEAM_CONFIG } from './team-config.js?v=2.1.0';
+import { effectiveTeamRole, TEAM_ROLES, teamPayload, teamError, localToIso, isoToTaipeiInput, teamFetch } from './team-core.js?v=2.1.0';
 
 export function initTeamWorkspace({getRecord,onOpenRecord,onSaved,onContext=async()=>{},kind='INSPECTION'}) {
     const $=id=>document.getElementById(id);
@@ -217,14 +217,21 @@ export function initTeamWorkspace({getRecord,onOpenRecord,onSaved,onContext=asyn
     });
     watchLoginSession(loginSession,()=>{ user=null; clear(); $('team-login').hidden=false; status('登入保存期限已到、已在其他分頁登出或變更帳號，請重新登入。'); client?.auth.stopAutoRefresh(); });
     $('team-org').onchange=()=>run(async()=>{org=$('team-org').value; selectedCase=null; routeDraft=null; $('team-account-link').replaceChildren(); await refresh();});
-    action($('team-upload'),async()=>{
+    async function saveCurrent() {
+        if(saveCurrent.running)throw Error('正在保存，請稍候');
         if(!operator()) throw new Error('只有客服或主管可同步估價');
-        const record=getRecord(); const payload=teamPayload(record,manager());
+        const saveOrg=org;const record=getRecord(); const payload=teamPayload(record,manager());
+        saveCurrent.running=true;try {
         const id=record.state.cloudOrgId===org ? record.state.cloudCaseId : (/^[0-9a-f-]{36}$/i.test(record.state.caseId || '') ? record.state.caseId : crypto.randomUUID());
         const expected=record.state.cloudOrgId===org && record.state.cloudCaseId ? record.state.cloudRevision : 0;
         const result=await rpc('yj_save_case',{p_org:org,p_case:id,p_expected:expected,p_record:payload.record,p_costs:payload.costs});
-        onSaved(result,{orgId:org}); await refresh(); status(`已同步至團隊，版本 ${result.revision}；已保存共用，同事可接手，不必等待主管核准。`);
-    });
+        if(org!==saveOrg)throw Error('團隊已切換，請回原團隊查詢剛保存的版本');
+        onSaved(result,{orgId:saveOrg,submitted:record});
+        try{await refresh();}catch{status('報價已保存，但清單暫時無法更新；請稍後重新整理。');}
+        return result;
+        }finally{saveCurrent.running=false;}
+    }
+    action($('team-upload'),async()=>{const result=await saveCurrent();status(`已保存到團隊，第${result.revision}版；同事可接手。`);});
     const chosen=()=>{if(!selectedCase) throw new Error('請先從案件列表選取供主管處理的案件');return selectedCase;};
     action($('team-approve'),async()=>{const item=chosen();await rpc('yj_approve_case',{p_case:item.id,p_expected:item.revision,p_reason:$('team-case-reason').value});selectedCase=null;await refresh();});
     action($('team-assign'),async()=>{const item=chosen();await rpc('yj_assign_case',{p_case:item.id,p_expected:item.assignment_version,p_engineer:$('team-case-engineer').value || null}); selectedCase=null;await refresh();});
@@ -260,4 +267,5 @@ export function initTeamWorkspace({getRecord,onOpenRecord,onSaved,onContext=asyn
         }
         await refresh();
     });
+    return {saveCurrent};
 }
