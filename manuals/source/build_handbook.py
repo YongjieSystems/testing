@@ -10,7 +10,7 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from pypdf import PdfReader
 ROOT=Path(__file__).resolve().parent.parent
-parser=argparse.ArgumentParser();parser.add_argument('--output',type=Path,default=ROOT/'output/pdf/yongjie-employee-handbook-2026-11-05.pdf');OUT=parser.parse_args().output;OUT.parent.mkdir(parents=True,exist_ok=True)
+parser=argparse.ArgumentParser();parser.add_argument('--output',type=Path,default=ROOT/'output/pdf/yongjie-employee-handbook-2026-11-06.pdf');OUT=parser.parse_args().output;OUT.parent.mkdir(parents=True,exist_ok=True)
 pdfmetrics.registerFont(TTFont('CJK','C:/Windows/Fonts/msjh.ttc',subfontIndex=0))
 pdfmetrics.registerFont(TTFont('CJKB','C:/Windows/Fonts/msjhbd.ttc',subfontIndex=0))
 BLUE=colors.HexColor('#1745A6');NAVY=colors.HexColor('#132B4A');GREY=colors.HexColor('#526173');PALE=colors.HexColor('#EFF5FF')
@@ -39,10 +39,10 @@ def note(title,text):
 def decor(c,d):
  c.setTitle('永捷員工操作手冊 - 檢測、維修、租賃')
  c.setAuthor('永捷系統科技')
- c.setSubject('統一保存與輸出、日期提醒、常用範本、租賃計價及收送押金')
+ c.setSubject('中央確認、複製成功提示、手機手動複製、保存與輸出')
  c.setStrokeColor(colors.HexColor('#DAE3EF'));c.line(48,H-39,W-48,H-39)
  c.setFillColor(GREY);c.setFont('CJK',8.6);c.drawString(48,H-29,'永捷系統科技 | 員工操作手冊')
- c.drawRightString(W-48,H-29,'2026.11.05 / 第6版')
+ c.drawRightString(W-48,H-29,'2026.11.06 / 第7版')
  c.line(48,38,W-48,38);c.setFont('CJK',8.2);c.drawString(48,25,'內部操作指引，請勿當作客戶報價交付')
  c.drawRightString(W-48,25,f'{d.page} / 22')
  if d.page>2:
@@ -50,9 +50,9 @@ def decor(c,d):
   c.setFillColor(colors.white);c.setFont('CJKB',8);c.drawCentredString(78,H-59,'工作步驟')
 content=json.loads(Path(__file__).with_name('handbook.json').read_text(encoding='utf-8'))
 story=[Spacer(1,39),Paragraph('員工操作手冊',styles['title']),para('檢測估價・維修估價・租賃估價','h1'),para('從接電話、建立案件，到交付報價與完成收送。\n每頁一個工作主題，按步驟就能操作。','lead'),Spacer(1,18)]
-for title,body in [('新同事先看','第3頁看分工，第4頁看登入；接著直接翻到你要使用的程式。'),('交付報價前必看','第8、12、17頁說明複製與列印；第3、4頁先看新版流程與分工。'),('主管與收送人員','新增員工看第20頁；收送看第18、19頁；公司公告看第21頁。')]:
+for title,body in [('新同事先看','第3頁看保存與複製，第4頁看登入；接著直接翻到你要使用的程式。'),('交付報價前必看','第8、12、17頁說明複製與列印；第3、4頁先看新版流程與分工。'),('主管與收送人員','新增員工看第20頁；收送看第18、19頁；公司公告看第21頁。')]:
  story.extend([note(title,body),Spacer(1,13)])
-story.extend([Spacer(1,8),para('編製日期：2026年11月5日','small'),para('適用：檢測v2.1.0、維修v3.2.0、租賃v2.2.0','small'),para('本手冊使用教學範例，不含真實客戶資料或登入密碼。','small'),PageBreak(),Head('目錄與快速入口',styles['h1']),para('在PDF中點章節可跳頁；列印時也能依右側頁碼選印。','lead')])
+story.extend([Spacer(1,8),para('編製日期：2026年11月6日','small'),para('適用：檢測v2.1.2、維修v3.2.2、租賃v2.2.2','small'),para('本手冊使用教學範例，不含真實客戶資料或登入密碼。','small'),PageBreak(),Head('目錄與快速入口',styles['h1']),para('在PDF中點章節可跳頁；列印時也能依右側頁碼選印。','lead')])
 for n,item in enumerate(content,3):
  t=Table([[Paragraph(f'<link href="#p{n}" color="#1745A6">{esc(item["title"])}</link>',styles['toc']),para(str(n),'toc')]],colWidths=[BODY-35,35]);t.setStyle(TableStyle([('VALIGN',(0,0),(-1,-1),'TOP'),('ALIGN',(1,0),(1,0),'RIGHT'),('LINEBELOW',(0,0),(-1,-1),0.35,colors.HexColor('#E5EBF3')),('TOPPADDING',(0,0),(-1,-1),4),('BOTTOMPADDING',(0,0),(-1,-1),4)]));story.append(t)
 story.append(Spacer(1,12))
