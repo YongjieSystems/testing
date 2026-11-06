@@ -1,9 +1,10 @@
-import {createNoticeBoard} from './notice-board.js?v=2.1.0';
-import {generateQuoteSummary} from './quote-core.js?v=2.1.0';
-import { createLoginSession, watchLoginSession, LOGIN_MODES } from './login-session.js?v=2.1.0';
+import {copyCustomerQuote,closeCustomerDialogs} from './quote-workflow.js?v=2.1.1';
+import {createNoticeBoard} from './notice-board.js?v=2.1.1';
+import {generateQuoteSummary} from './quote-core.js?v=2.1.1';
+import { createLoginSession, watchLoginSession, LOGIN_MODES } from './login-session.js?v=2.1.1';
 import { createClient } from './vendor/supabase.js?v=1.4.1';
-import { TEAM_CONFIG } from './team-config.js?v=2.1.0';
-import { effectiveTeamRole, TEAM_ROLES, teamPayload, teamError, localToIso, isoToTaipeiInput, teamFetch } from './team-core.js?v=2.1.0';
+import { TEAM_CONFIG } from './team-config.js?v=2.1.1';
+import { effectiveTeamRole, TEAM_ROLES, teamPayload, teamError, localToIso, isoToTaipeiInput, teamFetch } from './team-core.js?v=2.1.1';
 
 export function initTeamWorkspace({getRecord,onOpenRecord,onSaved,onContext=async()=>{},kind='INSPECTION'}) {
     const $=id=>document.getElementById(id);
@@ -41,7 +42,7 @@ export function initTeamWorkspace({getRecord,onOpenRecord,onSaved,onContext=asyn
         if(items.some(item=>item.value===previous)) select.value=previous;
     }
     function clear() {
-        contextGeneration++;notices.setContext(null);
+        contextGeneration++;closeCustomerDialogs();notices.setContext(null);
         onContext({client,user:null,org:null,role:null,cases:[],routes:[],stops:[]});
         role=null; org=null; cases=[]; routes=[]; stops=[]; directory=[]; members=[]; selectedCase=null; routeDraft=null;
         for(const id of ['team-case-list','team-route-list','team-employee-list','team-audit-list','team-stop-editor']) $(id).replaceChildren();
@@ -110,7 +111,7 @@ export function initTeamWorkspace({getRecord,onOpenRecord,onSaved,onContext=asyn
                     onOpenRecord(snapshot.record,{orgId:org,caseId:item.id,revision:latest.revision,costs:costs ? {...costs.costs,actualConfirmed:costs.quote_revision===latest.revision && costs.costs.actualConfirmed===true} : {}});
                     status(`已載入版本 ${latest.revision}${costs && costs.quote_revision!==latest.revision ? '；成本資料來自較早報價，請主管重新核對' : ''}`);
                 });
-                button(row,'複製客戶報價',async()=>{const record=await rpc('yj_export_inspection',{p_case:item.id,p_expected:item.revision});await navigator.clipboard.writeText(generateQuoteSummary(record.state,record.problem,record.state.pricing,record.state.date));status('已複製最新共用版本。');});
+                button(row,'複製客戶報價',async()=>{const record=await rpc('yj_export_inspection',{p_case:item.id,p_expected:item.revision});if(await copyCustomerQuote(generateQuoteSummary(record.state,record.problem,record.state.pricing,record.state.date),status,{navigator,document}))status('✓ 已複製最新共用版本，可貼到LINE。');});
                 if(manager()) button(row,'選取供主管處理',async()=>{selectedCase=item; $('team-selected-case').textContent=`已選取：${item.customer || item.id}（報價版本 ${item.revision}）`;});
             }
             if(operator()&&!['DONE','CANCELLED'].includes(item.workflow)) {

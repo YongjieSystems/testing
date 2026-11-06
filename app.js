@@ -1,11 +1,11 @@
-import { initTeamWorkspace } from './team-workspace.js?v=2.1.0';
-import { FAULT_TEMPLATES, NOTE_TEMPLATES, appendTemplate, inspectionHints, askOutput } from './quote-workflow.js?v=2.1.0';
-import { initTraining } from './training.js?v=2.1.0';
-import { CONFIG } from './pricing-config.js?v=2.1.0';
-import { WARRANTY_DATA, WARRANTY_KINDS, WARRANTY_ACTIONS } from './warranty-data.js?v=2.1.0';
-import { formatQuoteId, generateQuoteSummary, normalizeMoney, calculateQuote, assessLogistics, reviewLogistics, summarizeLogistics, ACTUAL_COST_FIELDS, SERVICE_LABELS, SERVICE_DESCRIPTIONS, LOGISTICS_LABELS, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_STATUS, parseBackup, mergeRecords, upsertRecord, matchesRecord } from './quote-core.js?v=2.1.0';
+import { initTeamWorkspace } from './team-workspace.js?v=2.1.1';
+import { FAULT_TEMPLATES, NOTE_TEMPLATES, appendTemplate, inspectionHints, askOutput, copyCustomerQuote, closeCustomerDialogs } from './quote-workflow.js?v=2.1.1';
+import { initTraining } from './training.js?v=2.1.1';
+import { CONFIG } from './pricing-config.js?v=2.1.1';
+import { WARRANTY_DATA, WARRANTY_KINDS, WARRANTY_ACTIONS } from './warranty-data.js?v=2.1.1';
+import { formatQuoteId, generateQuoteSummary, normalizeMoney, calculateQuote, assessLogistics, reviewLogistics, summarizeLogistics, ACTUAL_COST_FIELDS, SERVICE_LABELS, SERVICE_DESCRIPTIONS, LOGISTICS_LABELS, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_STATUS, parseBackup, mergeRecords, upsertRecord, matchesRecord } from './quote-core.js?v=2.1.1';
 
-import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from './driver-data.js?v=2.1.0';
+import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from './driver-data.js?v=2.1.1';
 
         let quoteAccess=false, teamController=null, savedKey='', savedLabel='尚未保存到團隊';
         let workflowBusy=false,workflowOrg=null;
@@ -297,23 +297,12 @@ import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from
             updateStaffDisplay();
         }
 
-        window.copyHistoryItem = (index, btnElement) => {
-            const record = historyData[index];
-            const dateStr = record.state.date || record.timestamp.split(' ')[0];
-            const summary = generateSummary(record.state, record.problem, record.total, dateStr);
-
-            ($('customer-print-text').textContent=summary, navigator.clipboard.writeText(summary)).then(() => {
-                const originalText = btnElement.innerText;
-                const originalClass = btnElement.className;
-
-                btnElement.innerText = "已複製";
-                btnElement.className = "flex-1 bg-emerald-100 text-emerald-700 text-xs font-bold py-1.5 rounded-lg transition-colors";
-
-                setTimeout(() => {
-                    btnElement.innerText = originalText;
-                    btnElement.className = originalClass;
-                }, 1500);
-            }).catch(() => notify('複製失敗，請確認瀏覽器剪貼簿權限，或改用列印。'));
+        window.copyHistoryItem = async (index, btnElement) => {
+            if(!quoteAccess){window.switchTab('team');return;}
+            const record=historyData[index];if(!record)return;
+            const summary=generateSummary(record.state,record.problem,record.total,record.state.date);
+            try{if(await copyCustomerQuote(summary,notify,{navigator,document})){const label=btnElement.innerText;btnElement.innerText='已複製';setTimeout(()=>btnElement.innerText=label,1800);}}
+            catch(error){notify(error.message||'複製未完成');}
         };
 
         window.printHistoryItem = (index) => {
@@ -580,8 +569,7 @@ import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from
                 if(captured!==workflowKey() && savedKey!==workflowKey())throw Error('確認期間內容已變更，請重新按複製或列印');
                 const summary=generateSummary(state,UI.problemInput.value.trim(),null,state.date);
                 $('customer-print-text').textContent=summary;
-                if(mode==='print')window.print();else await navigator.clipboard.writeText(summary);
-                notify(mode==='print'?'已開啟客戶報價列印。':'✓ 已複製客戶報價。');
+                if(mode==='print'){window.print();notify('已開啟客戶報價列印。');}else await copyCustomerQuote(summary,notify,{navigator,document});
             };
             if(review.errors.length||review.warnings.length||savedKey!==workflowKey())askOutput($('workflow-confirm'),review,savedKey!==workflowKey(),execute,saveToTeam,notify);
             else execute().catch(e=>notify(e.message||'輸出失敗，請檢查剪貼簿權限'));
@@ -744,7 +732,7 @@ import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from
         window.switchTab(['warranty','drivers','training'].includes(new URLSearchParams(location.search).get('tab')) ? new URLSearchParams(location.search).get('tab') : 'team');
         teamController=initTeamWorkspace({
             onContext(value) {
-                if(workflowOrg!==value.org || !value.user){savedKey='';savedLabel='尚未保存到目前團隊';workflowOrg=value.org;updateWorkflowStatus();}
+                if(workflowOrg!==value.org || !value.user){closeCustomerDialogs();savedKey='';savedLabel='尚未保存到目前團隊';workflowOrg=value.org;updateWorkflowStatus();}
                 quoteAccess=!!value.user && !!value.org && ['MANAGER','STAFF'].includes(value.role);
                 if(!quoteAccess) { $('customer-print-text').textContent=''; if(state.activeTab==='quote') window.switchTab('team'); }
             },

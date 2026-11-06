@@ -52,7 +52,7 @@ test('real fulfillment renderer hides and disables custom analysis in store/onsi
  const customFields=fields.slice(0,3),details=[{open:true},{open:true}];
  const el=id=>{if(!elements.has(id))elements.set(id,{textContent:'',hidden:false,querySelectorAll:selector=>selector==='details'?details:customFields});return elements.get(id)};
  const s={...base,service:'PICKUP'};
- const context={...core,...workflow,quoteAccess:true,savedKey:'same',workflowKey:()=> 'same',updateWorkflowStatus(){},saveToTeam:async()=>{},askOutput:(host,review,unsaved,execute)=>execute(),state:s,$:el,pricesFor:()=>CONFIG,document:{querySelectorAll:()=>fields,activeElement:null},console};
+ const context={...core,...workflow,quoteAccess:true,savedKey:'same',workflowKey:()=> 'same',updateWorkflowStatus(){},saveToTeam:async()=>{},document:{},askOutput:(host,review,unsaved,execute)=>execute(),state:s,$:el,pricesFor:()=>CONFIG,document:{querySelectorAll:()=>fields,activeElement:null},console};
  vm.runInNewContext(render+';this.draw=renderFulfillment;',context);
  context.draw();assert.equal(el('logistics-controls').hidden,false);assert.equal(customFields.every(f=>!f.disabled),true);
  for(const service of ['IN_STORE','ON_SITE']) {
@@ -71,8 +71,14 @@ test('actual inspection preview, copy and print callbacks produce the same custo
  const source=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8'),elements=new Map();
  const get=id=>{if(!elements.has(id))elements.set(id,{textContent:''});return elements.get(id)};
  const snippets=[source.match(/function requestCustomerOutput\(mode\) \{[\s\S]*?\n        \}/)[0],source.match(/function updateCustomerPreview\(\) \{[\s\S]*?\n        \}/)[0],source.match(/function generateSummary\([^)]*\) \{[\s\S]*?\n        \}/)[0],source.match(/function copyToClipboard\(\) \{[\s\S]*?\n        \}/)[0],source.match(/window.handlePrint = .*$/m)[0]].join('\n');
- for(const service of ['IN_STORE','ON_SITE','PICKUP']){let copied='',printed=0;const context={...core,...workflow,quoteAccess:true,savedKey:'same',workflowKey:()=> 'same',updateWorkflowStatus(){},saveToTeam:async()=>{},askOutput:(host,review,unsaved,execute)=>execute(),state:{...base,service,date:'2026-10-23'},UI:{problemInput:{value:' 無法開機 '},dispTotal:{innerText:'500'},btnCopy:{innerHTML:'複製摘要'}},pricesFor:()=>CONFIG,$:get,addToHistory:()=>true,navigator:{clipboard:{writeText:async text=>{copied=text}}},setTimeout(){},notify(){},window:{print(){printed++}}};vm.runInNewContext(snippets+';this.preview=updateCustomerPreview;this.copy=copyToClipboard;',context);
+ for(const service of ['IN_STORE','ON_SITE','PICKUP']){let copied='',printed=0;const context={...core,...workflow,quoteAccess:true,savedKey:'same',workflowKey:()=> 'same',updateWorkflowStatus(){},saveToTeam:async()=>{},document:{},askOutput:(host,review,unsaved,execute)=>execute(),state:{...base,service,date:'2026-10-23'},UI:{problemInput:{value:' 無法開機 '},dispTotal:{innerText:'500'},btnCopy:{innerHTML:'複製摘要'}},pricesFor:()=>CONFIG,$:get,addToHistory:()=>true,navigator:{clipboard:{writeText:async text=>{copied=text}}},setTimeout(){},notify(){},window:{print(){printed++}}};vm.runInNewContext(snippets+';this.preview=updateCustomerPreview;this.copy=copyToClipboard;',context);
  context.preview();context.copy();await Promise.resolve();assert.equal(copied,get('customer-summary-preview').textContent);context.window.handlePrint();assert.equal(printed,1);assert.equal(get('customer-print-text').textContent,copied);assert.match(copied,/【報價聲明】/);assert.doesNotMatch(copied,/成本邏輯|INTERNAL_ONLY|【收送與服務約定】/);
  }
  const html=fs.readFileSync(new URL('./index.html',import.meta.url),'utf8');const statement=html.match(/<ol id="quote-declaration-list"[\s\S]*?<\/ol>/)[0];const {QUOTE_DECLARATIONS}=await import('./customer-declaration.js');for(const text of QUOTE_DECLARATIONS)assert.ok(statement.includes(text));assert.doesNotMatch(statement,/成本|油資|同意維修不另加檢測費/);
+});
+
+test('inspection copy surfaces denied clipboard as manual fallback and not success',async()=>{
+ const src=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');const body=src.match(/function requestCustomerOutput\(mode\) \{[\s\S]*?\n        \}/)[0];let notices=[];
+ const ctx={...workflow,state:{...base,date:'2026-11-06',customerName:'測試',staffName:'經辦'},UI:{problemInput:{value:'無法開機'}},quoteAccess:true,workflowKey:()=> 'key',savedKey:'key',generateSummary:()=> '【客戶報價】',pricesFor:()=>CONFIG,calculateQuote:()=>({pending:[]}),$:()=>({}),notify:m=>notices.push(m),navigator:{clipboard:{writeText:async()=>{throw Error('denied')}}},document:{},window:{},askOutput:(host,review,unsaved,execute)=>execute()};
+ vm.runInNewContext(body+';this.copy=requestCustomerOutput',ctx);ctx.copy('copy');for(let n=0;n<8;n++)await Promise.resolve();assert.match(notices.join(),/自動複製未完成/);assert.doesNotMatch(notices.join(),/✓/);
 });

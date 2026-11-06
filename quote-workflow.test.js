@@ -60,3 +60,25 @@ test('inspection team save keeps optimistic version and reports only successful 
  vm.runInNewContext(body+';this.save=saveCurrent',ctx);await ctx.save();assert.equal(last.p_expected,4);assert.equal(notified,1);
  fail=true;await assert.rejects(ctx.save(),/版本衝突/);assert.equal(notified,1);assert.equal(writes,2);assert.equal(ctx.save.running,false);
 });
+
+test('modern clipboard succeeds without creating fallback elements',async()=>{
+ const {copyCustomerText}=await import('./quote-workflow.js');let actual='';assert.equal(await copyCustomerText('報價',{navigator:{clipboard:{writeText:async t=>actual=t}},document:{createElement(){throw Error('must not run')}}}),true);assert.equal(actual,'報價');
+});
+test('clipboard denial uses selection copy, restores focus and removes transient field',async()=>{
+ const {copyCustomerText}=await import('./quote-workflow.js');let selected=false,removed=false,focused=false,inside=false;
+ const field={style:{},setAttribute(){},focus(){},select(){selected=true},setSelectionRange(){},remove(){removed=true}};
+ const doc={activeElement:{focus(){focused=true}},body:{append(){}},querySelector:()=>({append(){inside=true}}),createElement:()=>field,execCommand:command=>command==='copy'&&selected};
+ assert.equal(await copyCustomerText('測試報價',{navigator:{clipboard:{writeText:async()=>{throw Error('denied')}}},document:doc}),true);assert.equal(field.value,'測試報價');assert.ok(removed&&focused&&inside);
+});
+test('unavailable or denied clipboard can fall back to manual copying without throwing',async()=>{
+ const {copyCustomerText}=await import('./quote-workflow.js');assert.equal(await copyCustomerText('報價',{navigator:{},document:{}}),false);
+ const field={style:{},setAttribute(){},focus(){},select(){},remove(){}};assert.equal(await copyCustomerText('報價',{navigator:{},document:{body:{append(){}},createElement:()=>field,execCommand:()=>false}}),false);
+});
+
+test('manual copy dialog contains only customer text and selects the complete quotation',async()=>{
+ const {copyCustomerQuote}=await import('./quote-workflow.js');
+ class Node{constructor(tag){this.tag=tag;this.children=[];this.style={};this.attributes={};}append(...nodes){this.children.push(...nodes)}setAttribute(k,v){this.attributes[k]=v}focus(){}select(){this.selected=true}setSelectionRange(a,b){this.range=[a,b]}showModal(){this.open=true}remove(){this.removed=true}close(){this.open=false}}
+ const doc={body:new Node('body'),createElement:t=>new Node(t)};let notice='';const quote='【客戶報價】\n設備1000元';
+ assert.equal(await copyCustomerQuote(quote,m=>notice=m,{navigator:{},document:doc}),false);assert.match(notice,/自動複製未完成/);assert.doesNotMatch(notice,/✓/);
+ const dialog=doc.body.children.find(n=>n.tag==='dialog');assert.equal(dialog.open,true);const field=dialog.children.find(n=>n.tag==='textarea');assert.equal(field.value,quote);dialog.children.at(-1).children[0].onclick();assert.deepEqual(field.range,[0,quote.length]);
+});

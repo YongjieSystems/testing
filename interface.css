@@ -282,3 +282,9 @@ button:disabled { opacity: .6; cursor: wait; }
 
 .quote-workflow input:not([type=checkbox]),.quote-workflow select{display:block;box-sizing:border-box;width:100%;min-height:58px;margin-top:6px;padding:12px;border:1px solid #9bafce;border-radius:10px;background:#fff;color:#183153;font:inherit}
 #workflow-confirm button{margin:8px 8px 0 0} @media(max-width:600px){#workflow-confirm button{margin:8px 0 0}}
+
+.customer-output-dialog{box-sizing:border-box;width:min(620px,calc(100% - 24px));max-height:calc(100dvh - 32px);overflow:auto;margin:auto;padding:24px;border:1px solid #a9bddb;border-radius:18px;background:#fff;color:#17304d;font:18px/1.7 "Microsoft JhengHei",sans-serif;box-shadow:0 20px 70px #10284a55}
+.customer-output-dialog::backdrop{background:#10284a88}.customer-output-dialog h2{font-size:23px;font-weight:700;margin:0 0 14px}.customer-output-dialog p{margin:12px 0}.customer-output-dialog ul{list-style:disc;padding-left:26px}.output-message{padding:12px;border-radius:10px;background:#eef5ff;color:#173d7a}
+.output-dialog-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}.output-dialog-actions button{min-height:52px;flex:1 1 180px;padding:12px;border:1px solid #9bafce;border-radius:10px;background:#eef4ff;color:#163d80;font:inherit;font-weight:700}.output-dialog-actions button:disabled{opacity:.55;cursor:wait}
+.customer-output-dialog textarea{box-sizing:border-box;width:100%;min-height:280px;padding:14px;border:1px solid #8fa6c8;border-radius:10px;font:16px/1.7 "Microsoft JhengHei",sans-serif;resize:vertical;white-space:pre-wrap}.copy-action-feedback{max-width:430px;font-size:16px;color:#173d7a;overflow-wrap:anywhere}
+@media(max-width:600px){.customer-output-dialog{padding:18px}.output-dialog-actions{display:grid;grid-template-columns:1fr}.output-dialog-actions button{width:100%}.customer-output-dialog textarea{min-height:230px}}

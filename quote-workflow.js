@@ -50,17 +50,58 @@ export function repairHints(note,selected,errors=[]) {
 }
 // Page-inline confirmation: missing details can be saved; invalid data cannot be delivered.
 export function askOutput(host,review,unsaved,execute,save,notify) {
- host.replaceChildren();host.hidden=false;host.scrollIntoView?.({behavior:'smooth',block:'center'});
- const add=(tag,text)=>{const e=document.createElement(tag);e.textContent=text;host.append(e);return e;};
- add('strong',review.errors.length?'請先修正以下內容':'交付前再確認');
+ host.replaceChildren();host.hidden=false;
+ const dialog=document.createElement('dialog');dialog.className='customer-output-dialog customer-copy-owned';dialog.setAttribute?.('aria-label','交付客戶報價前確認');host.append(dialog);
+ const add=(tag,text)=>{const e=document.createElement(tag);e.textContent=text;dialog.append(e);return e;};
+ add('h2',review.errors.length?'請先修正以下內容':'交付客戶報價前確認');
  const list=add('ul','');for(const text of (review.errors.length?review.errors:review.warnings)){const li=document.createElement('li');li.textContent=text;list.append(li);}
- if(unsaved)add('p','目前有內容尚未保存到團隊；只輸出畫面不代表已共用。');
- let running=false;
+ if(unsaved)add('p','目前有內容尚未保存到團隊，可先保存再交付，或只輸出目前畫面。');
+ const feedback=add('p','');feedback.setAttribute?.('role','status');let running=false;
+ const close=()=>{if(running)return;dialog.close?.();host.hidden=true;host.replaceChildren();};
+ dialog.oncancel=e=>{if(running)e.preventDefault();else close();};dialog.onclose=()=>{if(host.contains?.(dialog)){host.hidden=true;host.replaceChildren();}};
  const go=async(withSave)=>{if(running)return;running=true;for(const b of host.querySelectorAll('button'))b.disabled=true;
-  try{if(withSave)await save();await execute();host.hidden=true;}catch(e){notify(e.message||'操作未完成，原輸入已保留。');}finally{running=false;for(const b of host.querySelectorAll('button'))b.disabled=false;}};
- if(!review.errors.length){
-  if(unsaved){const b=add('button','保存到團隊並繼續');b.type='button';b.onclick=()=>go(true);}
-  const b=add('button',unsaved?'只輸出目前畫面':'確認後繼續');b.type='button';b.onclick=()=>go(false);
- }
- const cancel=add('button','返回修改');cancel.type='button';cancel.onclick=()=>{host.hidden=true;};
+  try{if(withSave){feedback.textContent='正在保存到團隊…';await save();}await execute();running=false;close();}
+  catch(e){feedback.textContent=e.message||'操作未完成，原輸入已保留。';notify(feedback.textContent);}
+  finally{running=false;for(const b of host.querySelectorAll('button'))b.disabled=false;}};
+ const actions=add('div','');actions.className='output-dialog-actions';
+ const button=(text,fn)=>{const b=document.createElement('button');b.textContent=text;b.type='button';b.onclick=fn;actions.append(b);};
+ if(!review.errors.length){if(unsaved)button('保存到團隊並繼續',()=>go(true));button(unsaved?'只輸出目前畫面':'確認後繼續',()=>go(false));}
+ button('返回修改',close);if(dialog.showModal)dialog.showModal();else dialog.open=true;
+}
+
+// Try the modern clipboard first, then the browser's selection-based copy.
+// A denied clipboard is recoverable: the caller shows selectable customer text.
+export async function copyCustomerText(text, env={}) {
+ const nav=env.navigator ?? globalThis.navigator,doc=env.document ?? globalThis.document;
+ if(nav?.clipboard?.writeText){try{await nav.clipboard.writeText(text);return true;}catch{}}
+ if(!doc?.createElement || !doc?.body)return false;
+ let field;const focused=doc.activeElement;
+ try{
+  field=doc.createElement('textarea');field.value=text;field.readOnly=true;
+  field.setAttribute('aria-label','客戶報價複製備援');
+  field.style.cssText='position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;font-size:16px';
+  // Appending inside the active modal keeps the fallback out of its inert background.
+  const parent=doc.querySelector?.('dialog[open]') || doc.body;parent.append(field);
+  field.focus();field.select();field.setSelectionRange?.(0,text.length);
+  return doc.execCommand?.('copy')===true;
+ }catch{return false;}finally{field?.remove();focused?.focus?.({preventScroll:true});}
+}
+
+
+export function closeCustomerDialogs(doc=globalThis.document){for(const d of doc?.querySelectorAll?.('.customer-copy-owned') || []){d.close?.();d.remove();}}
+export function showManualCustomerCopy(text,doc=globalThis.document){
+ if(!doc?.body)return;
+ const dialog=doc.createElement('dialog');dialog.className='customer-output-dialog customer-copy-owned';dialog.setAttribute('aria-label','手動複製客戶報價');
+ const title=doc.createElement('h2');title.textContent='手動複製客戶報價';
+ const hint=doc.createElement('p');hint.textContent='瀏覽器未允許自動複製。請按「選取全部文字」，再長按選「複製」，貼到LINE。也可改用Chrome或Safari開啟網站。';
+ const field=doc.createElement('textarea');field.readOnly=true;field.value=text;field.setAttribute('aria-label','可手動複製的客戶報價');
+ const buttons=doc.createElement('div');buttons.className='output-dialog-actions';
+ const select=doc.createElement('button');select.type='button';select.textContent='選取全部文字';select.onclick=()=>{field.focus();field.select();field.setSelectionRange?.(0,text.length);};
+ const close=doc.createElement('button');close.type='button';close.textContent='完成／關閉';close.onclick=()=>{dialog.close?.();dialog.remove();};
+ dialog.onclose=()=>dialog.remove();buttons.append(select,close);dialog.append(title,hint,field,buttons);doc.body.append(dialog);
+ if(dialog.showModal)dialog.showModal();else dialog.setAttribute('open','');
+}
+export async function copyCustomerQuote(text,notify,env={}){
+ if(await copyCustomerText(text,env)){notify('✓ 已複製客戶報價，可貼到LINE或訊息。');return true;}
+ showManualCustomerCopy(text,env.document ?? globalThis.document);notify('自動複製未完成，已開啟可手動複製的客戶報價。');return false;
 }
