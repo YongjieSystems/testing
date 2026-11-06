@@ -1,11 +1,11 @@
-import { initTeamWorkspace } from './team-workspace.js?v=2.1.4';
-import { FAULT_TEMPLATES, NOTE_TEMPLATES, appendTemplate, inspectionHints, askOutput, copyCustomerQuote, closeCustomerDialogs } from './quote-workflow.js?v=2.1.4';
-import { initTraining } from './training.js?v=2.1.4';
-import { CONFIG } from './pricing-config.js?v=2.1.4';
-import { WARRANTY_DATA, WARRANTY_KINDS, WARRANTY_ACTIONS } from './warranty-data.js?v=2.1.4';
-import { formatQuoteId, generateQuoteSummary, normalizeMoney, calculateQuote, assessLogistics, reviewLogistics, summarizeLogistics, ACTUAL_COST_FIELDS, SERVICE_LABELS, SERVICE_DESCRIPTIONS, LOGISTICS_LABELS, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_STATUS, parseBackup, mergeRecords, upsertRecord, matchesRecord } from './quote-core.js?v=2.1.4';
+import { initTeamWorkspace } from './team-workspace.js?v=2.1.5';
+import { FAULT_TEMPLATES, NOTE_TEMPLATES, appendTemplate, inspectionHints, askOutput, copyCustomerQuote, closeCustomerDialogs } from './quote-workflow.js?v=2.1.5';
+import { initTraining } from './training.js?v=2.1.5';
+import { CONFIG } from './pricing-config.js?v=2.1.5';
+import { WARRANTY_DATA, WARRANTY_KINDS, WARRANTY_ACTIONS } from './warranty-data.js?v=2.1.5';
+import { formatQuoteId, generateQuoteSummary, normalizeMoney, calculateQuote, assessLogistics, reviewLogistics, summarizeLogistics, ACTUAL_COST_FIELDS, SERVICE_LABELS, SERVICE_DESCRIPTIONS, LOGISTICS_LABELS, quoteTotal, readHistory, escapeHTML, quoteDate, QUOTE_STATUS, parseBackup, mergeRecords, upsertRecord, matchesRecord } from './quote-core.js?v=2.1.5';
 
-import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from './driver-data.js?v=2.1.4';
+import { DRIVER_DATA, DRIVER_EXCLUSIONS, DRIVER_CATEGORIES, matchesDriver } from './driver-data.js?v=2.1.5';
 
         let quoteAccess=false, teamController=null, savedKey='', savedLabel='尚未保存到團隊';
         let workflowBusy=false,workflowOrg=null;

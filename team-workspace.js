@@ -1,10 +1,10 @@
-import {copyCustomerQuote,closeCustomerDialogs} from './quote-workflow.js?v=2.1.4';
-import {createNoticeBoard} from './notice-board.js?v=2.1.4';
-import {generateQuoteSummary} from './quote-core.js?v=2.1.4';
-import { createLoginSession, watchLoginSession, LOGIN_MODES } from './login-session.js?v=2.1.4';
+import {copyCustomerQuote,closeCustomerDialogs} from './quote-workflow.js?v=2.1.5';
+import {createNoticeBoard} from './notice-board.js?v=2.1.5';
+import {generateQuoteSummary} from './quote-core.js?v=2.1.5';
+import { createLoginSession, watchLoginSession, LOGIN_MODES } from './login-session.js?v=2.1.5';
 import { createClient } from './vendor/supabase.js?v=1.4.1';
-import { TEAM_CONFIG } from './team-config.js?v=2.1.4';
-import { effectiveTeamRole, TEAM_ROLES, teamPayload, teamError, localToIso, isoToTaipeiInput, teamFetch } from './team-core.js?v=2.1.4';
+import { TEAM_CONFIG } from './team-config.js?v=2.1.5';
+import { effectiveTeamRole, TEAM_ROLES, teamPayload, teamError, localToIso, isoToTaipeiInput, teamFetch } from './team-core.js?v=2.1.5';
 
 export function initTeamWorkspace({getRecord,onOpenRecord,onSaved,onContext=async()=>{},kind='INSPECTION'}) {
     const $=id=>document.getElementById(id);
